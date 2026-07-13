@@ -80,5 +80,6 @@ a verdict cites evidence that isn't citable, an id dangles, or a timestamp doesn
 | 07 | Last Delivery | criminal network inside the platform |
 | 08 | The Babysitting App | predator behind a trust badge — she got out |
 | 09 | Neighborhood Watch | mutual surveillance — the street itself |
+| 10 | The Wellness Retreat | institutional erasure, told via cloud sync |
 
 The schema supports the full planned roster (see `src/types.ts`); new cases ship as data.
