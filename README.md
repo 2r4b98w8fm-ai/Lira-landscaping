@@ -75,5 +75,6 @@ a verdict cites evidence that isn't citable, an id dangles, or a timestamp doesn
 | 02 | Rideshare, One Star | human predator inside the platform |
 | 03 | Grief Group | an organization that farms the grieving |
 | 04 | The Last Customer | the kind the report can't hold |
+| 05 | Second Shift | institutional cover-up |
 
 The schema supports the full planned roster (see `src/types.ts`); new cases ship as data.
