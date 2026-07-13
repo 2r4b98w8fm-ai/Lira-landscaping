@@ -84,5 +84,7 @@ a verdict cites evidence that isn't citable, an id dangles, or a timestamp doesn
 | 11 | The Reunion Thread | a twenty-year-old lie called home |
 | 12 | Dog Walker | architectural horror, human crime — the dog was right |
 | 13 | The Landlord's Other Building | the complicit victim — sellers list it last |
+| 14 | Storm Chaser | analog horror — the watch requires watchers |
+| 15 | Group Project | the seminar that never adjourned |
 
-The schema supports the full planned roster (see `src/types.ts`); new cases ship as data.
+Adding a case is pure data work: one file in `src/cases/`, registered in `src/cases/index.ts`.

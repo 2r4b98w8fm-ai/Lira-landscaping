@@ -12,6 +12,8 @@ import case10 from "./case10";
 import case11 from "./case11";
 import case12 from "./case12";
 import case13 from "./case13";
+import case14 from "./case14";
+import case15 from "./case15";
 
 export const ALL_CASES: CaseFile[] = [
   case01,
@@ -27,4 +29,6 @@ export const ALL_CASES: CaseFile[] = [
   case11,
   case12,
   case13,
+  case14,
+  case15,
 ];
