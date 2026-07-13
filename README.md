@@ -81,5 +81,7 @@ a verdict cites evidence that isn't citable, an id dangles, or a timestamp doesn
 | 08 | The Babysitting App | predator behind a trust badge — she got out |
 | 09 | Neighborhood Watch | mutual surveillance — the street itself |
 | 10 | The Wellness Retreat | institutional erasure, told via cloud sync |
+| 11 | The Reunion Thread | a twenty-year-old lie called home |
+| 12 | Dog Walker | architectural horror, human crime — the dog was right |
 
 The schema supports the full planned roster (see `src/types.ts`); new cases ship as data.
