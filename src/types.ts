@@ -18,6 +18,7 @@ export type IconName =
   | "flashlight"
   | "calculator"
   | "weather"
+  | "clock"
   | "report";
 
 export interface Message {

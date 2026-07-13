@@ -76,5 +76,7 @@ a verdict cites evidence that isn't citable, an id dangles, or a timestamp doesn
 | 03 | Grief Group | an organization that farms the grieving |
 | 04 | The Last Customer | the kind the report can't hold |
 | 05 | Second Shift | institutional cover-up |
+| 06 | The Sleep Study | staged disappearance |
+| 07 | Last Delivery | criminal network inside the platform |
 
 The schema supports the full planned roster (see `src/types.ts`); new cases ship as data.

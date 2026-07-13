@@ -66,6 +66,11 @@ const GLYPHS: Record<IconName, { bg: string; glyph: string }> = {
     glyph:
       '<circle cx="26" cy="27" r="7" fill="none" stroke="#bcd8ea" stroke-width="3"/><path d="M33 40a8 8 0 1 1 7-12 6 6 0 1 1 1 12H24" fill="none" stroke="#bcd8ea" stroke-width="3" stroke-linecap="round"/>',
   },
+  clock: {
+    bg: "#252233",
+    glyph:
+      '<circle cx="32" cy="32" r="17" fill="none" stroke="#c3bce8" stroke-width="3"/><path d="M32 22v10l7 5" fill="none" stroke="#c3bce8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 14l-5 5M46 14l5 5" stroke="#c3bce8" stroke-width="3" stroke-linecap="round"/>',
+  },
   report: {
     bg: "#3a2626",
     glyph:
