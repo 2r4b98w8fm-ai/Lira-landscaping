@@ -79,5 +79,6 @@ a verdict cites evidence that isn't citable, an id dangles, or a timestamp doesn
 | 06 | The Sleep Study | staged disappearance |
 | 07 | Last Delivery | criminal network inside the platform |
 | 08 | The Babysitting App | predator behind a trust badge — she got out |
+| 09 | Neighborhood Watch | mutual surveillance — the street itself |
 
 The schema supports the full planned roster (see `src/types.ts`); new cases ship as data.
