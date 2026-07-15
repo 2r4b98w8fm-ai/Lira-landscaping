@@ -1,5 +1,5 @@
 import type { CaseFile } from "../types";
-import { photoSvg, figure, blurStreak, timestampBurn } from "../photoart";
+import { photoSvg, figure, blurStreak, timestampBurn, bloodSmear, bloodSpatter } from "../photoart";
 
 /**
  * CASE 02 — RIDESHARE, ONE STAR
@@ -345,6 +345,8 @@ const c2: CaseFile = {
             `<ellipse cx="150" cy="215" rx="70" ry="16" fill="#12161c"/>` +
             `<path d="M30 230 L80 180 L90 400 L20 400 Z" fill="#0d1015"/>` +
             `<path d="M270 230 L220 180 L210 400 L280 400 Z" fill="#0d1015"/>` +
+            bloodSmear(128, 372, 92, 14, "c2-drag") +
+            bloodSpatter(150, 352, 42, "c2-spat") +
             figure(238, 320, 0.9, 0.8, "#040508") +
             timestampBurn("03:04:51", 300, 400),
           { aspect: "portrait", base: "#090b0e", grain: 0.12 },

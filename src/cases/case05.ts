@@ -1,5 +1,5 @@
 import type { CaseFile } from "../types";
-import { photoSvg, figure, doorway, timestampBurn } from "../photoart";
+import { photoSvg, figure, doorway, timestampBurn, bloodSmear, bloodHandprint } from "../photoart";
 
 /**
  * CASE 05 — SECOND SHIFT
@@ -352,6 +352,8 @@ const c5: CaseFile = {
           `<rect width="400" height="300" fill="#0b0d10"/>` +
             doorway(150, 60, 100, 240, "#050608") +
             `<rect x="150" y="60" width="100" height="240" fill="#0a0c10"/>` +
+            bloodSmear(118, 288, 110, -4, "c5-drag") +
+            bloodHandprint(152, 210, 0.5, 88) +
             figure(200, 270, 1.0, 0.85, "#040507") +
             figure(120, 275, 0.9, 0.5, "#060810") +
             figure(285, 272, 0.9, 0.5, "#060810") +

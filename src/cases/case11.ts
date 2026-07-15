@@ -1,5 +1,5 @@
 import type { CaseFile } from "../types";
-import { photoSvg, figure, blurStreak, timestampBurn } from "../photoart";
+import { photoSvg, figure, blurStreak, timestampBurn, bloodPool, bloodSpatter } from "../photoart";
 
 /**
  * CASE 11 — THE REUNION THREAD
@@ -297,6 +297,8 @@ const c11: CaseFile = {
         hiddenSvg: photoSvg(
           `<rect width="400" height="300" fill="#080b0f"/>` +
             `<ellipse cx="200" cy="210" rx="180" ry="65" fill="#b8c4cc" opacity="0.14"/>` +
+            bloodPool(200, 196, 24, "c11-pool") +
+            bloodSpatter(200, 186, 58, "c11-spat") +
             figure(200, 175, 1.0, 0.9, "#030507") +
             `<ellipse cx="200" cy="188" rx="26" ry="5" fill="#000" opacity="0.6"/>` +
             `<text x="200" y="262" text-anchor="middle" font-family="monospace" font-size="9" fill="#44505c">standing on the ice. dead center. waiting. it waved us out like a crossing guard</text>` +

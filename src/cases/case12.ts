@@ -1,5 +1,5 @@
 import type { CaseFile } from "../types";
-import { photoSvg, wall, timestampBurn } from "../photoart";
+import { photoSvg, wall, timestampBurn, bloodHandprint, bloodRunnels } from "../photoart";
 
 /**
  * CASE 12 — DOG WALKER
@@ -269,9 +269,10 @@ const c12: CaseFile = {
         hiddenSvg: photoSvg(
           `<rect width="400" height="300" fill="#141008"/>` +
             Array.from({ length: 60 }, (_, i) => `<path d="M${30 + (i % 15) * 24} ${50 + Math.floor(i / 15) * 46} v22 ${i % 5 === 4 ? `M${26 + (i % 15) * 24} ${50 + Math.floor(i / 15) * 46} l16 22` : ""}" stroke="#3d3020" stroke-width="2"/>`).join("") +
-            `<path d="M300 240 q10 -14 24 -10 q14 4 12 18 q-2 12 -16 12 q-16 0 -20 -20z" fill="#2a2014" opacity="0.9"/>` +
-            `<path d="M340 244 q8 -11 19 -8 q11 3 10 14 q-2 10 -13 10 q-13 0 -16 -16z" fill="#57422a" opacity="0.9"/>` +
-            `<text x="200" y="288" text-anchor="middle" font-family="monospace" font-size="8" fill="#5c5342">tally marks. YEARS of them. and two handprints — one dust-old. one from this week.</text>` +
+            bloodHandprint(316, 236, 0.75, -8, "#3d0a0a") +
+            bloodHandprint(354, 242, 0.7, 6, "#7c1116") +
+            bloodRunnels(340, 252, 30, "c12-runnels") +
+            `<text x="200" y="288" text-anchor="middle" font-family="monospace" font-size="8" fill="#5c5342">tally marks. YEARS of them. and two handprints — one dried near-black. one still red.</text>` +
             timestampBurn("16:20:11", 400, 300),
           { aspect: "landscape", base: "#0f0c07", grain: 0.13 },
         ),

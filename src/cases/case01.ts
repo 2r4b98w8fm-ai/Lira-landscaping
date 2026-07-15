@@ -1,5 +1,16 @@
 import type { CaseFile } from "../types";
-import { photoSvg, wall, windowPane, figure, doorway, blurStreak, timestampBurn } from "../photoart";
+import {
+  photoSvg,
+  wall,
+  windowPane,
+  figure,
+  doorway,
+  blurStreak,
+  timestampBurn,
+  bloodSmear,
+  bloodHandprint,
+  bloodRunnels,
+} from "../photoart";
 
 /**
  * CASE 01 — THE STATIC LINE
@@ -343,7 +354,8 @@ const c1: CaseFile = {
           doorway(90, 120, 120, 260, "#030405") +
           `<rect x="196" y="120" width="14" height="260" fill="#22262d"/>` +
           `<path d="M90 380h120" stroke="#000" stroke-width="4"/>` +
-          `<ellipse cx="150" cy="378" rx="70" ry="8" fill="#000" opacity="0.6"/>`,
+          `<ellipse cx="150" cy="378" rx="70" ry="8" fill="#000" opacity="0.6"/>` +
+          bloodSmear(92, 368, 104, -2, "c1-base-drag"),
         { aspect: "portrait", base: "#101318", grain: 0.17 },
       ),
       evidenceLabel: "The basement door standing open, four days before she vanished",
@@ -358,7 +370,8 @@ const c1: CaseFile = {
         wall(0, 0, 400, 300, "#21252c") +
           `<path d="M80 40 C120 90 110 140 170 180 S 260 230 300 280" fill="none" stroke="#101216" stroke-width="3"/>` +
           `<path d="M170 180 C190 170 210 175 230 160" fill="none" stroke="#101216" stroke-width="2"/>` +
-          `<circle cx="172" cy="181" r="5" fill="#0a0c0f"/>`,
+          `<circle cx="172" cy="181" r="5" fill="#0a0c0f"/>` +
+          bloodRunnels(160, 184, 26, "c1-crack-seep"),
         { aspect: "landscape", base: "#181b21", grain: 0.13 },
       ),
       evidenceLabel: "Close-up of the wall crack — with a small round hole at the joint",
@@ -378,6 +391,8 @@ const c1: CaseFile = {
           `<rect width="300" height="400" fill="#0d1014"/>` +
             `<path d="M40 400V140L150 110l110 30v260" fill="#14171d"/>` +
             doorway(110, 170, 80, 230, "#07080b") +
+            bloodSmear(52, 384, 96, -3, "c1-314-drag") +
+            bloodHandprint(107, 262, 0.5, -10) +
             figure(150, 355, 1.05, 0.85, "#030406") +
             `<circle cx="144" cy="322" r="2.5" fill="#c8d6e0" opacity="0.9"/><circle cx="157" cy="322" r="2.5" fill="#c8d6e0" opacity="0.9"/>` +
             timestampBurn("03:14:09", 300, 400),

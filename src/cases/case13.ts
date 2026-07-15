@@ -1,5 +1,5 @@
 import type { CaseFile } from "../types";
-import { photoSvg, doorway, figure, timestampBurn } from "../photoart";
+import { photoSvg, doorway, figure, timestampBurn, bloodSmear, bloodSpatter } from "../photoart";
 
 /**
  * CASE 13 — THE LANDLORD'S OTHER BUILDING
@@ -302,6 +302,8 @@ const c13: CaseFile = {
             `<path d="M0 300 V100 Q0 50 90 50 H310 Q400 50 400 100 V300" fill="#120e08"/>` +
             doorway(115, 40, 56, 80, "#040302") +
             `<rect x="115" y="40" width="56" height="80" fill="#0a0704"/>` +
+            bloodSmear(74, 246, 84, -32, "c13-drag") +
+            bloodSpatter(143, 126, 34, "c13-spat") +
             figure(143, 108, 0.62, 0.85, "#030202") +
             `<text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="9" fill="#4a4232">the fourth door, open. and my buyer, holding it. politely.</text>` +
             timestampBurn("23:36:52", 400, 300),

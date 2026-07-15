@@ -53,7 +53,7 @@ export function renderCaseSelect(host: HTMLElement): void {
       h(
         "p",
         { class: "archive-cw" },
-        `Intensity ${"●".repeat(entry.contentWarningLevel)}${"○".repeat(3 - entry.contentWarningLevel)} — psychological dread, stalking themes. No gore.`,
+        `Intensity ${"●".repeat(entry.contentWarningLevel)}${"○".repeat(3 - entry.contentWarningLevel)} — psychological horror, stalking themes, graphic imagery.`,
       ),
     );
     card.addEventListener("click", () => void openCase(host, entry, card));
