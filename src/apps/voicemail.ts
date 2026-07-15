@@ -4,7 +4,7 @@ import { h, svgEl } from "../lib/dom";
 import { fullStamp, mmss } from "../lib/time";
 import { uiGlyph } from "../icons";
 import { mulberry32, seedFrom } from "../lib/rng";
-import { playVoicemailTone, type VoicePlayback } from "../audio";
+import { playVoicemailTone, speakTranscript, speechTextFor, type VoicePlayback } from "../audio";
 import { settings } from "../save";
 
 export function openVoicemail(rt: DeviceRuntime, targetId?: string): HTMLElement {
@@ -17,7 +17,7 @@ export function openVoicemail(rt: DeviceRuntime, targetId?: string): HTMLElement
     h(
       "p",
       { class: "folder-note" },
-      "Recovered from carrier backup. Audio is partially corrupted — transcripts were generated automatically.",
+      "Recovered from carrier backup. Audio is partially corrupted — playback reconstructs the recovered speech over the damaged recording. (On iPhone: turn the silent switch off and the volume up.)",
     ),
   );
 
@@ -39,6 +39,7 @@ export function openVoicemail(rt: DeviceRuntime, targetId?: string): HTMLElement
 
 function voicemailCard(rt: DeviceRuntime, vm: Voicemail, stops: Array<() => void>): HTMLElement {
   let playback: VoicePlayback | null = null;
+  let speech: VoicePlayback | null = null;
   let playing = false;
   let position = 0; // seconds
   let raf = 0;
@@ -73,6 +74,8 @@ function voicemailCard(rt: DeviceRuntime, vm: Voicemail, stops: Array<() => void
   function stop(ended: boolean): void {
     playback?.stop();
     playback = null;
+    speech?.stop();
+    speech = null;
     playing = false;
     cancelAnimationFrame(raf);
     playBtn.replaceChildren(svgEl(uiGlyph("play"), "glyph"));
@@ -86,7 +89,10 @@ function voicemailCard(rt: DeviceRuntime, vm: Voicemail, stops: Array<() => void
     if (remaining <= 0.2) position = 0;
     startOffset = position;
     playStartedAt = performance.now();
-    playback = playVoicemailTone(vm.tone, vm.id, vm.durationSec - position, () => stop(true));
+    // speech restarts from the top when playing from (near) the beginning;
+    // mid-message resumes get the damaged-tape bed alone
+    speech = position < 0.5 ? speakTranscript(vm.tone, speechTextFor(vm.transcript)) : null;
+    playback = playVoicemailTone(vm.tone, vm.id, vm.durationSec - position, () => stop(true), !!speech);
     playing = true;
     playBtn.replaceChildren(svgEl(uiGlyph("pause"), "glyph"));
     const step = () => {

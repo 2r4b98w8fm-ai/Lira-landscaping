@@ -103,11 +103,54 @@ export interface VoicePlayback {
   stop: () => void;
 }
 
+/**
+ * Strip stage directions, speaker labels, and evidence annotations from a
+ * transcript, leaving only the words a caller actually says.
+ */
+export function speechTextFor(transcript: string): string {
+  return transcript
+    .split("⚠")[0]
+    .replace(/\[[^\]]*\]/g, " ")
+    .replace(/^[A-Z][A-Z0-9 .,()'’-]{2,}:/gm, " ")
+    .replace(/[“”"]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const SPEECH_STYLE: Record<string, { rate: number; pitch: number }> = {
+  plain: { rate: 0.95, pitch: 1.0 },
+  distorted: { rate: 0.78, pitch: 0.4 },
+  static: { rate: 0.9, pitch: 0.85 },
+  breathing: { rate: 0.68, pitch: 0.3 },
+};
+
+/**
+ * Speak a voicemail's recovered words through the browser's built-in speech
+ * engine — free, offline, and unnerving in exactly the right way when pitched
+ * down and played under the damaged-tape bed.
+ */
+export function speakTranscript(
+  tone: "plain" | "distorted" | "static" | "breathing",
+  text: string,
+): VoicePlayback | null {
+  if (!("speechSynthesis" in window) || !text) return null;
+  const synth = window.speechSynthesis;
+  synth.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  const style = SPEECH_STYLE[tone];
+  utterance.rate = style.rate;
+  utterance.pitch = style.pitch;
+  utterance.volume = 1;
+  synth.speak(utterance);
+  return { stop: () => synth.cancel() };
+}
+
 export function playVoicemailTone(
   tone: "plain" | "distorted" | "static" | "breathing",
   seedKey: string,
   durationSec: number,
   onEnded: () => void,
+  underSpeech = false,
 ): VoicePlayback {
   const ac = audioCtx();
   const master = ac.createGain();
@@ -125,7 +168,8 @@ export function playVoicemailTone(
   bedFilter.frequency.value = tone === "static" ? 1400 : 500;
   bedFilter.Q.value = 0.7;
   const bedGain = ac.createGain();
-  bedGain.gain.value = tone === "static" ? 0.9 : 0.35;
+  // when real speech plays on top, the bed ducks so the words stay legible
+  bedGain.gain.value = underSpeech ? (tone === "static" ? 0.3 : 0.14) : tone === "static" ? 0.9 : 0.4;
   bed.connect(bedFilter).connect(bedGain).connect(master);
   bed.start();
   stops.push(() => bed.stop());
@@ -141,7 +185,7 @@ export function playVoicemailTone(
     stops.push(() => lfo.stop());
   }
 
-  if (tone === "distorted" || tone === "plain") {
+  if (!underSpeech && (tone === "distorted" || tone === "plain")) {
     // murmur: a wandering low tone behind the static, like speech underwater
     const osc = ac.createOscillator();
     osc.type = tone === "distorted" ? "sawtooth" : "sine";
@@ -165,8 +209,8 @@ export function playVoicemailTone(
     stops.push(() => osc.stop());
   }
 
-  master.gain.linearRampToValueAtTime(0.5, t0 + 0.15);
-  master.gain.setValueAtTime(0.5, t0 + durationSec - 0.3);
+  master.gain.linearRampToValueAtTime(0.9, t0 + 0.15);
+  master.gain.setValueAtTime(0.9, t0 + durationSec - 0.3);
   master.gain.linearRampToValueAtTime(0.0001, t0 + durationSec);
 
   let ended = false;
