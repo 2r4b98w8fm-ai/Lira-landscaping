@@ -230,14 +230,6 @@ export class DeviceRuntime {
     window.setTimeout(() => view.remove(), 260);
   }
 
-  popToHome(): void {
-    while (this.stack.length > 1) this.pop();
-  }
-
-  depth(): number {
-    return this.stack.length;
-  }
-
   openApp(appId: string, targetId?: string): void {
     const def = this.registry.get(appId);
     if (!def) return;

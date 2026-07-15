@@ -3,7 +3,6 @@ import { openMessages } from "../apps/messages";
 import { openPhotos } from "../apps/photos";
 import { openNotes } from "../apps/notes";
 import { openPhone } from "../apps/phone";
-import { openVoicemail } from "../apps/voicemail";
 import { openCalendar } from "../apps/calendar";
 import { openMaps } from "../apps/maps";
 import { openBrowser } from "../apps/browser";
@@ -30,7 +29,6 @@ export function buildAppRegistry(): AppDef[] {
       open: (rt, t) => (t ? openPhone(rt, t) : openPhone(rt)),
       badge: (rt) => rt.caseFile.voicemails.filter((vm) => !rt.hasViewed(vm.id)).length,
     },
-    { id: "voicemail-direct", label: "Voicemail", icon: "phone", open: (rt, t) => openVoicemail(rt, t) },
     { id: "calendar", label: "Calendar", icon: "calendar", open: (rt, t) => openCalendar(rt, t) },
     { id: "maps", label: "Maps", icon: "maps", open: (rt, t) => openMaps(rt, t) },
     { id: "browser", label: "Browser", icon: "browser", open: (rt, t) => openBrowser(rt, t) },
