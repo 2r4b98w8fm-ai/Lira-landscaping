@@ -17,9 +17,11 @@ loadSave();
 const host = document.getElementById("app")!;
 renderCaseSelect(host);
 
-// PWA: register the service worker in production builds only.
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
+// PWA: register the service worker in hosted production builds only.
+// (Skipped for the single-file build and file:// usage, where there is no
+// /sw.js to fetch — the game is already fully self-contained there.)
+if ("serviceWorker" in navigator && import.meta.env.PROD && location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js");
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
