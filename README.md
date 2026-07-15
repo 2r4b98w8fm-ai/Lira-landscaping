@@ -59,13 +59,17 @@ src/
   apps/               one module per app (messages, photos, notes, codepad,
                       voicemail, calendar, maps, browser, files, settings,
                       hidden, report)
-  cases/              case01…caseNN — content only, no UI code
+  cases/              case01…case15 — content only, no UI code
+  cases/index.ts      manifest: archive metadata + a lazy loader per case
 scripts/validate.ts   CI-friendly content check (runs first in npm run build)
 ```
 
-Adding a case = adding one data file to `src/cases/` and registering it in
-`src/cases/index.ts`. The validator fails the build if a lock code has no in-case clue path,
-a verdict cites evidence that isn't citable, an id dangles, or a timestamp doesn't parse.
+Case data is code-split: the core app is ~18 KB gzipped and each case ships as its own
+~12–18 KB chunk, fetched only when the player opens it (the service worker caches chunks
+for offline play after first visit). Adding a case = one data file in `src/cases/` plus a
+manifest entry in `src/cases/index.ts`. The validator fails the build if a lock code has no
+in-case clue path, a verdict cites evidence that isn't citable, an id dangles, a timestamp
+doesn't parse, or manifest metadata drifts from its case file.
 
 ## Case roster
 

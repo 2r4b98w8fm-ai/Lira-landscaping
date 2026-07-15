@@ -1,4 +1,5 @@
 import type { CaseFile } from "./types";
+import { CASE_MANIFEST, type CaseManifestEntry } from "./cases";
 import { h, clear } from "./lib/dom";
 import { caseProgress } from "./save";
 import { DeviceRuntime } from "./device/runtime";
@@ -8,9 +9,10 @@ import { buildHomeScreen } from "./device/homescreen";
 import { syncAmbient } from "./audio";
 
 /**
- * The out-of-fiction shell: a case archive. Selecting a case boots its phone.
+ * The out-of-fiction shell: a case archive. Selecting a case lazily loads
+ * its data chunk and boots the phone.
  */
-export function renderCaseSelect(host: HTMLElement, cases: CaseFile[]): void {
+export function renderCaseSelect(host: HTMLElement): void {
   clear(host);
   const root = h("div", { class: "archive" });
 
@@ -29,8 +31,8 @@ export function renderCaseSelect(host: HTMLElement, cases: CaseFile[]): void {
   );
 
   const list = h("div", { class: "archive-list", role: "list" });
-  for (const c of cases) {
-    const p = caseProgress(c.id);
+  for (const entry of CASE_MANIFEST) {
+    const p = caseProgress(entry.id);
     const status = p.completed ? "Report filed" : p.unlocked ? "In progress" : "Unopened";
     const card = h(
       "button",
@@ -38,19 +40,23 @@ export function renderCaseSelect(host: HTMLElement, cases: CaseFile[]): void {
       h(
         "div",
         { class: "archive-card-head" },
-        h("span", { class: "archive-case-id" }, c.id.toUpperCase()),
-        h("span", { class: `archive-status archive-status-${p.completed ? "done" : p.unlocked ? "open" : "new"}` }, status),
+        h("span", { class: "archive-case-id" }, entry.id.toUpperCase()),
+        h(
+          "span",
+          { class: `archive-status archive-status-${p.completed ? "done" : p.unlocked ? "open" : "new"}` },
+          status,
+        ),
       ),
-      h("h2", { class: "archive-card-title" }, c.title),
-      h("p", { class: "archive-card-victim" }, c.victimName),
-      h("p", { class: "archive-card-summary" }, c.summary),
+      h("h2", { class: "archive-card-title" }, entry.title),
+      h("p", { class: "archive-card-victim" }, entry.victimName),
+      h("p", { class: "archive-card-summary" }, entry.deck),
       h(
         "p",
         { class: "archive-cw" },
-        `Intensity ${"●".repeat(c.contentWarningLevel)}${"○".repeat(3 - c.contentWarningLevel)} — psychological dread, stalking themes. No gore.`,
+        `Intensity ${"●".repeat(entry.contentWarningLevel)}${"○".repeat(3 - entry.contentWarningLevel)} — psychological dread, stalking themes. No gore.`,
       ),
     );
-    card.addEventListener("click", () => bootCase(host, cases, c));
+    card.addEventListener("click", () => void openCase(host, entry, card));
     list.appendChild(card);
   }
   root.appendChild(list);
@@ -64,15 +70,29 @@ export function renderCaseSelect(host: HTMLElement, cases: CaseFile[]): void {
   host.appendChild(root);
 }
 
-function bootCase(host: HTMLElement, cases: CaseFile[], c: CaseFile): void {
+async function openCase(host: HTMLElement, entry: CaseManifestEntry, card: HTMLButtonElement): Promise<void> {
+  card.setAttribute("disabled", "");
+  card.classList.add("archive-loading");
+  try {
+    const caseFile = await entry.load();
+    bootCase(host, caseFile);
+  } catch {
+    // chunk failed to load (offline before first cache, flaky network) — recover
+    card.removeAttribute("disabled");
+    card.classList.remove("archive-loading");
+    card.querySelector(".archive-status")!.textContent = "Load failed — tap to retry";
+  }
+}
+
+function bootCase(host: HTMLElement, caseFile: CaseFile): void {
   const rt = new DeviceRuntime({
-    caseFile: c,
+    caseFile,
     apps: buildAppRegistry(),
     host,
-    onExit: () => renderCaseSelect(host, cases),
+    onExit: () => renderCaseSelect(host),
   });
   rt.push(buildLockScreen(rt), { transition: "none" });
-  if (caseProgress(c.id).unlocked) {
+  if (caseProgress(caseFile.id).unlocked) {
     // returning player: resume straight past the lock screen
     rt.push(buildHomeScreen(rt), { transition: "none" });
   }
