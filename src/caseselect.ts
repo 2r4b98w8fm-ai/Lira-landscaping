@@ -1,12 +1,16 @@
 import type { CaseFile } from "./types";
 import { CASE_MANIFEST, loadCase, type CaseManifestEntry } from "./cases";
+
+/** The real cases — the tutorial is excluded from all progress counts. */
+const PLAYABLE = CASE_MANIFEST.filter((e) => !e.tutorial);
 import { h, clear, svgEl } from "./lib/dom";
-import { caseProgress, loadSave, currentStreak } from "./save";
+import { caseProgress, loadSave, currentStreak, persist } from "./save";
+import { renderIntro } from "./intro";
 import { DeviceRuntime } from "./device/runtime";
 import { buildAppRegistry } from "./device/apps";
 import { buildLockScreen } from "./device/lockscreen";
 import { buildHomeScreen } from "./device/homescreen";
-import { syncAmbient } from "./audio";
+import { syncAmbient, syncMenuMusic, stopMenuMusic } from "./audio";
 import { totalXp, rankFor, ACHIEVEMENTS, unlockedAchievements, RANKS } from "./progression";
 
 /**
@@ -15,6 +19,7 @@ import { totalXp, rankFor, ACHIEVEMENTS, unlockedAchievements, RANKS } from "./p
  */
 export function renderCaseSelect(host: HTMLElement): void {
   clear(host);
+  syncMenuMusic(); // the archive/title carries the soundtrack; cases fall silent
   const root = h("div", { class: "archive" });
 
   root.appendChild(
@@ -37,11 +42,22 @@ export function renderCaseSelect(host: HTMLElement): void {
   buildDailyCase(host, root);
   root.appendChild(buildHowToPanel());
 
-  const list = h("div", { class: "archive-list", role: "list" });
-  for (const entry of CASE_MANIFEST) {
-    list.appendChild(buildCaseCard(host, entry));
+  // Tutorial sits up top, flagged, before the real files.
+  const tutorial = CASE_MANIFEST.find((e) => e.tutorial);
+  if (tutorial) {
+    root.appendChild(h("h2", { class: "archive-section" }, "Start here — Training"));
+    root.appendChild(buildCaseCard(host, tutorial));
   }
-  root.appendChild(list);
+
+  const hasSeasonTwo = CASE_MANIFEST.some((e) => !e.tutorial && e.season === "two");
+  for (const [season, label] of [["one", "The Cold Case Files"], ["two", "Season Two — New Files"]] as const) {
+    const entries = CASE_MANIFEST.filter((e) => !e.tutorial && (e.season ?? "one") === season);
+    if (!entries.length) continue;
+    if (hasSeasonTwo) root.appendChild(h("h2", { class: "archive-section" }, label));
+    const list = h("div", { class: "archive-list", role: "list" });
+    for (const entry of entries) list.appendChild(buildCaseCard(host, entry));
+    root.appendChild(list);
+  }
   buildFinaleCard(host, root);
   root.appendChild(
     h(
@@ -61,11 +77,11 @@ function buildCaseCard(host: HTMLElement, entry: CaseManifestEntry): HTMLElement
   const pct = p.citableTotal ? Math.round(((p.citableFound ?? 0) / p.citableTotal) * 100) : 0;
   const card = h(
     "button",
-    { class: `archive-card${p.completed ? " archive-done" : ""}`, type: "button", role: "listitem" },
+    { class: `archive-card${p.completed ? " archive-done" : ""}${entry.tutorial ? " archive-tutorial" : ""}`, type: "button", role: "listitem" },
     h(
       "div",
       { class: "archive-card-head" },
-      h("span", { class: "archive-case-id" }, entry.id.toUpperCase()),
+      h("span", { class: "archive-case-id" }, entry.tutorial ? "🕵️ TUTORIAL" : entry.id.toUpperCase()),
       h(
         "span",
         { class: `archive-status archive-status-${p.completed ? "done" : p.unlocked ? "open" : "new"}` },
@@ -154,7 +170,7 @@ async function openCase(host: HTMLElement, entry: CaseManifestEntry, card: HTMLB
 function buildProfileButton(host: HTMLElement): HTMLElement {
   const xp = totalXp(loadSave());
   const { rank, index } = rankFor(xp);
-  const solved = CASE_MANIFEST.filter((e) => caseProgress(e.id).completed).length;
+  const solved = PLAYABLE.filter((e) => caseProgress(e.id).completed).length;
   const streak = currentStreak();
   const btn = h(
     "button",
@@ -164,7 +180,7 @@ function buildProfileButton(host: HTMLElement): HTMLElement {
       "span",
       { class: "archive-profile-main" },
       h("span", { class: "archive-profile-rank" }, rank.name),
-      h("span", { class: "archive-profile-sub" }, `${xp} XP · ${solved}/${CASE_MANIFEST.length} cases closed`),
+      h("span", { class: "archive-profile-sub" }, `${xp} XP · ${solved}/${PLAYABLE.length} cases closed`),
     ),
     streak.count >= 2
       ? h("span", { class: "archive-streak", "aria-label": `${streak.count} day streak` }, `🔥 ${streak.count}`)
@@ -214,8 +230,8 @@ function buildResumeBanner(host: HTMLElement, root: HTMLElement): void {
 function buildDailyCase(host: HTMLElement, root: HTMLElement): void {
   const day = new Date();
   const seed = day.getFullYear() * 1000 + day.getMonth() * 40 + day.getDate();
-  const unplayed = CASE_MANIFEST.filter((e) => !caseProgress(e.id).completed);
-  const pool = unplayed.length ? unplayed : CASE_MANIFEST;
+  const unplayed = PLAYABLE.filter((e) => !caseProgress(e.id).completed);
+  const pool = unplayed.length ? unplayed : PLAYABLE;
   const pick = pool[seed % pool.length];
   const card = h(
     "button",
@@ -231,8 +247,8 @@ function buildDailyCase(host: HTMLElement, root: HTMLElement): void {
 
 /** Locked commendation that opens once every case has been filed. */
 function buildFinaleCard(host: HTMLElement, root: HTMLElement): void {
-  const solved = CASE_MANIFEST.filter((e) => caseProgress(e.id).completed).length;
-  const total = CASE_MANIFEST.length;
+  const solved = PLAYABLE.filter((e) => caseProgress(e.id).completed).length;
+  const total = PLAYABLE.length;
   const unlocked = solved >= total;
   const card = h(
     "button",
@@ -255,9 +271,9 @@ export function renderProfile(host: HTMLElement): void {
   const save = loadSave();
   const xp = totalXp(save);
   const { rank, index, next, progress } = rankFor(xp);
-  const solved = CASE_MANIFEST.filter((e) => caseProgress(e.id).completed).length;
-  const totalStars = CASE_MANIFEST.reduce((sum, e) => sum + (caseProgress(e.id).stars ?? 0), 0);
-  const canon = CASE_MANIFEST.filter((e) => caseProgress(e.id).canonReached).length;
+  const solved = PLAYABLE.filter((e) => caseProgress(e.id).completed).length;
+  const totalStars = PLAYABLE.reduce((sum, e) => sum + (caseProgress(e.id).stars ?? 0), 0);
+  const canon = PLAYABLE.filter((e) => caseProgress(e.id).canonReached).length;
   const have = unlockedAchievements();
   const streak = currentStreak();
 
@@ -320,9 +336,51 @@ export function renderProfile(host: HTMLElement): void {
       stats,
       h("h2", { class: "section-label" }, "Achievements"),
       grid,
+      h("h2", { class: "section-label" }, "Game"),
+      buildManageButtons(host),
     ),
   );
   host.appendChild(root);
+}
+
+/** Replay the title, restart the tutorial, or wipe progress on this device. */
+function buildManageButtons(host: HTMLElement): HTMLElement {
+  const wrap = h("div", { class: "profile-manage" });
+
+  const replay = h("button", { class: "manage-btn", type: "button" }, "▶  Replay the title screen");
+  replay.addEventListener("click", () => renderIntro(host, () => renderCaseSelect(host)));
+
+  const retut = h("button", { class: "manage-btn", type: "button" }, "🕵️  Restart the tutorial");
+  retut.addEventListener("click", () => {
+    delete loadSave().cases["case-00"];
+    persist();
+    const t = CASE_MANIFEST.find((e) => e.tutorial);
+    if (t) void openCase(host, t, h("button") as HTMLButtonElement);
+  });
+
+  const reset = h("button", { class: "manage-btn manage-danger", type: "button" }, "🗑  Reset all progress");
+  let armed = false;
+  reset.addEventListener("click", () => {
+    if (!armed) {
+      armed = true;
+      reset.textContent = "Tap again to confirm — this erases everything";
+      window.setTimeout(() => {
+        armed = false;
+        reset.textContent = "🗑  Reset all progress";
+      }, 4000);
+      return;
+    }
+    const save = loadSave();
+    save.cases = {};
+    save.achievements = [];
+    delete save.streak;
+    delete save.lastCaseId;
+    persist();
+    renderCaseSelect(host);
+  });
+
+  wrap.append(replay, retut, reset);
+  return wrap;
 }
 
 function statCell(num: string, label: string): HTMLElement {
@@ -338,11 +396,11 @@ function statCell(num: string, label: string): HTMLElement {
 export function renderFinale(host: HTMLElement): void {
   clear(host);
   const save = loadSave();
-  const canon = CASE_MANIFEST.filter((e) => caseProgress(e.id).canonReached).length;
-  const stars = CASE_MANIFEST.reduce((s, e) => s + (caseProgress(e.id).stars ?? 0), 0);
+  const canon = PLAYABLE.filter((e) => caseProgress(e.id).canonReached).length;
+  const stars = PLAYABLE.reduce((s, e) => s + (caseProgress(e.id).stars ?? 0), 0);
   const xp = totalXp(save);
   const { rank } = rankFor(xp);
-  const allCanon = canon >= CASE_MANIFEST.length;
+  const allCanon = canon >= PLAYABLE.length;
 
   const root = h("div", { class: "archive" });
   const back = h("button", { class: "dossier-skip", type: "button" }, "‹ Back to case files");
@@ -356,7 +414,7 @@ export function renderFinale(host: HTMLElement): void {
     h("p", { class: "finale-kicker" }, "COLD CASE UNIT · OFFICE OF THE DIRECTOR"),
     h("h1", { class: "finale-head" }, "Commendation"),
     h("p", { class: "finale-para" }, `Fifteen files. Every one of them had been closed before you arrived — voluntary departure, walked off the job, wandered off, ran. Fifteen people the paperwork had already given up on.`),
-    h("p", { class: "finale-para" }, `You opened the phones anyway. You read the messages nobody re-read, found the photos that shouldn't develop, and listened to the voicemails that were still, quietly, waiting for a call back. You reached ${canon} of ${CASE_MANIFEST.length} true endings and earned ${stars} of ${CASE_MANIFEST.length * 3} stars.`),
+    h("p", { class: "finale-para" }, `You opened the phones anyway. You read the messages nobody re-read, found the photos that shouldn't develop, and listened to the voicemails that were still, quietly, waiting for a call back. You reached ${canon} of ${PLAYABLE.length} true endings and earned ${stars} of ${PLAYABLE.length * 3} stars.`),
     h("p", { class: "finale-para" }, allCanon
       ? `You reached the truth of every single one. Some of those truths could be arrested. Some could only be witnessed. You did not look away from either kind. That is the whole job, and almost no one does all of it.`
       : `Some truths you named exactly; others you'll want to come back for. The files stay open on this device — the dead are patient, and so, it turns out, are you.`),
@@ -409,6 +467,7 @@ function buildHowToPanel(): HTMLElement {
 
 function bootCase(host: HTMLElement, caseFile: CaseFile): void {
   loadSave().lastCaseId = caseFile.id;
+  stopMenuMusic(); // inside a case, the phone is silent tech — only its own soundscape
   const rt = new DeviceRuntime({
     caseFile,
     apps: buildAppRegistry(),
@@ -428,12 +487,13 @@ function bootCase(host: HTMLElement, caseFile: CaseFile): void {
   syncAmbient();
 }
 
-/** The next case after `currentId` that hasn't been completed (wraps around). */
+/** The next real case after `currentId` that hasn't been completed (wraps around). */
 export function nextUnfinishedCase(currentId: string): CaseManifestEntry | undefined {
-  const n = CASE_MANIFEST.length;
-  const start = CASE_MANIFEST.findIndex((e) => e.id === currentId);
+  const n = PLAYABLE.length;
+  const start = PLAYABLE.findIndex((e) => e.id === currentId);
+  // From the tutorial (start === -1), begin at the first real case.
   for (let i = 1; i <= n; i++) {
-    const entry = CASE_MANIFEST[(start + i) % n];
+    const entry = PLAYABLE[(start + i + n) % n];
     if (!caseProgress(entry.id).completed) return entry;
   }
   return undefined;

@@ -257,3 +257,125 @@ export function playStinger(): void {
   osc.start(t0);
   osc.stop(t0 + 1);
 }
+
+// ---------------------------------------------------------------------------
+// UI sounds — tiny synthesized cues (toggled in Settings, default on)
+// ---------------------------------------------------------------------------
+
+function blip(freq: number, dur: number, peak: number, type: OscillatorType = "sine"): void {
+  const ac = audioCtx();
+  const osc = ac.createOscillator();
+  osc.type = type;
+  const gain = ac.createGain();
+  const t0 = ac.currentTime;
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain).connect(ac.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.02);
+}
+
+/** A soft tap for a forward navigation / button press. */
+export function playTap(): void {
+  if (!settings().uiSounds) return;
+  blip(660, 0.05, 0.035, "triangle");
+}
+
+/** A lower cue for going back. */
+export function playBack(): void {
+  if (!settings().uiSounds) return;
+  blip(360, 0.06, 0.03, "triangle");
+}
+
+/** A gentle confirmation chord (two quick notes) — used on positive actions. */
+export function playConfirm(): void {
+  if (!settings().uiSounds) return;
+  blip(587, 0.08, 0.03, "sine");
+  window.setTimeout(() => blip(880, 0.12, 0.03, "sine"), 70);
+}
+
+// ---------------------------------------------------------------------------
+// Menu soundtrack — a slow, procedural minor pad for the archive / title.
+// Deliberately sparse and quiet; the phone itself stays "silent tech".
+// ---------------------------------------------------------------------------
+
+let menu: { stop: () => void } | null = null;
+
+export function startMenuMusic(): void {
+  if (menu || !settings().music) return;
+  const ac = audioCtx();
+  const master = ac.createGain();
+  master.gain.value = 0;
+  master.connect(ac.destination);
+
+  const reverbish = ac.createBiquadFilter();
+  reverbish.type = "lowpass";
+  reverbish.frequency.value = 900;
+  reverbish.connect(master);
+
+  // A slow arpeggio over an A-minor-ish drone: sparse, cold, patient.
+  const root = 110; // A2
+  const scale = [0, 3, 7, 10, 12, 15]; // minor pentatonic-ish
+  const voices: OscillatorNode[] = [];
+  const drone = ac.createOscillator();
+  drone.type = "sine";
+  drone.frequency.value = root;
+  const droneGain = ac.createGain();
+  droneGain.gain.value = 0.05;
+  drone.connect(droneGain).connect(reverbish);
+  drone.start();
+  voices.push(drone);
+
+  let step = 0;
+  let seedR = mulberry32(seedFrom("menu-music"));
+  const interval = window.setInterval(() => {
+    if (!menu) return;
+    // occasionally play a note
+    if (seedR() < 0.7) {
+      const semis = scale[Math.floor(seedR() * scale.length)] + (seedR() < 0.3 ? 12 : 0);
+      const f = root * 2 * Math.pow(2, semis / 12);
+      const osc = ac.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.value = f;
+      const g = ac.createGain();
+      const t0 = ac.currentTime;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.4);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.4);
+      osc.connect(g).connect(reverbish);
+      osc.start(t0);
+      osc.stop(t0 + 2.6);
+    }
+    step++;
+  }, 1400);
+
+  master.gain.linearRampToValueAtTime(0.5, ac.currentTime + 3);
+  menu = {
+    stop: () => {
+      window.clearInterval(interval);
+      master.gain.linearRampToValueAtTime(0, ac.currentTime + 1.2);
+      window.setTimeout(() => {
+        for (const v of voices) {
+          try {
+            v.stop();
+          } catch {
+            /* already stopped */
+          }
+        }
+        master.disconnect();
+      }, 1400);
+    },
+  };
+}
+
+export function stopMenuMusic(): void {
+  menu?.stop();
+  menu = null;
+}
+
+export function syncMenuMusic(): void {
+  if (settings().music) startMenuMusic();
+  else stopMenuMusic();
+}

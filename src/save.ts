@@ -7,6 +7,9 @@ function defaultSettings(): PlayerSettings {
     reducedIntensity: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     ambientAudio: false,
     transcriptsOpen: true,
+    uiSounds: true,
+    music: true,
+    haptics: true,
   };
 }
 

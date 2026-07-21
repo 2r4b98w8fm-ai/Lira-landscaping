@@ -1,7 +1,7 @@
 import type { DeviceRuntime } from "../device/runtime";
 import { h } from "../lib/dom";
 import { loadSave, persist, settings } from "../save";
-import { syncAmbient } from "../audio";
+import { syncAmbient, syncMenuMusic } from "../audio";
 
 export function openSettings(rt: DeviceRuntime): HTMLElement {
   const view = h("div", { class: "app app-settings" });
@@ -33,10 +33,46 @@ export function openSettings(rt: DeviceRuntime): HTMLElement {
       },
     ),
   );
+
+  body.appendChild(h("h2", { class: "section-label" }, "Sound & haptics"));
+  body.appendChild(
+    toggleRow(
+      "UI sounds",
+      "Soft taps and cues as you navigate. On by default.",
+      () => settings().uiSounds !== false,
+      (v) => {
+        loadSave().settings.uiSounds = v;
+        persist();
+      },
+    ),
+  );
+  body.appendChild(
+    toggleRow(
+      "Menu music",
+      "A quiet procedural soundtrack on the case archive and title screen. On by default.",
+      () => settings().music !== false,
+      (v) => {
+        loadSave().settings.music = v;
+        persist();
+        syncMenuMusic();
+      },
+    ),
+  );
+  body.appendChild(
+    toggleRow(
+      "Haptics",
+      "Light vibration feedback on supported devices. On by default.",
+      () => settings().haptics !== false,
+      (v) => {
+        loadSave().settings.haptics = v;
+        persist();
+      },
+    ),
+  );
   body.appendChild(
     toggleRow(
       "Ambient audio",
-      "A quiet procedural room-tone under everything. Off by default.",
+      "A quiet procedural room-tone under everything, inside a case. Off by default.",
       () => settings().ambientAudio,
       (v) => {
         loadSave().settings.ambientAudio = v;

@@ -1,6 +1,7 @@
 import type { DeviceRuntime } from "../device/runtime";
 import { h } from "../lib/dom";
 import { settings } from "../save";
+import { larryCard } from "../larry";
 
 /**
  * Generic 4-digit code lock. Wrong entries shake (unless reduced intensity)
@@ -30,16 +31,20 @@ export function buildCodePad(
   // Hint starts hidden — the player must find the code, not read it.
   const hint = h("p", { class: "code-hint" }, "The code is somewhere on this phone.");
   const feedback = h("p", { class: "code-feedback", role: "alert" }, "");
+  // Detective Larry delivers the on-demand hint in person.
+  const larryHost = h("div", { class: "code-larry" });
 
-  // Normal difficulty gets a "Need a hint?" button they can tap on demand.
-  // Using it costs the no-hint achievement but never blocks the player. Hard
-  // mode hides the button entirely — deduction only.
-  const hintBtn = h("button", { class: "code-hint-btn", type: "button" }, "Need a hint?");
-  hintBtn.addEventListener("click", () => {
+  function revealHint(): void {
     specificHintShown = true;
-    hint.textContent = opts.hintText;
+    larryHost.replaceChildren(larryCard(opts.hintText, "hint"));
     hintBtn.remove();
-  });
+  }
+
+  // Normal difficulty gets a "Ask Detective Larry" button they can tap on
+  // demand. Using it costs the no-hint achievement but never blocks the
+  // player. Hard mode hides the button entirely — deduction only.
+  const hintBtn = h("button", { class: "code-hint-btn", type: "button" }, "🕵️  Ask Detective Larry");
+  hintBtn.addEventListener("click", revealHint);
 
   const pad = h("div", { class: "code-pad" });
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
@@ -92,9 +97,7 @@ export function buildCodePad(
     if (settings().hardMode) {
       hint.textContent = wrongCount >= 6 ? "The code is somewhere on this phone. Keep looking." : "";
     } else if (wrongCount >= 8) {
-      specificHintShown = true;
-      hint.textContent = opts.hintText;
-      hintBtn.remove();
+      revealHint(); // Larry steps in after real effort
     } else if (wrongCount >= 4) {
       hint.textContent = "The four digits are hidden on this phone — a photo, a note, a message. Two pieces, put together.";
     }
@@ -106,7 +109,7 @@ export function buildCodePad(
     if (e.key === "Backspace") press("⌫");
   });
 
-  const wrap = h("div", { class: "code-wrap" }, h("p", { class: "code-prompt" }, "Enter Code"), dots, feedback, pad, hint);
+  const wrap = h("div", { class: "code-wrap" }, h("p", { class: "code-prompt" }, "Enter Code"), dots, feedback, pad, hint, larryHost);
   if (!settings().hardMode) wrap.appendChild(hintBtn);
   view.appendChild(wrap);
   return view;

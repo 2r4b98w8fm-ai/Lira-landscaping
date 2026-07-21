@@ -281,6 +281,12 @@ export interface PlayerSettings {
   hardMode?: boolean;
   /** Cleared once the player has seen the in-phone how-to coach overlay. */
   coachSeen?: boolean;
+  /** Subtle tap/navigation sounds. Default on. */
+  uiSounds?: boolean;
+  /** A quiet procedural menu soundtrack on the archive/title. Default on. */
+  music?: boolean;
+  /** Light haptic feedback on supported devices. Default on. */
+  haptics?: boolean;
 }
 
 export interface SaveFile {

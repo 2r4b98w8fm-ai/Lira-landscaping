@@ -4,7 +4,9 @@ import { loadAllCases } from "./cases";
 import { validateAll } from "./validator";
 import { renderCaseSelect } from "./caseselect";
 import { renderIntro } from "./intro";
-import { loadSave, recordPlayDay } from "./save";
+import { loadSave, recordPlayDay, settings } from "./save";
+import { playTap, playBack } from "./audio";
+import { vibrate } from "./lib/haptics";
 
 // Content is validated by `npm run validate` at build time; this dev-mode
 // pass catches issues instantly while authoring cases. It loads every case
@@ -18,6 +20,20 @@ recordPlayDay();
 
 const host = document.getElementById("app")!;
 renderIntro(host, () => renderCaseSelect(host));
+
+// Global, subtle UI feedback: a soft tap + tiny haptic on any button press.
+// Gated by the Settings toggles (uiSounds/haptics), which default on.
+document.addEventListener(
+  "click",
+  (e) => {
+    const btn = (e.target as HTMLElement | null)?.closest("button");
+    if (!btn || btn.hasAttribute("disabled")) return;
+    if (btn.classList.contains("hdr-back") || btn.classList.contains("dossier-back")) playBack();
+    else playTap();
+    if (settings().haptics !== false) vibrate(8);
+  },
+  true,
+);
 
 // PWA: register the service worker in hosted production builds only.
 // (Skipped for the single-file build and file:// usage, where there is no

@@ -18,10 +18,24 @@ export interface CaseManifestEntry {
   deck: string;
   /** Puzzle difficulty, shown as pips on the archive card. 1 = gentle, 3 = brutal. */
   difficulty: 1 | 2 | 3;
+  /** The training case — shown first, flagged "Start here", skips the dossier. */
+  tutorial?: boolean;
+  /** Season grouping for the archive ("one" = original 15, "two" = new pack). */
+  season?: "one" | "two";
   load: () => Promise<CaseFile>;
 }
 
 export const CASE_MANIFEST: CaseManifestEntry[] = [
+  {
+    id: "case-00",
+    title: "The Practice File",
+    victimName: "Ray Okonkwo, 52",
+    contentWarningLevel: 1,
+    deck: "Your first day. Detective Larry has an easy one to teach you the ropes — a custodian who 'walked off,' except the paperwork lies.",
+    difficulty: 1,
+    tutorial: true,
+    load: () => import("./case00").then((m) => m.default),
+  },
   {
     id: "case-01",
     title: "The Static Line",
@@ -156,6 +170,26 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     deck: "A late-night study call whose participants' numbers were never issued. The math was excellent.",
     difficulty: 3,
     load: () => import("./case15").then((m) => m.default),
+  },
+  {
+    id: "case-16",
+    title: "The 3:33 Caller",
+    victimName: "Del Amara, 39",
+    contentWarningLevel: 2,
+    deck: "An overnight radio host on a show the station swears is automated. Every night at 3:33, a caller read her next words back before she said them.",
+    difficulty: 2,
+    season: "two",
+    load: () => import("./case16").then((m) => m.default),
+  },
+  {
+    id: "case-17",
+    title: "The Night Auditor",
+    victimName: "Priya Sunder, 33",
+    contentWarningLevel: 2,
+    deck: "A hotel guest ledger with one permanent occupant in a room the elevator skips. She reconciled the books. The books reconciled back.",
+    difficulty: 3,
+    season: "two",
+    load: () => import("./case17").then((m) => m.default),
   },
 ];
 

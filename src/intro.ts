@@ -1,5 +1,6 @@
 import { h, clear, svgEl } from "./lib/dom";
 import { settings } from "./save";
+import { syncMenuMusic } from "./audio";
 
 /**
  * The title screen. A dark case-file surface; blood strikes across it in
@@ -30,6 +31,8 @@ export function renderIntro(host: HTMLElement, onEnter: () => void): void {
   const enter = (): void => {
     if (entered) return;
     entered = true;
+    // First user gesture — unlocks the AudioContext and starts the soundtrack.
+    syncMenuMusic();
     screen.classList.add("intro-leaving");
     window.setTimeout(onEnter, reduce ? 0 : 420);
   };

@@ -530,6 +530,70 @@ const SOCIAL: Record<string, SocialData> = {
       ],
     },
   },
+  "case-16": {
+    glimpse: {
+      handle: "insomniac.hour",
+      name: "Del Amara",
+      bio: "2 to 5 AM on WVRN 1400 · you're not alone out there · professionally awake",
+      posts: 51,
+      followers: "3,908",
+      following: "212",
+      grid: [
+        { scene: "🎙️", caption: "night 2,190-something. the board's warm, the coffee's cold, the city's asleep and we are not. request line's open.", when: "3w", likes: 312, comments: [["nite_listener", "you got me through my divorce, Del. literally every night"]] },
+        { scene: "🌃", caption: "the view from studio B at 3am. nobody believes there's a live person up here. there is. hi.", when: "2w", likes: 244, location: "WVRN 1400" },
+        { scene: "☎️", caption: "there's a caller who phones at exactly 3:33 every single night for the same 1940s song. six years. i've started to find it less charming and more. hm. anyway. requests?", when: "9d", likes: 128, comments: [["gil_wvrn", "which caller. Del which caller"], ["insomniac.hour", "you know the one 🙃"]] },
+        { scene: "📻", caption: "fun radio history fact i regret learning: the guy who hosted this exact shift in the 70s vanished out of this exact chair. anyway! here's a love song.", when: "6d", likes: 96 },
+        { scene: "🚗", caption: "drove out to the transmitter tower at 4am 'for research.' unmanned building. curtains in the window. light on. i'm fine. everything's fine. you're not alone out there (neither am i, apparently)", when: "3d", likes: 174, comments: [["renee_a", "DEL. police. now."]] },
+        { scene: "🎧", caption: "one more night then an actual vacation somewhere the sun is a documented phenomenon. keep me company till 5.", when: "1d", likes: 208 },
+      ],
+    },
+    chatter: {
+      handle: "delonair",
+      name: "del",
+      bio: "the voice at the end of your worst night. 1400 AM. do not request Harbor Lights.",
+      following: "180",
+      followers: "5,100",
+      posts: [
+        { text: "corporate emailed me AGAIN to inform me that i, the person typing this from the live studio, do not exist and the overnight is a tape. i've been a tape for six years apparently. tapes don't get this tired.", when: "8d", likes: 402, reposts: 88 },
+        { text: "the 3:33 caller said my next sentence back to me before i said it tonight. word for word. i'd like to formally downgrade him from 'charming regular' to 'please trace this number'", when: "6d", likes: 156, replies: [["gil_wvrn", "on it. do NOT engage more than you have to"]] },
+        { text: "someone rewired a phone line that was physically cut in 2019. someone is living in the transmitter shack. someone has been keeping my show on the air from the outside and i don't think he's on payroll", when: "4d", likes: 233, reposts: 51 },
+        { text: "if i ever go quiet mid-show, listen to the tape. the whole last hour. i'll leave everything in it. that's not ominous. that's just good radio.", when: "2d", likes: 141, replies: [["renee_a", "this is extremely ominous and i hate it"]] },
+        { text: "he's calling at 3:11 tonight instead of 3:33. says he's 'impatient now.' first new thing he's done in six years. wish me a boring show.", when: "1d", likes: 97 },
+      ],
+    },
+  },
+  "case-17": {
+    glimpse: {
+      handle: "priya.balances",
+      name: "Priya Sunder",
+      bio: "night auditor · fraud examiner by training · the books WILL balance · 11 to 7",
+      posts: 33,
+      followers: "487",
+      following: "196",
+      grid: [
+        { scene: "📒", caption: "there is no feeling in this world like a night audit that balances to the penny. don't @ me, i know what i am.", when: "3w", likes: 88, comments: [["ravi_s", "you're a nerd is what you are 🖤"]] },
+        { scene: "🛗", caption: "the elevator in this old hotel goes 810, 811, 812, 814. i have posted a rent payment for 813 every night for a month. where is the money coming from. WHERE.", when: "12d", likes: 121, comments: [["ravi_s", "please tell me you're not investigating your own workplace at 3am again"], ["priya.balances", "…no comment"]] },
+        { scene: "🕰️", caption: "the front desk bell rings from room 813 at 3:13 every night. nobody's checked in. i keep answering it. old habits.", when: "8d", likes: 74 },
+        { scene: "📖", caption: "found the 1971 guest register. the night auditor before me wrote '810 → 813?' and then his handwriting just… stops. he went missing that year. same month room 813 'checked in.'", when: "5d", likes: 96, comments: [["ravi_s", "priya i am begging you to quit this job"]] },
+        { scene: "🍽️", caption: "the bellman carries a dinner tray up the service stairs to 813 every night. 'it always comes back empty,' he says, and then he wouldn't look at me. 54 years of empty trays.", when: "3d", likes: 133 },
+        { scene: "📮", caption: "certified mail: sent. whatever happens on shift tonight, the paper's out of my hands and safe. brunch with my brother sunday, i'm ALIVE for it, that's a promise.", when: "1d", likes: 108, comments: [["ravi_s", "you better be. sunday. i mean it."]] },
+      ],
+    },
+    chatter: {
+      handle: "p_sunder",
+      name: "priya",
+      bio: "i audit fraud for a living. i also audit fraud for free, apparently, at my night job. help.",
+      following: "150",
+      followers: "610",
+      posts: [
+        { text: "this hotel is running the cleanest scam i've ever seen and i've seen a LOT. eleven 'permanent guests' with no death record and no living record, their government checks paying their own rent in a perfect little circle. immortal tenants. immaculate books.", when: "7d", likes: 188, reposts: 44, replies: [["ravi_s", "that's a police thing. not a priya thing. PLEASE"]] },
+        { text: "ten of them are paperwork ghosts, sad but explainable. room 813 is not paperwork. 813 pays cash. 813 gets a tray. 813 texted my work phone 'good evening, miss' and referenced the 1971 auditor by name.", when: "5d", likes: 211, reposts: 67 },
+        { text: "the manager's exact words: 'some folios are older than you. balance them and do not read them.' sir i am a FORENSIC ACCOUNTANT. 'do not read them' is the single most incriminating sentence you could possibly say to me", when: "4d", likes: 176 },
+        { text: "if i go quiet the proof is in my audit note and the password is the room that isn't there. also i mailed everything certified because i'm not an amateur. love you all. balance your drawers.", when: "2d", likes: 92, replies: [["ravi_s", "PRIYA."]] },
+        { text: "going up the service stairs tonight to see the 813 door with my own eyes. the elevator won't take me. that's fine. auditors take the stairs.", when: "1d", likes: 118 },
+      ],
+    },
+  },
 };
 
 export function socialFor(caseId: string): SocialData | undefined {

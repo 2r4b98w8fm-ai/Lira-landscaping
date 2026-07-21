@@ -411,6 +411,40 @@ const EXTRAS: Record<string, CaseExtras> = {
       footer: "Every conversation dies the same way — she reaches for the one thing she loves and no one reaches back. It makes what finally DID want to talk math with her, at 11:30 on Tuesdays, land very differently.",
     },
   },
+  "case-16": {
+    shopping: [
+      { item: "Reel-to-reel tape, 1/4in ×6", detail: "'to copy the WVRN archive'", date: "Nov 1", price: "$54.00", status: "Delivered" },
+      { item: "Blue-light glasses (3 AM screens)", detail: "", date: "Oct 20", price: "$19.00", status: "Delivered" },
+      { item: "Call recorder, inline phone tap", detail: "'legal, one-party consent state'", date: "Nov 3", price: "$38.00", status: "Delivered" },
+      { item: "Thermos, 40oz (studio coffee)", detail: "", date: "Oct 18", price: "$26.00", status: "Delivered" },
+      { item: "Book: 'Lost Voices of AM Radio'", detail: "chapter on WVRN 1979", date: "Nov 5", price: "$22.00", status: "Delivered" },
+      { item: "Plane ticket — somewhere sunny", detail: "departs Nov 20", date: "Nov 8", price: "$214.00", status: "Confirmed" },
+    ],
+    reminders: [
+      ["Pull the transmitter power logs (Gil)", false],
+      ["Do NOT play Harbor Lights. ever.", true],
+      ["Trap-and-trace ready before 3:11", false],
+      ["Tell Renée the password is the hour", true],
+      ["ACTUAL vacation. sun. Nov 20.", false],
+    ],
+  },
+  "case-17": {
+    shopping: [
+      { item: "Forensic accounting field guide", detail: "'benefits fraud, payee schemes'", date: "Sep 12", price: "$44.00", status: "Delivered" },
+      { item: "Certified mail supplies, bulk", detail: "return receipts", date: "Sep 17", price: "$18.00", status: "Delivered" },
+      { item: "LED headlamp (service stairs)", detail: "", date: "Sep 15", price: "$21.00", status: "Delivered" },
+      { item: "Portable document scanner", detail: "'scan the register before he notices'", date: "Sep 14", price: "$66.00", status: "Delivered" },
+      { item: "Pepper spray, keychain", detail: "night shift", date: "Sep 10", price: "$14.00", status: "Delivered" },
+      { item: "Instant coffee, jar (the 3am jar)", detail: "", date: "Sep 8", price: "$12.00", status: "Delivered" },
+    ],
+    reminders: [
+      ["MAIL folios certified — before shift", true],
+      ["Cross-check 11 permanent guests vs records", true],
+      ["Ask Reggie what's really in 813", true],
+      ["Do NOT print the pages Adler flagged", false],
+      ["Brunch w/ Ravi Sunday — BE ALIVE for it", false],
+    ],
+  },
 };
 
 export function extrasFor(caseId: string): CaseExtras | undefined {

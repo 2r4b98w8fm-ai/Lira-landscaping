@@ -270,6 +270,38 @@ const AFTERMATH: Record<string, Aftermath> = {
     ],
     coda: "The proof is taught now under her name. On the last page of her research journal, beneath the completed result, she had written a single line in a hand that was steady and unhurried: 'They said it was elegant. They said I should come and see.'",
   },
+  "case-16": {
+    kicker: "THE RECORD · 9 months later",
+    resolution: "charged",
+    arrest:
+      "The trap-and-trace Del set on her own last broadcast held: the 3:11 call came from the 'unmanned' WVRN transmitter shack, and Denny Folkes — the intern fired in 2018, obsessed with the overnight and with Royce Vandermeer's 1979 disappearance — had been living there for six years, remote-forcing her mic live every night to keep 'the hour' from going silent. He was arrested at the shack, which police found to be a shrine of reel-to-reel tape and a hand-written 'operations manual' for the hour.",
+    charges: "Kidnapping, stalking, unlawful use of a broadcast transmitter, and burglary. Murder charges pending recovery.",
+    plea: "Pleaded not guilty; declined every plea offer, insisting he had 'kept the light on.'",
+    trial:
+      "Del's own recorded broadcast ran the case — six years of 3:33 calls, the rewired request line, and the final hour where she kept him talking, live and timestamped, until the trace closed on the exact building she'd photographed. The prosecution never had to prove she was live; two thousand listeners testified to it. What the state could not close was the last forty seconds of air: 'Harbor Lights' cued to the transmitter at 3:41 from a source that is not the automation library and has no file origin — the one song Del refused to play for six years.",
+    sentence: "Not yet sentenced; held without bail. The WVRN overnight was taken truly dark pending the FCC inquiry.",
+    family: [
+      { name: "Renée Amara", relation: "her sister", quote: "She said my name at the end. Not goodbye — my name, calm as anything, with someone already in the room with her, because she was pointing: the log, the hour, here's where to look. Six years she talked strangers down off their worst nights and the last thing she did was produce her own disappearance so cleanly that a man is in a cell for it. I go on at 2 AM now. I say what she said — you're not alone out there. The request line lights up at 3:33. I let it ring. I will always let it ring." },
+      { name: "Gil Ordóñez", relation: "her producer", quote: "Corporate made me disconnect that request line in 2019 with my own two hands. Somebody spent six years undoing my work in the dark eight miles away and I told the auditors he didn't exist because they told ME he didn't exist. I hear the show in my sleep. I hear the forty seconds where it goes from two people breathing to one. I turned that line off. I'll never turn anything off again without checking who's on it." },
+    ],
+    coda: "WVRN's overnight is a test tone now, 2 to 5, no host. Listeners report that some nights, at 3:33, there is a texture under the tone — a room with someone in it. The station calls it a known audio artifact.",
+  },
+  "case-17": {
+    kicker: "THE RECORD · 11 months later",
+    resolution: "convicted",
+    arrest:
+      "Priya mailed it before she climbed the stairs — certified copies of eleven 'permanent guests' whose federal benefits Howard Adler collected as representative payee and cycled into rent, no death certificates, decades deep. Her brother carried the envelope to the state fraud line. Adler was arrested at the Marlibel's front desk and, by every account, seemed relieved to be.",
+    charges: "Eleven counts of benefits fraud, aggravated identity theft, elder financial exploitation, and money laundering. A twelfth file — Priya's own disappearance — remains open.",
+    plea: "Pleaded guilty to the fraud counts in full; entered no plea on the disappearance, which was not charged.",
+    trial:
+      "The ledger convicted him without a fight — forty years of theft, forty folios, not a cent out of balance, exactly as Priya had written. What unsettled the courtroom was the part Adler wouldn't stop saying, past his own lawyer: a service door, a boy of sixteen, a tray that comes back empty, and a night he spent begging his auditor — the one who'd read the book — to come DOWN the stairs. When they opened the eighth-floor wall behind the painted door there was no Room 813: a made bed, a tray set for two, fifty-four years of tally marks, and two handprints, one old, one new.",
+    sentence: "Twenty-four years; the Marlibel seized and shuttered, its permanent folios unwound and eleven long-hidden estates finally opened to their real heirs.",
+    family: [
+      { name: "Ravi Sunder", relation: "her brother", quote: "My sister never left a column unbalanced in her life, so when the hotel said she 'didn't finish her shift' I knew — that's not a sentence you can say about Priya. She mailed me the whole case the night she vanished. Certified. Because even walking up those stairs she was thinking about chain of custody. She took down a forty-year machine with a stack of certified mail and I will read every folio of it into the record until they find her, because she left exactly one account open on purpose and somebody is still sitting at it." },
+      { name: "Reggie Alvarez", relation: "the Marlibel bellman, 22 years", quote: "I carried a tray up those service stairs to a door the wall says isn't there, every night, for twenty-two years, and I stopped letting myself notice it came back empty a long time ago. She noticed on her second week. That was the difference between us, and it's the difference that got her. I retired the day they shuttered the place. I still wake at 3:13. I think I always will." },
+    ],
+    coda: "The conservator who dated the recovered register found the 1971 ink of 'A. Ganz — 813' and the fresh tally marks photographed inside the room to be, impossibly, the same age. The county filed the disappearance under one word: occupied.",
+  },
 };
 
 export function aftermathFor(caseId: string): Aftermath | undefined {

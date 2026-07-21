@@ -101,6 +101,16 @@ const STORIES: Record<string, StorySeg[]> = {
     { scene: "📞", text: "called one back on a normal line. carrier says the number was 'never issued.' huh.", when: "3d" },
     { scene: "📄", text: "proof's done. presenting tuesday night. to the only ones who'll truly understand.", when: "1d" },
   ],
+  "case-16": [
+    { scene: "🎙️", text: "night 2,190. the request line's open and the city's asleep. you're not alone out there.", when: "5d" },
+    { scene: "☎️", text: "the 3:33 caller said my next line back to me before i said it. i'd like to get off this ride now.", when: "3d" },
+    { scene: "📻", text: "someone's living in the 'unmanned' transmitter shack keeping my show on the air. one more night.", when: "1d" },
+  ],
+  "case-17": [
+    { scene: "🛗", text: "812, then 814. i post rent for 813 every night. the elevator has never heard of it.", when: "5d" },
+    { scene: "🕰️", text: "the front desk bell rang from 813 at 3:13 again. nobody's checked in. i answered anyway.", when: "3d" },
+    { scene: "📮", text: "certified mail's out, the fraud is safe on paper. going up the service stairs to see the door.", when: "1d" },
+  ],
 };
 
 const DMS: Record<string, DMThread[]> = {
@@ -291,6 +301,33 @@ const DMS: Record<string, DMThread[]> = {
       { from: "them", text: "Pris — see me before Tuesday. Before. It's important." },
       { from: "me", text: "is this about the study group? they're real, Dr. Grasz. I have eleven weeks of recordings." },
       { from: "them", text: "I know they are. That's precisely why I need to see you. Please. Not on a Tuesday." },
+    ] },
+  ],
+  "case-16": [
+    { name: "Renée (sis)", handle: "renee_a", when: "2d", unread: true, lines: [
+      { from: "them", text: "you keep saying goodnight to one caller like you know him. i don't love it, Del." },
+      { from: "me", text: "he's lonely. the overnight is full of lonely. takes one to know one." },
+      { from: "them", text: "promise me you'll go to the police if it gets weird." },
+      { from: "me", text: "promise. hey — if i ever go quiet, listen to the whole last hour. i'll leave you everything. the password's the hour 💜" },
+    ] },
+    { name: "Producer Gil", handle: "gil_wvrn", when: "1d", unread: true, lines: [
+      { from: "them", text: "trap-and-trace is armed from the telco side. keep him talking and it walks right to him." },
+      { from: "me", text: "he's calling at 3:11 tonight, not 3:33. he's 'impatient now.' that's the first new thing he's done in six years." },
+      { from: "them", text: "that's good, right? different is a crack?" },
+      { from: "me", text: "different is a crack. leave the ON AIR light on. i'm going to keep him on the line however long it takes." },
+    ] },
+  ],
+  "case-17": [
+    { name: "Ravi (bro)", handle: "ravi_s", when: "1d", unread: true, lines: [
+      { from: "them", text: "you texted 'the hotel is stealing dead people' and then went to WORK there. priya." },
+      { from: "me", text: "i mailed everything certified before my shift. the fraud's safe on paper no matter what happens to me tonight." },
+      { from: "them", text: "no matter what happens to you?? that's not the reassurance you think it is" },
+      { from: "me", text: "813 isn't paper like the others. i have to see the door. if i go quiet, the password's the room that isn't there. brunch sunday. i'll be there." },
+    ] },
+    { name: "Room 813", handle: "—", when: "3d", unread: true, lines: [
+      { from: "them", text: "good evening, miss. the tray was cold again. the hall light is still out. i have asked since 1971." },
+      { from: "me", text: "this line doesn't go to a room. rooms don't text. who is this." },
+      { from: "them", text: "you balance me every night. it is only polite to say good evening back. mr coble learned his manners. he is just down the hall." },
     ] },
   ],
 };

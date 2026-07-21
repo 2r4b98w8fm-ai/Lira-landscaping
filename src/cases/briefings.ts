@@ -198,6 +198,30 @@ export const BRIEFINGS: Record<string, Briefing> = {
     objective: "Read her research journal and the calls. Decide who she really presented her proof to.",
     personaTags: ["rigorous", "lonely", "brilliant", "documents everything"],
   },
+  "case-16": {
+    ruling: "Officially ruled: burnout — voluntary departure",
+    cards: [
+      { label: "The disappearance", text: "Del Amara, 39, hosted 'The Insomniac Hour' — the 2–5 AM call-in on WVRN 1400 AM. She vanished mid-show; the ON AIR light was lit, the board was LIVE, her coffee was warm, and the overnight aired forty seconds of open-mic breathing." },
+      { label: "The official ruling", text: "The station says the overnight has been a pre-recorded loop since 2019, with no live host and no phone line — so officially there was no one there to go missing. Del's own W-2 lists her as part-time daytime traffic. Filed as burnout." },
+      { label: "Why we reopened it", text: "Every listener who called our tip line heard her live for six years. The request line was physically cut in 2019 — and rewired. The transmitter shack, logged unmanned, has drawn household power the whole time. And a caller phoned at 3:33 every night for a song pulled from the library in 1979." },
+      { label: "What her family says", text: "Her sister Renée refuses 'burnout.' Del left her a message on the last live broadcast — said her name at the end, not as a goodbye, but 'like she was pointing at me for whoever came later.'" },
+      { label: "Who she was", text: "Warm, wry, nocturnal — six years of talking strangers through their worst 3 AMs. An insomniac who made a home of the hour nobody else wanted, and documented everything when it started documenting her back." },
+    ],
+    objective: "Work through her call logs, her private show notes, and the transmitter. Decide who — or what — was really on the line at 3:33.",
+    personaTags: ["wry", "nocturnal", "kind to strangers", "documents everything"],
+  },
+  "case-17": {
+    ruling: "Officially ruled: walked off the shift",
+    cards: [
+      { label: "The disappearance", text: "Priya Sunder, 33, ran the overnight audit at the Marlibel, a century-old residential hotel. The 7 AM relief found the night audit printed to the exact line where Room 813's folio posts — and stopped. Her cardigan was on the chair. The drawer was sealed." },
+      { label: "The official ruling", text: "A new auditor who didn't finish her business day and quit, like the auditor before her in 1971. The hotel closed the shift quietly. Filed as voluntary." },
+      { label: "Why we reopened it", text: "Room 813 has paid rent in cash, monthly, since 1971 — from a floor whose elevator skips 813 and a hallway that ends at 812. Eleven other 'permanent guests' draw federal benefits with no death record and no living record. And the 1971 auditor's final audit halted at the same line." },
+      { label: "What her family says", text: "Her brother Ravi got a certified envelope from her the day she vanished — the whole fraud, documented. 'My sister balanced everything she ever touched,' he says. 'She left the books open on exactly one account.'" },
+      { label: "Who she was", text: "Precise, dogged, incapable of leaving a column unbalanced. A fraud auditor who read the ledger nobody was supposed to read — and then read the one older than the fraud itself." },
+    ],
+    objective: "Reconstruct her reconciliation and her climb up the service stairs. Decide what was really being kept in Room 813.",
+    personaTags: ["precise", "dogged", "reads the book", "unbalanced by nothing"],
+  },
 };
 
 export function briefingFor(caseId: string): Briefing | undefined {

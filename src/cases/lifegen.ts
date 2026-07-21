@@ -66,6 +66,8 @@ const PERSONAS: Record<string, Persona> = {
   "case-13": { kinds: ["car", "city", "brunch", "coffee", "gym", "sunset", "food", "neon", "street", "friends", "drink"] },
   "case-14": { kinds: ["sunset", "sunset", "mountains", "car", "nature", "friends", "brunch", "dog", "coffee", "city", "park"] },
   "case-15": { kinds: ["coffee", "books", "plant", "friends", "brunch", "city", "flowers", "dessert", "selfie", "street", "food"] },
+  "case-16": { kinds: ["neon", "city", "coffee", "street", "concert", "books", "street", "friends", "drink", "selfie", "rain", "food"] },
+  "case-17": { kinds: ["city", "coffee", "books", "street", "brunch", "friends", "food", "neon", "dessert", "selfie", "drink"] },
 };
 
 function fallbackSvg(seed: number, aspect: "landscape" | "portrait"): string {
