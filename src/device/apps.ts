@@ -21,6 +21,8 @@ import {
   openWallet,
   openAppStore,
   openNews,
+  openShopping,
+  openDating,
 } from "../apps/flavor";
 
 export function buildAppRegistry(): AppDef[] {
@@ -59,5 +61,7 @@ export function buildAppRegistry(): AppDef[] {
     { id: "wallet", label: "Wallet", icon: "wallet", open: (rt) => openWallet(rt) },
     { id: "appstore", label: "App Store", icon: "appstore", open: (rt) => openAppStore(rt) },
     { id: "news", label: "News", icon: "news", open: (rt) => openNews(rt) },
+    { id: "shop", label: "Shopping", icon: "shop", open: (rt) => openShopping(rt) },
+    { id: "dating", label: "Matches", icon: "dating", open: (rt) => openDating(rt) },
   ];
 }

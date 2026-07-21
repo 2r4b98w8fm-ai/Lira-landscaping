@@ -1,6 +1,7 @@
 import type { DeviceRuntime } from "../device/runtime";
 import { h } from "../lib/dom";
 import { mulberry32, seedFrom } from "../lib/rng";
+import { extrasFor } from "../cases/caseextras";
 
 /**
  * Flavor apps: believable, mostly non-clue screens that make the phone feel
@@ -190,7 +191,7 @@ export function openSocial(rt: DeviceRuntime): HTMLElement {
 export function openReminders(rt: DeviceRuntime): HTMLElement {
   const { view, body } = scroll(rt, "Reminders");
   body.appendChild(label("Reminders"));
-  const items = [
+  const items = extrasFor(rt.caseFile.id)?.reminders ?? ([
     ["Call mom back", true],
     ["Buy trash bags + AAA batteries", false],
     ["Return library book (overdue)", false],
@@ -199,7 +200,7 @@ export function openReminders(rt: DeviceRuntime): HTMLElement {
     ["Text back — everyone", false],
     ["Deposit check", true],
     ["Stop checking the locks", false],
-  ] as Array<[string, boolean]>;
+  ] as Array<[string, boolean]>);
   for (const [text, done] of items) {
     body.appendChild(
       h(
@@ -265,5 +266,84 @@ export function openNews(rt: DeviceRuntime): HTMLElement {
     ["Missing persons cases quietly rise in the county", "Investigations"],
   ];
   for (const [t, sec] of heads) body.appendChild(row(t, sec, ""));
+  return view;
+}
+
+export function openShopping(rt: DeviceRuntime): HTMLElement {
+  const { view, body } = scroll(rt, "Orders");
+  const orders = extrasFor(rt.caseFile.id)?.shopping ?? [];
+  body.appendChild(label("Your Orders"));
+  if (!orders.length) {
+    body.appendChild(h("p", { class: "folder-note" }, "No recent orders."));
+    return view;
+  }
+  for (const o of orders) {
+    const refunded = o.price.startsWith("+");
+    body.appendChild(
+      h(
+        "div",
+        { class: "shop-order" },
+        h(
+          "div",
+          { class: "shop-thumb", "aria-hidden": "true" },
+          h("span", { class: "shop-thumb-glyph" }, "▢"),
+        ),
+        h(
+          "div",
+          { class: "row-main" },
+          h("span", { class: "row-title" }, o.item),
+          o.detail ? h("span", { class: "row-sub" }, o.detail) : null,
+          h("span", { class: `shop-status${o.status && /cancel/i.test(o.status) ? " shop-status-warn" : ""}` }, `${o.date}${o.status ? " · " + o.status : ""}`),
+        ),
+        h("span", { class: `shop-price${refunded ? " shop-price-in" : ""}` }, o.price),
+      ),
+    );
+  }
+  return view;
+}
+
+export function openDating(rt: DeviceRuntime): HTMLElement {
+  const d = extrasFor(rt.caseFile.id)?.dating;
+  const { view, body } = scroll(rt, d?.app ?? "Matches");
+  if (!d) {
+    body.appendChild(h("p", { class: "folder-note" }, "No account."));
+    return view;
+  }
+  // own profile
+  body.appendChild(
+    h(
+      "div",
+      { class: "dt-profile" },
+      h("div", { class: "dt-avatar" }),
+      h("div", { class: "dt-me-name" }, `${d.handle}, ${d.age}`),
+      h("div", { class: "dt-bio" }, d.bio),
+      h("div", { class: "dt-active" }, d.lastActive),
+    ),
+  );
+  body.appendChild(label("Matches"));
+  for (const m of d.matches) {
+    const card = h("div", { class: "dt-match" });
+    card.appendChild(
+      h(
+        "div",
+        { class: "dt-match-head" },
+        h("span", { class: "dt-match-avatar" }),
+        h(
+          "span",
+          { class: "row-main" },
+          h("span", { class: "row-title" }, `${m.name}, ${m.age}`),
+          m.tag ? h("span", { class: "row-sub" }, m.tag) : null,
+        ),
+      ),
+    );
+    if (m.thread) {
+      const thread = h("div", { class: "dt-thread" });
+      for (const msg of m.thread) {
+        thread.appendChild(h("div", { class: `dt-bubble dt-${msg.from}` }, msg.text));
+      }
+      card.appendChild(thread);
+    }
+    body.appendChild(card);
+  }
   return view;
 }

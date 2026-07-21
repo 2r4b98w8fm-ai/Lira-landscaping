@@ -31,7 +31,9 @@ export type IconName =
   | "camera"
   | "translate"
   | "fitness"
-  | "news";
+  | "news"
+  | "shop"
+  | "dating";
 
 export interface Message {
   id: string;

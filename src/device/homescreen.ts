@@ -2,14 +2,20 @@ import type { DeviceRuntime } from "./runtime";
 import { h, clear, svgEl } from "../lib/dom";
 import { appIconSvg } from "../icons";
 import { loadSave, persist } from "../save";
+import { extrasFor } from "../cases/caseextras";
 
 // The core apps sit on page 1 up top; flavor apps fill out the pages so the
 // player has to swipe and dig. The hidden app, once found, joins page 1.
-const PAGES: string[][] = [
-  ["messages", "photos", "notes", "phone", "calendar", "maps", "browser", "report", "mail", "social", "music", "wallet"],
-  ["weather", "health", "podcasts", "reminders", "appstore", "news", "files", "settings"],
-];
+const PAGE1 = ["messages", "photos", "notes", "phone", "calendar", "maps", "browser", "report", "shop", "mail", "social", "music"];
+const PAGE2 = ["wallet", "weather", "health", "podcasts", "reminders", "appstore", "news", "files", "settings"];
 const DOCK_ORDER = ["phone", "messages", "photos", "report"];
+
+/** App layout for this case: dating only appears where the victim had an account. */
+function pagesFor(caseId: string): string[][] {
+  const page1 = [...PAGE1];
+  if (extrasFor(caseId)?.dating) page1.splice(8, 0, "dating"); // beside Shopping
+  return [page1, [...PAGE2]];
+}
 
 export function buildHomeScreen(rt: DeviceRuntime): HTMLElement {
   const view = h("div", { class: "home-screen", style: `--wall-hue:${rt.caseFile.phone.wallpaperHue}` });
@@ -42,7 +48,7 @@ export function buildHomeScreen(rt: DeviceRuntime): HTMLElement {
     clear(dots);
     clear(dock);
     // page 1 gets the revealed hidden app appended
-    const pages = PAGES.map((p) => [...p]);
+    const pages = pagesFor(rt.caseFile.id);
     if (rt.progress.hiddenAppRevealed) pages[0].push("__hidden__");
     pages.forEach((ids) => {
       const page = h("div", { class: "home-page" });

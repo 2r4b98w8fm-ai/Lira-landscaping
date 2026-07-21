@@ -323,6 +323,29 @@ h1, h2, h3, p { margin: 0; }
 .wallet-amt { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--text); font-weight: 600; }
 .wallet-in { color: #1d7a3e; }
 
+/* Shopping */
+.shop-order { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 9px; box-shadow: 0 1px 2px rgba(20,20,40,0.04); }
+.shop-thumb { width: 46px; height: 46px; border-radius: 8px; background: var(--surface-3); display: grid; place-items: center; flex-shrink: 0; }
+.shop-thumb-glyph { color: var(--text-faint); font-size: 20px; }
+.shop-status { color: var(--text-faint); font-size: 12px; margin-top: 2px; }
+.shop-status-warn { color: #c25b00; }
+.shop-price { font-variant-numeric: tabular-nums; font-weight: 650; font-size: 14px; white-space: nowrap; }
+.shop-price-in { color: #1d7a3e; }
+
+/* Dating */
+.dt-profile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0 6px; text-align: center; }
+.dt-avatar { width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, #ff6a8e, #fc2b55); }
+.dt-me-name { font-weight: 700; font-size: 18px; }
+.dt-bio { color: var(--text-dim); font-size: 14px; max-width: 30ch; }
+.dt-active { color: var(--text-faint); font-size: 12px; font-family: var(--mono); }
+.dt-match { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(20,20,40,0.04); }
+.dt-match-head { display: flex; align-items: center; gap: 12px; }
+.dt-match-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #b0b6c4, #7a8090); flex-shrink: 0; }
+.dt-thread { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+.dt-bubble { max-width: 82%; padding: 8px 12px; border-radius: 16px; font-size: 14px; line-height: 1.35; }
+.dt-them { align-self: flex-start; background: var(--bubble-them); color: #0b0b0f; border-bottom-left-radius: 5px; }
+.dt-me { align-self: flex-end; background: #fc2b55; color: #fff; border-bottom-right-radius: 5px; }
+
 /* ---------------------------------------------------------------------------
    Shared app chrome
 --------------------------------------------------------------------------- */

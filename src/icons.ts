@@ -166,6 +166,18 @@ const GLYPHS: Record<IconName, { bg: string; bg2: string; glyph: string }> = {
     glyph:
       '<rect x="15" y="16" width="34" height="32" rx="4" fill="#fff"/><path d="M20 24h10v8H20zM33 24h11M33 30h11M20 37h24M20 42h24" stroke="#c7c7cc" stroke-width="2.5" stroke-linecap="round"/>',
   },
+  shop: {
+    bg: "#ffb648",
+    bg2: "#f7861e",
+    glyph:
+      '<path d="M20 24h24l-3 24H23z" fill="#fff"/><path d="M25 24v-3a7 7 0 0 1 14 0v3" fill="none" stroke="#fff" stroke-width="3.5"/>',
+  },
+  dating: {
+    bg: "#ff6a8e",
+    bg2: "#fc2b55",
+    glyph:
+      '<path d="M32 46s-14-8-14-18a8 8 0 0 1 14-5 8 8 0 0 1 14 5c0 10-14 18-14 18z" fill="#fff"/>',
+  },
 };
 
 let iconUid = 0;
