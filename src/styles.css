@@ -1665,3 +1665,23 @@ h1, h2, h3, p { margin: 0; }
   .archive-card, .daily-card, .resume-banner, .archive-profile-btn, .streak-nudge, .finale-card,
   .app-scroll .list-row, .photo-grid .photo-thumb, .home-page .home-icon, .iv-reply-in { animation: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Embedded context (e.g. claude.ai artifact viewer): the host draws a top bar
+   across our content. Nudge every top-anchored surface down to clear it.
+--------------------------------------------------------------------------- */
+:root.embedded { --embed-top: 52px; }
+:root.embedded .status-bar { top: calc(env(safe-area-inset-top) + var(--embed-top, 0px)); }
+:root.embedded .app { padding-top: calc(34px + env(safe-area-inset-top) + var(--embed-top, 0px)); }
+:root.embedded .home-screen { padding-top: calc(60px + env(safe-area-inset-top) + var(--embed-top, 0px)); }
+:root.embedded .lock-screen { padding-top: calc(86px + var(--embed-top, 0px)); }
+:root.embedded .archive { padding-top: calc(clamp(22px, 5vw, 52px) + var(--embed-top, 0px)); }
+:root.embedded .dossier { padding-top: calc(20px + env(safe-area-inset-top) + var(--embed-top, 0px)); }
+:root.embedded .intro { padding-top: var(--embed-top, 0px); }
+/* On the desktop centered phone frame there's already a margin above it, so
+   don't double up — only the fullscreen (mobile) layout needs the nudge. */
+@media (min-width: 720px) {
+  :root.embedded .app { padding-top: calc(34px + env(safe-area-inset-top)); }
+  :root.embedded .home-screen { padding-top: calc(60px + env(safe-area-inset-top)); }
+  :root.embedded .lock-screen { padding-top: 86px; }
+}

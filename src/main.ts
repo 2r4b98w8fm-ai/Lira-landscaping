@@ -18,6 +18,17 @@ if (import.meta.env.DEV) {
 loadSave();
 recordPlayDay();
 
+// When the game is embedded in another site's frame (e.g. the claude.ai
+// artifact viewer), that host paints its own bar across the top. Flag it so
+// the CSS can nudge our content down and clear it. Standalone / single-file
+// play is never framed, so it keeps the full screen.
+try {
+  if (window.self !== window.top) document.documentElement.classList.add("embedded");
+} catch {
+  // cross-origin access threw — that itself means we're framed
+  document.documentElement.classList.add("embedded");
+}
+
 const host = document.getElementById("app")!;
 renderIntro(host, () => renderCaseSelect(host));
 
