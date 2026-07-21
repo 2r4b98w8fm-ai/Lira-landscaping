@@ -436,12 +436,27 @@ function buildManageButtons(host: HTMLElement): HTMLElement {
 }
 
 function statCell(num: string, label: string): HTMLElement {
-  return h(
-    "div",
-    { class: "profile-stat" },
-    h("div", { class: "profile-stat-num" }, num),
-    h("div", { class: "profile-stat-label" }, label),
-  );
+  const numEl = h("div", { class: "profile-stat-num" }, num);
+  // Count-up for a plain integer (respecting reduced motion).
+  const m = /^(\d+)$/.exec(num);
+  if (m && !settings().reducedIntensity) {
+    const target = parseInt(m[1], 10);
+    if (target > 0) {
+      numEl.textContent = "0";
+      numEl.classList.add("counting");
+      const start = performance.now();
+      const dur = 620;
+      const tick = (t: number): void => {
+        const p = Math.min(1, (t - start) / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        numEl.textContent = String(Math.round(target * eased));
+        if (p < 1) requestAnimationFrame(tick);
+        else numEl.classList.remove("counting");
+      };
+      window.setTimeout(() => requestAnimationFrame(tick), 120);
+    }
+  }
+  return h("div", { class: "profile-stat" }, numEl, h("div", { class: "profile-stat-label" }, label));
 }
 
 /** The endgame: a commendation letter once all fifteen files are closed. */

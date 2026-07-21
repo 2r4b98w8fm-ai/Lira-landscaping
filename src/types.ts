@@ -35,7 +35,8 @@ export type IconName =
   | "shop"
   | "dating"
   | "glimpse"
-  | "chatter";
+  | "chatter"
+  | "interviews";
 
 export interface Message {
   id: string;
@@ -270,6 +271,10 @@ export interface CaseProgress {
   citableFound?: number;
   /** Epoch ms of the most recent time this case was opened. */
   lastPlayedAt?: number;
+  /** Interrogation: question ids the player has already asked. */
+  interviewAsked?: string[];
+  /** Set once a suspect has incriminated themselves in this case. */
+  confessionHeard?: boolean;
 }
 
 export interface PlayerSettings {

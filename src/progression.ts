@@ -70,6 +70,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "season_two", emoji: "🎬", name: "Second Wave", desc: "Close both Season Two cases.", test: (s) => caseDone(s, "case-16") && caseDone(s, "case-17") },
   { id: "night_owl", emoji: "🦉", name: "Small Hours", desc: "Open a case between midnight and 5 AM.", test: (s) => !!s.playedLate },
   { id: "deep_diver", emoji: "🧷", name: "Case Cracker", desc: "Find 100% of the evidence in three cases.", test: (s) => countCases(s, (p) => !!p.citableTotal && (p.citableFound ?? 0) >= p.citableTotal) >= 3 },
+  { id: "interrogator", emoji: "🎙️", name: "The Confession", desc: "Get a suspect to incriminate themselves.", test: (s) => anyCase(s, (p) => !!p.confessionHeard) },
 ];
 
 // ---------------------------------------------------------------------------

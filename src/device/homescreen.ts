@@ -3,6 +3,7 @@ import { h, clear, svgEl } from "../lib/dom";
 import { appIconSvg } from "../icons";
 import { loadSave, persist } from "../save";
 import { extrasFor } from "../cases/caseextras";
+import { interrogationFor } from "../cases/interviews";
 
 // The core apps sit on page 1 up top; flavor apps fill out the pages so the
 // player has to swipe and dig. The hidden app, once found, joins page 1.
@@ -10,10 +11,11 @@ const PAGE1 = ["messages", "photos", "notes", "phone", "calendar", "maps", "brow
 const PAGE2 = ["mail", "music", "wallet", "weather", "health", "podcasts", "reminders", "appstore", "news", "files", "settings"];
 const DOCK_ORDER = ["phone", "messages", "photos", "report"];
 
-/** App layout for this case: dating only appears where the victim had an account. */
+/** App layout for this case: the Interview Room and dating only appear where they have content. */
 function pagesFor(caseId: string): string[][] {
   const page1 = [...PAGE1];
-  if (extrasFor(caseId)?.dating) page1.splice(9, 0, "dating"); // beside Shopping
+  if (interrogationFor(caseId)) page1.splice(8, 0, "interviews"); // right after the Case Report
+  if (extrasFor(caseId)?.dating) page1.splice(page1.indexOf("shop") + 1, 0, "dating"); // beside Shopping
   return [page1, [...PAGE2]];
 }
 

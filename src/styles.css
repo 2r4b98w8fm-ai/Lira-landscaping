@@ -1479,3 +1479,99 @@ h1, h2, h3, p { margin: 0; }
 :root[data-board="slate"] .archive-title { color: #eef3f8; }
 :root[data-board="slate"] .archive-kicker { color: #6f9fd0; }
 :root[data-board="slate"] .archive-section { color: #b9c8d8; border-left-color: #6f9fd0; background: linear-gradient(180deg, rgba(111,159,208,0.14), rgba(111,159,208,0.05)); }
+
+/* ---------------------------------------------------------------------------
+   Interview Room
+--------------------------------------------------------------------------- */
+.iv-brief { font-size: 14px; line-height: 1.55; color: var(--text-dim); margin: 4px 2px 8px; }
+.iv-row { display: flex; align-items: center; gap: 13px; padding: 13px 4px; border-bottom: 1px solid var(--line); width: 100%; }
+.iv-avatar {
+  width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center;
+  font-weight: 700; font-size: 15px; color: #fff; letter-spacing: 0.02em;
+  background: linear-gradient(150deg, hsl(var(--iv-hue,220) 45% 52%), hsl(calc(var(--iv-hue,220) + 25) 50% 38%));
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.25);
+}
+.iv-avatar-lg { width: 62px; height: 62px; font-size: 20px; }
+.iv-name { font-weight: 700; font-size: 15.5px; }
+.iv-chip {
+  font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px;
+  border-radius: 4px; border: 1.5px solid currentColor;
+}
+.iv-suspect-head { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 0 16px; text-align: center; }
+.iv-role { font-size: 13px; color: var(--text-dim); }
+.iv-transcript { display: flex; flex-direction: column; gap: 9px; }
+.iv-bubble { max-width: 84%; padding: 11px 14px; border-radius: 16px; font-size: 14.5px; line-height: 1.5; }
+.iv-them { align-self: flex-start; background: var(--bubble-them); color: var(--text); border-bottom-left-radius: 5px; }
+.iv-me { align-self: flex-end; background: var(--bubble-owner); color: #fff; border-bottom-right-radius: 5px; }
+.iv-past { opacity: 0.72; }
+.iv-intro { font-style: italic; background: var(--surface-2); color: var(--text-dim); max-width: 100%; align-self: stretch; text-align: center; border-radius: 12px; }
+.iv-tag { align-self: flex-start; font-family: var(--mono); font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 2px 6px; }
+.iv-guilt { color: #c8321f; }
+.iv-cleared { color: #1d7a3e; }
+.iv-stonewall { color: var(--text-faint); }
+.iv-redirect { color: #a05a00; }
+.iv-questions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.iv-prompt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); }
+.iv-q {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  font-size: 14px; color: var(--text); min-height: 46px; transition: border-color 0.15s, transform 0.1s;
+}
+.iv-q:not(.iv-q-locked):hover { border-color: var(--accent-dim); }
+.iv-q:not(.iv-q-locked):active { transform: scale(0.99); }
+.iv-q-locked { opacity: 0.6; color: var(--text-dim); }
+.iv-q-lock svg { width: 15px; height: 15px; }
+.iv-q-hint { margin-left: auto; font-size: 11px; color: var(--text-faint); font-style: italic; white-space: nowrap; }
+.iv-jump {
+  margin-top: 6px; text-align: center; width: 100%; background: #fff4e2; color: #a05a00;
+  border: 1px solid #f0d5a8; border-radius: 12px; padding: 13px; font-weight: 650; font-size: 14px; min-height: 46px;
+}
+.iv-done-note { font-size: 13px; color: var(--text-faint); font-style: italic; text-align: center; padding: 6px; }
+/* typing indicator */
+.iv-typing { display: inline-flex; gap: 4px; align-items: center; }
+.iv-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); animation: iv-blink 1s infinite; }
+.iv-typing span:nth-child(2) { animation-delay: 0.18s; }
+.iv-typing span:nth-child(3) { animation-delay: 0.36s; }
+@keyframes iv-blink { 0%, 60%, 100% { opacity: 0.28; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+.iv-reply-in { animation: iv-pop 0.32s cubic-bezier(0.2, 1.3, 0.4, 1); }
+@keyframes iv-pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* ---------------------------------------------------------------------------
+   Premium animation pass
+--------------------------------------------------------------------------- */
+/* Case folders deal onto the desk, staggered */
+.archive-card, .daily-card, .resume-banner, .archive-profile-btn, .streak-nudge, .finale-card {
+  animation: deal-in 0.44s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.archive-list .archive-card:nth-child(1) { animation-delay: 0.02s; }
+.archive-list .archive-card:nth-child(2) { animation-delay: 0.08s; }
+.archive-list .archive-card:nth-child(3) { animation-delay: 0.14s; }
+.archive-list .archive-card:nth-child(4) { animation-delay: 0.2s; }
+.archive-list .archive-card:nth-child(n+5) { animation-delay: 0.26s; }
+@keyframes deal-in { from { opacity: 0; transform: translateY(16px) rotate(-0.6deg); } to { opacity: 1; transform: none; } }
+/* App list rows fade up */
+.app-scroll .list-row { animation: row-in 0.3s ease backwards; }
+.app-scroll .list-row:nth-child(2) { animation-delay: 0.03s; }
+.app-scroll .list-row:nth-child(3) { animation-delay: 0.06s; }
+.app-scroll .list-row:nth-child(4) { animation-delay: 0.09s; }
+.app-scroll .list-row:nth-child(n+5) { animation-delay: 0.12s; }
+@keyframes row-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* Photo tiles bloom in */
+.photo-grid .photo-thumb { animation: tile-in 0.4s ease backwards; }
+.photo-grid .photo-thumb:nth-child(3n+2) { animation-delay: 0.05s; }
+.photo-grid .photo-thumb:nth-child(3n) { animation-delay: 0.1s; }
+@keyframes tile-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+/* count-up numbers on the profile */
+.profile-stat-num.counting { color: var(--accent); }
+/* Home icons settle in on first render */
+.home-page .home-icon { animation: icon-in 0.42s cubic-bezier(0.2,1,0.4,1) backwards; }
+.home-page .home-icon:nth-child(2) { animation-delay: 0.03s; }
+.home-page .home-icon:nth-child(3) { animation-delay: 0.06s; }
+.home-page .home-icon:nth-child(4) { animation-delay: 0.09s; }
+.home-page .home-icon:nth-child(n+5) { animation-delay: 0.12s; }
+@keyframes icon-in { from { opacity: 0; transform: translateY(10px) scale(0.9); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-card, .daily-card, .resume-banner, .archive-profile-btn, .streak-nudge, .finale-card,
+  .app-scroll .list-row, .photo-grid .photo-thumb, .home-page .home-icon, .iv-reply-in { animation: none; }
+}

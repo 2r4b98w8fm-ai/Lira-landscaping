@@ -10,6 +10,7 @@ import { openFiles } from "../apps/files";
 import { openSettings } from "../apps/settings";
 import { openHidden } from "../apps/hidden";
 import { openReport } from "../apps/report";
+import { openInterviews } from "../apps/interviews";
 import {
   openMusic,
   openWeather,
@@ -52,6 +53,7 @@ export function buildAppRegistry(): AppDef[] {
     { id: "settings", label: "Settings", icon: "settings", open: (rt) => openSettings(rt) },
     { id: "hidden", label: "Hidden", icon: "flashlight", open: (rt) => openHidden(rt) },
     { id: "report", label: "Case Report", icon: "report", open: (rt) => openReport(rt) },
+    { id: "interviews", label: "Interviews", icon: "interviews", open: (rt, t) => openInterviews(rt, t) },
     // Flavor apps — believable surface to search; none required to solve.
     { id: "music", label: "Music", icon: "music", open: (rt) => openMusic(rt) },
     { id: "weather", label: "Weather", icon: "weather", open: (rt) => openWeather(rt) },

@@ -190,6 +190,12 @@ const GLYPHS: Record<IconName, { bg: string; bg2: string; glyph: string }> = {
     glyph:
       '<path d="M16 18h32a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H30l-9 8v-8h-5a3 3 0 0 1-3-3V21a3 3 0 0 1 3-3z" fill="#fff"/><path d="M23 27h18M23 34h12" stroke="#4ab6ff" stroke-width="3.4" stroke-linecap="round"/>',
   },
+  interviews: {
+    bg: "#3a3f4a",
+    bg2: "#191c22",
+    glyph:
+      '<circle cx="26" cy="26" r="9" fill="none" stroke="#e8c34a" stroke-width="3.4"/><path d="M18 46c1-7 4-10 8-10s7 3 8 10" fill="none" stroke="#e8c34a" stroke-width="3.4" stroke-linecap="round"/><rect x="38" y="20" width="12" height="17" rx="2" fill="none" stroke="#cfd3da" stroke-width="2.6"/><path d="M41 26h6M41 30h6" stroke="#cfd3da" stroke-width="2.2" stroke-linecap="round"/>',
+  },
 };
 
 let iconUid = 0;
