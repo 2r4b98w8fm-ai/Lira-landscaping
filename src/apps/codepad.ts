@@ -31,6 +31,16 @@ export function buildCodePad(
   const hint = h("p", { class: "code-hint" }, "The code is somewhere on this phone.");
   const feedback = h("p", { class: "code-feedback", role: "alert" }, "");
 
+  // Normal difficulty gets a "Need a hint?" button they can tap on demand.
+  // Using it costs the no-hint achievement but never blocks the player. Hard
+  // mode hides the button entirely — deduction only.
+  const hintBtn = h("button", { class: "code-hint-btn", type: "button" }, "Need a hint?");
+  hintBtn.addEventListener("click", () => {
+    specificHintShown = true;
+    hint.textContent = opts.hintText;
+    hintBtn.remove();
+  });
+
   const pad = h("div", { class: "code-pad" });
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
   for (const key of keys) {
@@ -78,10 +88,13 @@ export function buildCodePad(
     // Difficulty: the real hint stays hidden. Only after real effort — and
     // never in Hard mode — does a nudge, then the full hint, surface, so the
     // puzzle is hard but never a dead end.
+    if (specificHintShown) return; // player already asked for the full hint — don't downgrade it
     if (settings().hardMode) {
       hint.textContent = wrongCount >= 6 ? "The code is somewhere on this phone. Keep looking." : "";
     } else if (wrongCount >= 8) {
+      specificHintShown = true;
       hint.textContent = opts.hintText;
+      hintBtn.remove();
     } else if (wrongCount >= 4) {
       hint.textContent = "The four digits are hidden on this phone — a photo, a note, a message. Two pieces, put together.";
     }
@@ -93,8 +106,8 @@ export function buildCodePad(
     if (e.key === "Backspace") press("⌫");
   });
 
-  view.appendChild(
-    h("div", { class: "code-wrap" }, h("p", { class: "code-prompt" }, "Enter Code"), dots, feedback, pad, hint),
-  );
+  const wrap = h("div", { class: "code-wrap" }, h("p", { class: "code-prompt" }, "Enter Code"), dots, feedback, pad, hint);
+  if (!settings().hardMode) wrap.appendChild(hintBtn);
+  view.appendChild(wrap);
   return view;
 }

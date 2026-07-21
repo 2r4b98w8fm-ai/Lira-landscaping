@@ -7,6 +7,8 @@ import { triggerGlitch } from "../glitch";
 import { playStinger } from "../audio";
 import { scoreCase, totalXp, rankFor, evaluateAchievements, type CaseScore } from "../progression";
 import { vibrate } from "../lib/haptics";
+import { aftermathFor } from "../cases/aftermath";
+import { nextUnfinishedCase } from "../caseselect";
 
 const APP_LABELS: Record<string, string> = {
   messages: "Messages",
@@ -252,10 +254,66 @@ function renderEpilogue(rt: DeviceRuntime, body: HTMLElement, verdictId: string,
       ...verdict.epilogue.split("\n\n").map((p) => h("p", { class: "epilogue-para" }, p)),
     ),
   );
+
+  renderAftermath(rt, body);
+
   body.appendChild(
     h("p", { class: "folder-note" }, `Filed with ${cited.length} cited items. The case stays open on this device — you can keep looking.`),
   );
+  const next = nextUnfinishedCase(rt.caseFile.id);
+  if (next) {
+    const nextBtn = h(
+      "button",
+      { class: "report-submit report-next", type: "button" },
+      `Next case →  ${next.title}`,
+    );
+    nextBtn.addEventListener("click", () => rt.nextCase());
+    body.appendChild(nextBtn);
+  }
   const back = h("button", { class: "settings-btn", type: "button" }, "Return to case files");
   back.addEventListener("click", () => rt.exitCase());
   body.appendChild(back);
+}
+
+/** The case's final page: arrest, trial, sentence, and the family's words. */
+function renderAftermath(rt: DeviceRuntime, body: HTMLElement): void {
+  const a = aftermathFor(rt.caseFile.id);
+  if (!a) return;
+  const RES_LABEL: Record<string, string> = {
+    convicted: "Conviction secured",
+    charged: "Charges filed",
+    unresolved: "Case remains open",
+    sealed: "File sealed",
+  };
+  const wrap = h("div", { class: "aftermath" });
+  wrap.appendChild(h("p", { class: "aftermath-kicker" }, a.kicker));
+  wrap.appendChild(h("div", { class: `aftermath-badge aftermath-${a.resolution}` }, RES_LABEL[a.resolution]));
+
+  const seg = (label: string, text?: string): void => {
+    if (!text) return;
+    wrap.appendChild(
+      h("div", { class: "aftermath-seg" }, h("span", { class: "aftermath-seg-label" }, label), h("p", { class: "aftermath-seg-text" }, text)),
+    );
+  };
+  seg("The break in the case", a.arrest);
+  seg("Charges", a.charges);
+  seg("Plea", a.plea);
+  seg("At trial", a.trial);
+  seg("Sentence", a.sentence);
+  seg("Disposition", a.disposition);
+
+  wrap.appendChild(h("p", { class: "aftermath-family-label" }, "Those left behind"));
+  for (const f of a.family) {
+    wrap.appendChild(
+      h(
+        "figure",
+        { class: "aftermath-quote" },
+        h("blockquote", {}, f.quote),
+        h("figcaption", {}, h("b", {}, f.name), ` — ${f.relation}`),
+      ),
+    );
+  }
+  wrap.appendChild(h("p", { class: "aftermath-coda" }, a.coda));
+  body.appendChild(h("h2", { class: "section-label" }, "The aftermath"));
+  body.appendChild(wrap);
 }

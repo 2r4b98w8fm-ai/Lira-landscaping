@@ -23,6 +23,8 @@ import {
   openNews,
   openShopping,
   openDating,
+  openGlimpse,
+  openChatter,
 } from "../apps/flavor";
 
 export function buildAppRegistry(): AppDef[] {
@@ -63,5 +65,7 @@ export function buildAppRegistry(): AppDef[] {
     { id: "news", label: "News", icon: "news", open: (rt) => openNews(rt) },
     { id: "shop", label: "Shopping", icon: "shop", open: (rt) => openShopping(rt) },
     { id: "dating", label: "Matches", icon: "dating", open: (rt) => openDating(rt) },
+    { id: "glimpse", label: "Glimpse", icon: "glimpse", open: (rt) => openGlimpse(rt) },
+    { id: "chatter", label: "Chatter", icon: "chatter", open: (rt) => openChatter(rt) },
   ];
 }

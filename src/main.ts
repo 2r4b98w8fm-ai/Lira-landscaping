@@ -3,7 +3,8 @@ import "./styles.css";
 import { loadAllCases } from "./cases";
 import { validateAll } from "./validator";
 import { renderCaseSelect } from "./caseselect";
-import { loadSave } from "./save";
+import { renderIntro } from "./intro";
+import { loadSave, recordPlayDay } from "./save";
 
 // Content is validated by `npm run validate` at build time; this dev-mode
 // pass catches issues instantly while authoring cases. It loads every case
@@ -13,9 +14,10 @@ if (import.meta.env.DEV) {
 }
 
 loadSave();
+recordPlayDay();
 
 const host = document.getElementById("app")!;
-renderCaseSelect(host);
+renderIntro(host, () => renderCaseSelect(host));
 
 // PWA: register the service worker in hosted production builds only.
 // (Skipped for the single-file build and file:// usage, where there is no

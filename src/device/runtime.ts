@@ -41,17 +41,20 @@ export class DeviceRuntime {
     liveMessage: new Set(),
   };
   private onExit: () => void;
+  private onNextCase?: () => void;
 
   constructor(opts: {
     caseFile: CaseFile;
     apps: AppDef[];
     host: HTMLElement;
     onExit: () => void;
+    onNextCase?: () => void;
   }) {
     this.caseFile = opts.caseFile;
     this.progress = caseProgress(opts.caseFile.id);
     this.registry = new Map(opts.apps.map((a) => [a.id, a]));
     this.onExit = opts.onExit;
+    this.onNextCase = opts.onNextCase;
 
     clear(opts.host);
     const frame = h("div", { class: "device-frame" });
@@ -241,6 +244,13 @@ export class DeviceRuntime {
     persist();
     this.destroy();
     this.onExit();
+  }
+
+  /** Jump straight from a filed report into the next unfinished case. */
+  nextCase(): void {
+    persist();
+    this.destroy();
+    (this.onNextCase ?? this.onExit)();
   }
 
   /** Re-check achievements and toast any freshly unlocked ones in-phone. */

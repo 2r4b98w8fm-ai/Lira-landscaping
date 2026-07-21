@@ -76,6 +76,42 @@ export function settings(): PlayerSettings {
   return loadSave().settings;
 }
 
+function dayStamp(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Record that the game was opened today and return the live streak.
+ * Consecutive calendar days build the streak; a gap of more than one day
+ * resets it to 1. Called once when the app boots.
+ */
+export function recordPlayDay(): { count: number; best: number; extended: boolean } {
+  const save = loadSave();
+  const today = dayStamp();
+  const s = save.streak ?? { count: 0, best: 0, lastDay: "" };
+  let extended = false;
+  if (s.lastDay !== today) {
+    const yesterday = dayStamp(new Date(Date.now() - 864e5));
+    s.count = s.lastDay === yesterday ? s.count + 1 : 1;
+    s.lastDay = today;
+    s.best = Math.max(s.best, s.count);
+    extended = true;
+    save.streak = s;
+    persist();
+  }
+  return { count: s.count, best: s.best, extended };
+}
+
+export function currentStreak(): { count: number; best: number } {
+  const s = loadSave().streak;
+  if (!s) return { count: 0, best: 0 };
+  // A streak only "counts" as live if the last play day was today or yesterday.
+  const today = dayStamp();
+  const yesterday = dayStamp(new Date(Date.now() - 864e5));
+  const count = s.lastDay === today || s.lastDay === yesterday ? s.count : 0;
+  return { count, best: s.best };
+}
+
 export function resetAllProgress(): void {
   const save = loadSave();
   save.cases = {};

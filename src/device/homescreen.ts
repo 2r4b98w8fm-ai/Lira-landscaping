@@ -6,14 +6,14 @@ import { extrasFor } from "../cases/caseextras";
 
 // The core apps sit on page 1 up top; flavor apps fill out the pages so the
 // player has to swipe and dig. The hidden app, once found, joins page 1.
-const PAGE1 = ["messages", "photos", "notes", "phone", "calendar", "maps", "browser", "report", "shop", "mail", "social", "music"];
-const PAGE2 = ["wallet", "weather", "health", "podcasts", "reminders", "appstore", "news", "files", "settings"];
+const PAGE1 = ["messages", "photos", "notes", "phone", "calendar", "maps", "browser", "report", "shop", "glimpse", "chatter", "social"];
+const PAGE2 = ["mail", "music", "wallet", "weather", "health", "podcasts", "reminders", "appstore", "news", "files", "settings"];
 const DOCK_ORDER = ["phone", "messages", "photos", "report"];
 
 /** App layout for this case: dating only appears where the victim had an account. */
 function pagesFor(caseId: string): string[][] {
   const page1 = [...PAGE1];
-  if (extrasFor(caseId)?.dating) page1.splice(8, 0, "dating"); // beside Shopping
+  if (extrasFor(caseId)?.dating) page1.splice(9, 0, "dating"); // beside Shopping
   return [page1, [...PAGE2]];
 }
 

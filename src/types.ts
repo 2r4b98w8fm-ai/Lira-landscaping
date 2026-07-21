@@ -33,7 +33,9 @@ export type IconName =
   | "fitness"
   | "news"
   | "shop"
-  | "dating";
+  | "dating"
+  | "glimpse"
+  | "chatter";
 
 export interface Message {
   id: string;
@@ -283,4 +285,11 @@ export interface SaveFile {
   cases: Record<string, CaseProgress>;
   /** Unlocked achievement ids. */
   achievements?: string[];
+  /** Daily play streak, updated once per calendar day the game is opened. */
+  streak?: {
+    count: number;
+    best: number;
+    /** ISO date (YYYY-MM-DD) of the most recent day played. */
+    lastDay: string;
+  };
 }

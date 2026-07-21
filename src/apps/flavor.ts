@@ -2,6 +2,7 @@ import type { DeviceRuntime } from "../device/runtime";
 import { h } from "../lib/dom";
 import { mulberry32, seedFrom } from "../lib/rng";
 import { extrasFor } from "../cases/caseextras";
+import { socialFor } from "../cases/social";
 
 /**
  * Flavor apps: believable, mostly non-clue screens that make the phone feel
@@ -298,6 +299,130 @@ export function openShopping(rt: DeviceRuntime): HTMLElement {
         h("span", { class: `shop-price${refunded ? " shop-price-in" : ""}` }, o.price),
       ),
     );
+  }
+  return view;
+}
+
+export function openGlimpse(rt: DeviceRuntime): HTMLElement {
+  const g = socialFor(rt.caseFile.id)?.glimpse;
+  const { view, body } = scroll(rt, "Glimpse");
+  if (!g) {
+    body.appendChild(h("p", { class: "folder-note" }, "No account."));
+    return view;
+  }
+  // profile header
+  body.appendChild(
+    h(
+      "div",
+      { class: "gl-profile" },
+      h("div", { class: "gl-avatar", "aria-hidden": "true" }),
+      h(
+        "div",
+        { class: "gl-profile-main" },
+        h("div", { class: "gl-handle" }, `@${g.handle}`),
+        h(
+          "div",
+          { class: "gl-stats" },
+          h("span", {}, h("b", {}, String(g.posts)), " posts"),
+          h("span", {}, h("b", {}, g.followers), " followers"),
+          h("span", {}, h("b", {}, g.following), " following"),
+        ),
+      ),
+    ),
+  );
+  body.appendChild(h("div", { class: "gl-name" }, g.name));
+  body.appendChild(h("div", { class: "gl-bio" }, g.bio));
+
+  // grid of tinted tiles
+  const grid = h("div", { class: "gl-grid" });
+  g.grid.forEach((post, i) => {
+    const tile = h(
+      "button",
+      { class: "gl-tile", type: "button", style: `--gl-hue:${(seedFrom(rt.caseFile.id + i) % 360)}` },
+      h("span", { class: "gl-scene", "aria-hidden": "true" }, post.scene),
+    );
+    tile.addEventListener("click", () => rt.push(glimpsePost(rt, g, post)));
+    grid.appendChild(tile);
+  });
+  body.appendChild(grid);
+  return view;
+}
+
+function glimpsePost(rt: DeviceRuntime, g: GlimpseProfileLike, post: import("../cases/social").GlimpsePost): HTMLElement {
+  const view = h("div", { class: "app" });
+  view.appendChild(rt.appHeader("Glimpse"));
+  const body = h("div", { class: "app-scroll" });
+  view.appendChild(body);
+  body.appendChild(
+    h("div", { class: "gl-post-head" }, h("span", { class: "gl-avatar gl-avatar-sm", "aria-hidden": "true" }), h("span", { class: "gl-handle" }, `@${g.handle}`)),
+  );
+  body.appendChild(h("div", { class: "gl-post-photo", style: `--gl-hue:${seedFrom(post.caption) % 360}` }, h("span", { class: "gl-scene-lg", "aria-hidden": "true" }, post.scene)));
+  body.appendChild(h("div", { class: "gl-post-likes" }, `${post.likes.toLocaleString()} likes · ${post.when} ago`));
+  if (post.location) body.appendChild(h("div", { class: "gl-post-loc" }, `📍 ${post.location}`));
+  body.appendChild(h("p", { class: "gl-post-caption" }, h("b", {}, `${g.handle} `), post.caption));
+  if (post.comments?.length) {
+    const c = h("div", { class: "gl-comments" });
+    for (const [who, text] of post.comments) {
+      c.appendChild(h("p", { class: "gl-comment" }, h("b", {}, `${who} `), text));
+    }
+    body.appendChild(c);
+  }
+  return view;
+}
+
+interface GlimpseProfileLike {
+  handle: string;
+}
+
+export function openChatter(rt: DeviceRuntime): HTMLElement {
+  const c = socialFor(rt.caseFile.id)?.chatter;
+  const { view, body } = scroll(rt, "Chatter");
+  if (!c) {
+    body.appendChild(h("p", { class: "folder-note" }, "No account."));
+    return view;
+  }
+  body.appendChild(
+    h(
+      "div",
+      { class: "ch-profile" },
+      h("div", { class: "ch-avatar", "aria-hidden": "true" }),
+      h("div", { class: "ch-name" }, c.name),
+      h("div", { class: "ch-handle" }, `@${c.handle}`),
+      h("div", { class: "ch-bio" }, c.bio),
+      h("div", { class: "ch-follow" }, h("span", {}, h("b", {}, c.following), " Following"), h("span", {}, h("b", {}, c.followers), " Followers")),
+    ),
+  );
+  body.appendChild(label("Posts"));
+  for (const p of c.posts) {
+    const post = h(
+      "div",
+      { class: "ch-post" },
+      h(
+        "div",
+        { class: "ch-post-head" },
+        h("span", { class: "ch-avatar ch-avatar-sm", "aria-hidden": "true" }),
+        h("span", { class: "ch-post-name" }, c.name),
+        h("span", { class: "ch-post-handle" }, `@${c.handle} · ${p.when}`),
+      ),
+      h("p", { class: "ch-post-text" }, p.text),
+      h(
+        "div",
+        { class: "ch-post-meta" },
+        h("span", {}, `💬 ${p.replies?.length ?? 0}`),
+        h("span", {}, `🔁 ${p.reposts ?? 0}`),
+        h("span", {}, `♡ ${p.likes.toLocaleString()}`),
+      ),
+    );
+    if (p.replies?.length) {
+      const rep = h("div", { class: "ch-replies" });
+      for (const [who, text] of p.replies) {
+        rep.appendChild(
+          h("div", { class: "ch-reply" }, h("span", { class: "ch-reply-who" }, `@${who}`), h("span", { class: "ch-reply-text" }, text)),
+        );
+      }
+      post.appendChild(rep);
+    }
+    body.appendChild(post);
   }
   return view;
 }

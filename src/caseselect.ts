@@ -1,7 +1,7 @@
 import type { CaseFile } from "./types";
 import { CASE_MANIFEST, loadCase, type CaseManifestEntry } from "./cases";
 import { h, clear } from "./lib/dom";
-import { caseProgress, loadSave } from "./save";
+import { caseProgress, loadSave, currentStreak } from "./save";
 import { DeviceRuntime } from "./device/runtime";
 import { buildAppRegistry } from "./device/apps";
 import { buildLockScreen } from "./device/lockscreen";
@@ -22,7 +22,7 @@ export function renderCaseSelect(host: HTMLElement): void {
       "header",
       { class: "archive-hdr" },
       h("p", { class: "archive-kicker" }, "Evidence Review Terminal"),
-      h("h1", { class: "archive-title" }, "LAST SEEN"),
+      h("h1", { class: "archive-title" }, "COLD CASE"),
       h(
         "p",
         { class: "archive-sub" },
@@ -110,7 +110,9 @@ async function openCase(host: HTMLElement, entry: CaseManifestEntry, card: HTMLB
     // chunk failed to load (offline before first cache, flaky network) — recover
     card.removeAttribute("disabled");
     card.classList.remove("archive-loading");
-    card.querySelector(".archive-status")!.textContent = "Load failed — tap to retry";
+    const status = card.querySelector(".archive-status");
+    if (status) status.textContent = "Load failed — tap to retry";
+    else renderCaseSelect(host); // detached card (next-case jump) — fall back to the archive
   }
 }
 
@@ -118,6 +120,7 @@ function buildProfileButton(host: HTMLElement): HTMLElement {
   const xp = totalXp(loadSave());
   const { rank, index } = rankFor(xp);
   const solved = CASE_MANIFEST.filter((e) => caseProgress(e.id).completed).length;
+  const streak = currentStreak();
   const btn = h(
     "button",
     { class: "archive-profile-btn", type: "button" },
@@ -128,7 +131,9 @@ function buildProfileButton(host: HTMLElement): HTMLElement {
       h("span", { class: "archive-profile-rank" }, rank.name),
       h("span", { class: "archive-profile-sub" }, `${xp} XP · ${solved}/${CASE_MANIFEST.length} cases closed`),
     ),
-    h("span", { class: "archive-profile-chev" }, "›"),
+    streak.count >= 2
+      ? h("span", { class: "archive-streak", "aria-label": `${streak.count} day streak` }, `🔥 ${streak.count}`)
+      : h("span", { class: "archive-profile-chev" }, "›"),
   );
   btn.addEventListener("click", () => renderProfile(host));
   return btn;
@@ -148,6 +153,7 @@ export function renderProfile(host: HTMLElement): void {
   const totalStars = CASE_MANIFEST.reduce((sum, e) => sum + (caseProgress(e.id).stars ?? 0), 0);
   const canon = CASE_MANIFEST.filter((e) => caseProgress(e.id).canonReached).length;
   const have = unlockedAchievements();
+  const streak = currentStreak();
 
   const root = h("div", { class: "archive" });
 
@@ -182,7 +188,7 @@ export function renderProfile(host: HTMLElement): void {
     statCell(`${totalStars}`, "Stars earned"),
     statCell(`${have.size}/${ACHIEVEMENTS.length}`, "Achievements"),
     statCell(String(xp), "Total XP"),
-    statCell(`${CASE_MANIFEST.length - solved}`, "Cases left"),
+    statCell(streak.count > 0 ? `🔥 ${streak.count}` : "—", streak.best > streak.count ? `Day streak · best ${streak.best}` : "Day streak"),
   );
 
   const grid = h("div", { class: "profile-achv-grid" });
@@ -268,6 +274,11 @@ function bootCase(host: HTMLElement, caseFile: CaseFile): void {
     apps: buildAppRegistry(),
     host,
     onExit: () => renderCaseSelect(host),
+    onNextCase: () => {
+      const next = nextUnfinishedCase(caseFile.id);
+      if (next) void openCase(host, next, h("button") as HTMLButtonElement);
+      else renderCaseSelect(host);
+    },
   });
   rt.push(buildLockScreen(rt), { transition: "none" });
   if (caseProgress(caseFile.id).unlocked) {
@@ -275,4 +286,15 @@ function bootCase(host: HTMLElement, caseFile: CaseFile): void {
     rt.push(buildHomeScreen(rt), { transition: "none" });
   }
   syncAmbient();
+}
+
+/** The next case after `currentId` that hasn't been completed (wraps around). */
+export function nextUnfinishedCase(currentId: string): CaseManifestEntry | undefined {
+  const n = CASE_MANIFEST.length;
+  const start = CASE_MANIFEST.findIndex((e) => e.id === currentId);
+  for (let i = 1; i <= n; i++) {
+    const entry = CASE_MANIFEST[(start + i) % n];
+    if (!caseProgress(entry.id).completed) return entry;
+  }
+  return undefined;
 }

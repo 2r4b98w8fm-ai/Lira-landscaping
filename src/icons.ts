@@ -178,6 +178,18 @@ const GLYPHS: Record<IconName, { bg: string; bg2: string; glyph: string }> = {
     glyph:
       '<path d="M32 46s-14-8-14-18a8 8 0 0 1 14-5 8 8 0 0 1 14 5c0 10-14 18-14 18z" fill="#fff"/>',
   },
+  glimpse: {
+    bg: "#f74a7e",
+    bg2: "#8a3ff0",
+    glyph:
+      '<rect x="15" y="15" width="34" height="34" rx="11" fill="none" stroke="#fff" stroke-width="4"/><circle cx="32" cy="32" r="8.5" fill="none" stroke="#fff" stroke-width="4"/><circle cx="42.5" cy="21.5" r="2.6" fill="#fff"/>',
+  },
+  chatter: {
+    bg: "#4ab6ff",
+    bg2: "#0a6cff",
+    glyph:
+      '<path d="M16 18h32a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H30l-9 8v-8h-5a3 3 0 0 1-3-3V21a3 3 0 0 1 3-3z" fill="#fff"/><path d="M23 27h18M23 34h12" stroke="#4ab6ff" stroke-width="3.4" stroke-linecap="round"/>',
+  },
 };
 
 let iconUid = 0;
