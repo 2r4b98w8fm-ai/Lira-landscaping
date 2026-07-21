@@ -2,8 +2,11 @@ import type { DeviceRuntime } from "../device/runtime";
 import type { Verdict } from "../types";
 import { h } from "../lib/dom";
 import { citableEvidence, type CitableItem } from "../validator";
-import { persist } from "../save";
+import { loadSave, persist, settings } from "../save";
 import { triggerGlitch } from "../glitch";
+import { playStinger } from "../audio";
+import { scoreCase, totalXp, rankFor, evaluateAchievements, type CaseScore } from "../progression";
+import { vibrate } from "../lib/haptics";
 
 const APP_LABELS: Record<string, string> = {
   messages: "Messages",
@@ -109,17 +112,109 @@ export function openReport(rt: DeviceRuntime): HTMLElement {
     if (!chosenVerdict) return;
     // score every verdict against the citation set; closest match tells the epilogue
     const best = closestVerdict(rt.caseFile.verdicts, chosenVerdict, cited);
+    const score = scoreCase(rt.caseFile, rt.progress, best.id, cited);
     rt.progress.verdictChosen = best.id;
     rt.progress.citedEvidence = [...cited];
     rt.progress.completed = true;
+    rt.progress.canonReached = score.canonReached;
+    rt.progress.stars = Math.max(rt.progress.stars ?? 0, score.stars);
+    rt.progress.bestScore = Math.max(rt.progress.bestScore ?? 0, score.points);
+    rt.progress.solvedHard = rt.progress.solvedHard || !!settings().hardMode;
+    rt.progress.allNotesUnlocked =
+      rt.caseFile.notes.filter((n) => n.lock).every((n) => rt.progress.unlockedNotes.includes(n.id));
     persist();
+    const newAchievements = evaluateAchievements();
     triggerGlitch(500);
+    playStinger();
+    vibrate([16, 40, 24]);
     body.replaceChildren();
-    renderEpilogue(rt, body, best.id, [...cited]);
+    renderResults(rt, body, best.id, [...cited], score, newAchievements);
     body.scrollTop = 0;
   });
 
   return view;
+}
+
+function renderResults(
+  rt: DeviceRuntime,
+  body: HTMLElement,
+  verdictId: string,
+  cited: string[],
+  score: CaseScore,
+  newAchievements: import("../progression").Achievement[],
+): void {
+  const xp = totalXp(loadSave());
+  const { rank, next, progress } = rankFor(xp);
+
+  const results = h("div", { class: "results" });
+  results.appendChild(h("p", { class: "results-kicker" }, "Case Closed"));
+
+  // stars, animated in
+  const starRow = h("div", { class: "results-stars", "aria-label": `${score.stars} of 3 stars` });
+  for (let i = 0; i < 3; i++) {
+    const star = h("span", { class: "results-star" }, "★");
+    starRow.appendChild(star);
+    if (i < score.stars) {
+      window.setTimeout(() => {
+        star.classList.add("results-star-on");
+        playStinger();
+        vibrate(12);
+      }, 350 + i * 380);
+    }
+  }
+  results.appendChild(starRow);
+  results.appendChild(
+    h("p", { class: "results-verdict" }, score.canonReached ? "You reached the truth of it." : "Report filed. The truth may run deeper."),
+  );
+
+  // score breakdown
+  const breakdown = h("div", { class: "results-breakdown" });
+  for (const line of score.lines) {
+    breakdown.appendChild(
+      h(
+        "div",
+        { class: `results-line${line.got ? " results-line-got" : ""}` },
+        h("span", { class: "results-line-check" }, line.got ? "✓" : "—"),
+        h("span", { class: "results-line-label" }, line.label),
+        h("span", { class: "results-line-pts" }, line.got ? `+${line.points}` : "0"),
+      ),
+    );
+  }
+  results.appendChild(breakdown);
+  results.appendChild(
+    h(
+      "div",
+      { class: "results-xp" },
+      h("div", { class: "results-xp-head" }, h("span", {}, rank.name), h("span", {}, next ? `${xp} / ${next.at} XP` : `${xp} XP · max rank`)),
+      h("div", { class: "results-xp-bar" }, (() => {
+        const fill = h("div", { class: "results-xp-fill" });
+        window.setTimeout(() => (fill.style.width = `${Math.round(progress * 100)}%`), 200);
+        return fill;
+      })()),
+    ),
+  );
+
+  body.appendChild(results);
+
+  // achievement pop-ins
+  if (newAchievements.length) {
+    const shelf = h("div", { class: "results-achv" });
+    shelf.appendChild(h("p", { class: "section-label" }, "Achievements unlocked"));
+    newAchievements.forEach((a, i) => {
+      const card = h(
+        "div",
+        { class: "achv-pop" },
+        h("span", { class: "achv-emoji" }, a.emoji),
+        h("span", { class: "row-main" }, h("span", { class: "row-title" }, a.name), h("span", { class: "row-sub" }, a.desc)),
+      );
+      shelf.appendChild(card);
+      window.setTimeout(() => card.classList.add("achv-pop-in"), 1500 + i * 300);
+    });
+    body.appendChild(shelf);
+  }
+
+  // the epilogue, revealed after the celebration
+  renderEpilogue(rt, body, verdictId, cited);
 }
 
 function closestVerdict(verdicts: Verdict[], chosenId: string, cited: Set<string>): Verdict {

@@ -39,6 +39,7 @@ export function openPhotos(rt: DeviceRuntime, targetId?: string): HTMLElement {
       if (!rt.progress.deletedFolderFound) {
         rt.progress.deletedFolderFound = true;
         persist();
+        rt.awardCheck();
       }
       rt.push(deletedFolder(rt, deleted));
     });
@@ -143,6 +144,11 @@ function photoViewer(rt: DeviceRuntime, start: Photo, album: Photo[]): HTMLEleme
         if (hintShown) {
           hintShown = false;
           stage.querySelector(".photo-flash-hint")?.remove();
+          if (!rt.progress.flashlightUsed) {
+            rt.progress.flashlightUsed = true;
+            persist();
+            rt.awardCheck();
+          }
         }
       };
       stage.addEventListener("pointerdown", (e) => {

@@ -255,6 +255,14 @@ export interface CaseProgress {
   citedEvidence?: string[];
   completed: boolean;
   lowBatteryWarned: boolean;
+  /** Progression, set when a report is filed. */
+  stars?: number;
+  bestScore?: number;
+  canonReached?: boolean;
+  solvedHard?: boolean;
+  allNotesUnlocked?: boolean;
+  codeNoHint?: boolean;
+  flashlightUsed?: boolean;
 }
 
 export interface PlayerSettings {
@@ -273,4 +281,6 @@ export interface SaveFile {
   playerId: string;
   settings: PlayerSettings;
   cases: Record<string, CaseProgress>;
+  /** Unlocked achievement ids. */
+  achievements?: string[];
 }

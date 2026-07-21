@@ -5,6 +5,7 @@ import { clockTime } from "../lib/time";
 import { mountGlitchLayer, triggerGlitch } from "../glitch";
 import { playStinger } from "../audio";
 import { appIconSvg, uiGlyph } from "../icons";
+import { evaluateAchievements } from "../progression";
 
 export interface AppDef {
   id: string;
@@ -240,6 +241,13 @@ export class DeviceRuntime {
     persist();
     this.destroy();
     this.onExit();
+  }
+
+  /** Re-check achievements and toast any freshly unlocked ones in-phone. */
+  awardCheck(): void {
+    for (const a of evaluateAchievements()) {
+      this.notify({ icon: "report", title: `🏆 ${a.name}`, body: a.desc });
+    }
   }
 
   // -- notifications ---------------------------------------------------------------

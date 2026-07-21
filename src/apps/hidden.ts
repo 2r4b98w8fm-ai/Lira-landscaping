@@ -30,6 +30,7 @@ export function openHidden(rt: DeviceRuntime): HTMLElement {
       persist();
       triggerGlitch(650);
       playStinger();
+      window.setTimeout(() => rt.awardCheck(), 1200);
     }
     rt.markViewed(`${rt.caseFile.id}.hidden`);
 

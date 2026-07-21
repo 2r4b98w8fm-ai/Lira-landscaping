@@ -1,12 +1,13 @@
 import type { CaseFile } from "./types";
 import { CASE_MANIFEST, loadCase, type CaseManifestEntry } from "./cases";
 import { h, clear } from "./lib/dom";
-import { caseProgress } from "./save";
+import { caseProgress, loadSave } from "./save";
 import { DeviceRuntime } from "./device/runtime";
 import { buildAppRegistry } from "./device/apps";
 import { buildLockScreen } from "./device/lockscreen";
 import { buildHomeScreen } from "./device/homescreen";
 import { syncAmbient } from "./audio";
+import { totalXp, rankFor, ACHIEVEMENTS, unlockedAchievements, RANKS } from "./progression";
 
 /**
  * The out-of-fiction shell: a case archive. Selecting a case lazily loads
@@ -30,12 +31,14 @@ export function renderCaseSelect(host: HTMLElement): void {
     ),
   );
 
+  root.appendChild(buildProfileButton(host));
   root.appendChild(buildHowToPanel());
 
   const list = h("div", { class: "archive-list", role: "list" });
   for (const entry of CASE_MANIFEST) {
     const p = caseProgress(entry.id);
     const status = p.completed ? "Report filed" : p.unlocked ? "In progress" : "Unopened";
+    const stars = p.stars ?? 0;
     const card = h(
       "button",
       { class: `archive-card${p.completed ? " archive-done" : ""}`, type: "button", role: "listitem" },
@@ -52,6 +55,23 @@ export function renderCaseSelect(host: HTMLElement): void {
       h("h2", { class: "archive-card-title" }, entry.title),
       h("p", { class: "archive-card-victim" }, entry.victimName),
       h("p", { class: "archive-card-summary" }, entry.deck),
+      h(
+        "div",
+        { class: "archive-card-meta" },
+        h(
+          "span",
+          { class: "diff-pips", "aria-label": `Difficulty ${entry.difficulty} of 3` },
+          ...[1, 2, 3].map((n) => h("span", { class: `diff-pip${n <= entry.difficulty ? " diff-pip-on" : ""}` })),
+        ),
+        h("span", { class: "diff-label" }, ["", "Gentle", "Tricky", "Brutal"][entry.difficulty]),
+        p.completed
+          ? h(
+              "span",
+              { class: "card-stars", "aria-label": `${stars} of 3 stars` },
+              ...[1, 2, 3].map((n) => h("span", { class: n <= stars ? "card-stars-on" : "" }, "★")),
+            )
+          : null,
+      ),
       h(
         "p",
         { class: "archive-cw" },
@@ -92,6 +112,114 @@ async function openCase(host: HTMLElement, entry: CaseManifestEntry, card: HTMLB
     card.classList.remove("archive-loading");
     card.querySelector(".archive-status")!.textContent = "Load failed — tap to retry";
   }
+}
+
+function buildProfileButton(host: HTMLElement): HTMLElement {
+  const xp = totalXp(loadSave());
+  const { rank, index } = rankFor(xp);
+  const solved = CASE_MANIFEST.filter((e) => caseProgress(e.id).completed).length;
+  const btn = h(
+    "button",
+    { class: "archive-profile-btn", type: "button" },
+    h("span", { class: "archive-profile-badge" }, rankBadge(index)),
+    h(
+      "span",
+      { class: "archive-profile-main" },
+      h("span", { class: "archive-profile-rank" }, rank.name),
+      h("span", { class: "archive-profile-sub" }, `${xp} XP · ${solved}/${CASE_MANIFEST.length} cases closed`),
+    ),
+    h("span", { class: "archive-profile-chev" }, "›"),
+  );
+  btn.addEventListener("click", () => renderProfile(host));
+  return btn;
+}
+
+const RANK_BADGES = ["🔰", "🥉", "🥈", "🥇", "🎖️", "🏅", "⭐", "💎"];
+function rankBadge(index: number): string {
+  return RANK_BADGES[Math.min(index, RANK_BADGES.length - 1)];
+}
+
+export function renderProfile(host: HTMLElement): void {
+  clear(host);
+  const save = loadSave();
+  const xp = totalXp(save);
+  const { rank, index, next, progress } = rankFor(xp);
+  const solved = CASE_MANIFEST.filter((e) => caseProgress(e.id).completed).length;
+  const totalStars = CASE_MANIFEST.reduce((sum, e) => sum + (caseProgress(e.id).stars ?? 0), 0);
+  const canon = CASE_MANIFEST.filter((e) => caseProgress(e.id).canonReached).length;
+  const have = unlockedAchievements();
+
+  const root = h("div", { class: "archive" });
+
+  const back = h("button", { class: "dossier-skip", type: "button" }, "‹ Back to case files");
+  back.addEventListener("click", () => renderCaseSelect(host));
+  root.appendChild(back);
+
+  const hero = h(
+    "div",
+    { class: "profile-hero" },
+    h("div", { class: "profile-badge" }, rankBadge(index)),
+    h("div", { class: "profile-rank" }, rank.name),
+    h(
+      "div",
+      { class: "profile-xp-line" },
+      next ? `${xp} / ${next.at} XP · ${RANKS[index + 1].name} next` : `${xp} XP · maximum rank`,
+    ),
+    (() => {
+      const bar = h("div", { class: "profile-xp-bar" });
+      const fill = h("div", { class: "profile-xp-fill" });
+      bar.appendChild(fill);
+      window.setTimeout(() => (fill.style.width = `${Math.round(progress * 100)}%`), 120);
+      return bar;
+    })(),
+  );
+
+  const stats = h(
+    "div",
+    { class: "profile-stats" },
+    statCell(String(solved), "Cases closed"),
+    statCell(String(canon), "True endings"),
+    statCell(`${totalStars}`, "Stars earned"),
+    statCell(`${have.size}/${ACHIEVEMENTS.length}`, "Achievements"),
+    statCell(String(xp), "Total XP"),
+    statCell(`${CASE_MANIFEST.length - solved}`, "Cases left"),
+  );
+
+  const grid = h("div", { class: "profile-achv-grid" });
+  for (const a of ACHIEVEMENTS) {
+    const unlocked = have.has(a.id);
+    grid.appendChild(
+      h(
+        "div",
+        { class: `profile-achv${unlocked ? "" : " profile-achv-locked"}` },
+        h("span", { class: "profile-achv-emoji" }, unlocked ? a.emoji : "🔒"),
+        h("span", { class: "profile-achv-name" }, a.name),
+        h("span", { class: "profile-achv-desc" }, a.desc),
+      ),
+    );
+  }
+
+  root.appendChild(
+    h(
+      "div",
+      { class: "profile" },
+      hero,
+      h("h2", { class: "section-label" }, "Statistics"),
+      stats,
+      h("h2", { class: "section-label" }, "Achievements"),
+      grid,
+    ),
+  );
+  host.appendChild(root);
+}
+
+function statCell(num: string, label: string): HTMLElement {
+  return h(
+    "div",
+    { class: "profile-stat" },
+    h("div", { class: "profile-stat-num" }, num),
+    h("div", { class: "profile-stat-label" }, label),
+  );
 }
 
 function buildHowToPanel(): HTMLElement {

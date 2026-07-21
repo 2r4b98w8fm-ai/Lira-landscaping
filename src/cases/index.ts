@@ -16,6 +16,8 @@ export interface CaseManifestEntry {
   contentWarningLevel: 1 | 2 | 3;
   /** One-line archive teaser (the full summary lives in the case file). */
   deck: string;
+  /** Puzzle difficulty, shown as pips on the archive card. 1 = gentle, 3 = brutal. */
+  difficulty: 1 | 2 | 3;
   load: () => Promise<CaseFile>;
 }
 
@@ -26,6 +28,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Wren Castellan, 26",
     contentWarningLevel: 2,
     deck: "Three weeks in Unit 4B, above a flower shop that never reopens. The door was locked from inside.",
+    difficulty: 2,
     load: () => import("./case01").then((m) => m.default),
   },
   {
@@ -34,6 +37,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Mara Quist, 31",
     contentWarningLevel: 2,
     deck: "Her last passenger isn't in any system. He knew her schedule better than she did.",
+    difficulty: 2,
     load: () => import("./case02").then((m) => m.default),
   },
   {
@@ -42,6 +46,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Edith Marsh, 58",
     contentWarningLevel: 2,
     deck: "A support circle that promises you'll never carry it alone — for exactly one year.",
+    difficulty: 2,
     load: () => import("./case03").then((m) => m.default),
   },
   {
@@ -50,6 +55,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "June Pell, 24",
     contentWarningLevel: 3,
     deck: "Same booth, same order, exact change, every night since 1961. Her photos of him never come out.",
+    difficulty: 3,
     load: () => import("./case04").then((m) => m.default),
   },
   {
@@ -58,6 +64,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Omar Reyes-Vance, 34",
     contentWarningLevel: 2,
     deck: "His badge keeps clocking into a shift payroll cancelled months ago. His truck never left the lot.",
+    difficulty: 2,
     load: () => import("./case05").then((m) => m.default),
   },
   {
@@ -66,6 +73,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Casey Brandt, 20",
     contentWarningLevel: 2,
     deck: "$150 a night, cash, to sleep in a building the university says has been empty since 2021.",
+    difficulty: 2,
     load: () => import("./case06").then((m) => m.default),
   },
   {
@@ -74,6 +82,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Andre Boudreaux, 29",
     contentWarningLevel: 2,
     deck: "Thirty-four deliveries to an address that doesn't exist. The van came back without him.",
+    difficulty: 2,
     load: () => import("./case07").then((m) => m.default),
   },
   {
@@ -82,6 +91,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Maddie Okafor, 17",
     contentWarningLevel: 3,
     deck: "Five sits for a verified family at a condemned address. The one rule: never check on the children.",
+    difficulty: 3,
     load: () => import("./case08").then((m) => m.default),
   },
   {
@@ -90,6 +100,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Hal Brennan, 45",
     contentWarningLevel: 2,
     deck: "He filed 214 tips on his neighbors. Then the tips started being about him.",
+    difficulty: 3,
     load: () => import("./case09").then((m) => m.default),
   },
   {
@@ -98,6 +109,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Farrah Haddad, 34",
     contentWarningLevel: 2,
     deck: "Her phone synced one final batch — from a meadow the retreat insists doesn't exist.",
+    difficulty: 2,
     load: () => import("./case10").then((m) => m.default),
   },
   {
@@ -106,6 +118,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Marcus Bell, 33",
     contentWarningLevel: 3,
     deck: "The group chat is lively. The friends stopped being the ones typing, one by one, in order.",
+    difficulty: 3,
     load: () => import("./case11").then((m) => m.default),
   },
   {
@@ -114,6 +127,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Sadie Kwan, 26",
     contentWarningLevel: 2,
     deck: "Twenty-minute walks. Hours inside. The dog kept pawing a wall the floor plan calls empty.",
+    difficulty: 1,
     load: () => import("./case12").then((m) => m.default),
   },
   {
@@ -122,6 +136,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Milo Grieves, 41",
     contentWarningLevel: 2,
     deck: "He rented out the tunnels under five buildings to a buyer who pays odd numbers. The last payment cleared at 11:03 PM.",
+    difficulty: 3,
     load: () => import("./case13").then((m) => m.default),
   },
   {
@@ -130,6 +145,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Wade Kessler, 37",
     contentWarningLevel: 2,
     deck: "A violent supercell only his app can see, parked over the same field — for thirty-eight years.",
+    difficulty: 2,
     load: () => import("./case14").then((m) => m.default),
   },
   {
@@ -138,6 +154,7 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
     victimName: "Pris Navarro, 27",
     contentWarningLevel: 2,
     deck: "A late-night study call whose participants' numbers were never issued. The math was excellent.",
+    difficulty: 3,
     load: () => import("./case15").then((m) => m.default),
   },
 ];

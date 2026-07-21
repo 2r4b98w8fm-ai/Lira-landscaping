@@ -51,10 +51,12 @@ function openNote(rt: DeviceRuntime, note: Note): void {
         title: note.title,
         hintText: note.lock!.hintText,
         solution: note.lock!.code,
-        onSolved: () => {
+        onSolved: (usedHint) => {
           rt.progress.unlockedNotes.push(note.id);
+          rt.progress.codeNoHint = (rt.progress.codeNoHint ?? true) && !usedHint;
           persist();
           triggerGlitch(350);
+          rt.awardCheck();
           rt.pop();
           window.setTimeout(() => rt.push(noteView(rt, note)), 120);
         },

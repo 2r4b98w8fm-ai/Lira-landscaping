@@ -13,7 +13,7 @@ export function buildCodePad(
     title: string;
     hintText: string;
     solution: string;
-    onSolved: () => void;
+    onSolved: (usedHint: boolean) => void;
   },
 ): HTMLElement {
   const view = h("div", { class: "app app-codepad" });
@@ -21,6 +21,7 @@ export function buildCodePad(
 
   let entry = "";
   let wrongCount = 0;
+  let specificHintShown = false;
 
   const dots = h("div", { class: "code-dots", role: "status", "aria-label": "Code entry" });
   const dotEls = Array.from({ length: 4 }, () => h("span", { class: "code-dot" }));
@@ -62,7 +63,7 @@ export function buildCodePad(
   function check(): void {
     if (entry === opts.solution) {
       dots.classList.add("code-ok");
-      window.setTimeout(opts.onSolved, 250);
+      window.setTimeout(() => opts.onSolved(specificHintShown), 250);
       return;
     }
     wrongCount++;
