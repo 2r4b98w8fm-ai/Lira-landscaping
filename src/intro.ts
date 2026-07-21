@@ -22,7 +22,7 @@ export function renderIntro(host: HTMLElement, onEnter: () => void): void {
     { class: "intro-stack" },
     h("p", { class: "intro-kicker" }, "Evidence Review Terminal"),
     h("h1", { class: "intro-title" }, h("span", { class: "intro-word intro-word-1" }, "COLD"), h("span", { class: "intro-word intro-word-2" }, "CASE")),
-    h("p", { class: "intro-tag" }, "Fifteen phones. Fifteen people who were last seen — and never again."),
+    h("p", { class: "intro-tag" }, "Recovered phones. People who were last seen — and never again. Find what the phone remembers."),
     h("p", { class: "intro-enter" }, "Tap to begin"),
   );
   screen.appendChild(stack);

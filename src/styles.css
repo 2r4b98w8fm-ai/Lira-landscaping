@@ -591,7 +591,7 @@ h1, h2, h3, p { margin: 0; }
 .note-title { font-size: 22px; font-weight: 750; margin-bottom: 4px; }
 .note-date { color: var(--text-faint); font-size: 12.5px; margin-bottom: 18px; }
 .note-para { margin-bottom: 14px; font-size: 15.5px; line-height: 1.6; white-space: normal; }
-.code-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 20px; }
+.code-wrap { flex: 1 1 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 18px; padding: 20px 20px calc(24px + env(safe-area-inset-bottom)); }
 .code-prompt { font-size: 16px; color: var(--text-dim); letter-spacing: 0.08em; font-weight: 600; }
 .code-dots { display: flex; gap: 16px; }
 .code-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--text-dim); transition: background 0.12s; }
@@ -778,55 +778,74 @@ h1, h2, h3, p { margin: 0; }
 .howto-foot { color: var(--text-faint); font-size: 13px; line-height: 1.5; margin-top: 4px; }
 
 /* ---------------------------------------------------------------------------
-   Case briefing dossier (out-of-phone, dark investigator frame)
+   Case briefing dossier — reading a physical case file on the desk
 --------------------------------------------------------------------------- */
 .dossier {
-  height: 100%; overflow-y: auto;
-  background: radial-gradient(120% 90% at 50% 0%, #141821 0%, #0a0c11 70%);
-  color: #e7eaee;
+  height: 100%; overflow: hidden;
+  background:
+    radial-gradient(130% 70% at 50% -6%, rgba(184,147,63,0.15), transparent 55%),
+    radial-gradient(120% 90% at 50% 120%, rgba(0,0,0,0.55), transparent 60%),
+    linear-gradient(180deg, #1c1811 0%, #120f0a 100%);
+  color: var(--paper);
   display: flex; flex-direction: column;
-  padding: clamp(24px, 6vw, 64px) clamp(20px, 5vw, 56px);
-  max-width: 640px; margin: 0 auto; gap: 20px;
+  padding: calc(20px + env(safe-area-inset-top)) clamp(16px, 5vw, 40px) calc(16px + env(safe-area-inset-bottom));
+  max-width: 620px; margin: 0 auto; gap: 14px;
 }
-.dossier-hdr { flex-shrink: 0; }
+.dossier-hdr { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
 .dossier-kicker {
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em;
-  text-transform: uppercase; color: #6b7480;
+  font-family: var(--type); font-size: 11px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--brass);
 }
-.dossier-stage { flex: 1; display: flex; align-items: center; min-height: 340px; touch-action: pan-y; }
-.dossier-cover { display: flex; flex-direction: column; gap: 10px; }
-.dossier-file { font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em; color: #7f8b98; }
-.dossier-title { font-size: clamp(30px, 8vw, 46px); font-weight: 750; line-height: 1.05; text-wrap: balance; }
-.dossier-victim { font-size: 17px; color: #9fd8c4; font-weight: 500; }
+.dossier-hdr::after {
+  content: "CONFIDENTIAL"; font-family: var(--type); font-size: 10px; letter-spacing: 0.2em; color: var(--ox);
+  border: 1.5px solid var(--ox); border-radius: 3px; padding: 2px 6px; transform: rotate(6deg); opacity: 0.75;
+}
+/* the paper file the briefing is printed on */
+.dossier-stage {
+  flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y;
+  background:
+    repeating-linear-gradient(90deg, rgba(90,74,40,0.03) 0 3px, transparent 3px 7px),
+    linear-gradient(158deg, var(--paper) 0%, var(--paper-2) 100%);
+  border: 1px solid var(--paper-edge); border-radius: 4px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+  padding: clamp(22px, 5vw, 34px); display: flex; flex-direction: column; justify-content: center;
+  color: var(--ink);
+}
+.dossier-cover { display: flex; flex-direction: column; gap: 9px; }
+.dossier-file { font-family: var(--type); font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: var(--ox-deep); }
+.dossier-title { font-family: var(--serif); font-size: clamp(30px, 8vw, 46px); font-weight: 800; line-height: 1.04; color: var(--ink); text-wrap: balance; }
+.dossier-victim { font-family: var(--type); font-size: 13px; color: var(--ox-deep); letter-spacing: 0.02em; }
+.dossier-victim::before { content: "SUBJECT — "; color: var(--ink-faint); }
 .dossier-ruling {
-  align-self: flex-start; margin-top: 8px;
-  font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.04em;
-  color: #e0a458; border: 1px solid #5c4a2c; background: rgba(224,164,88,0.08);
-  padding: 8px 14px; border-radius: 8px;
+  align-self: flex-start; margin-top: 10px;
+  font-family: var(--type); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--ox); border: 2px solid var(--ox); background: transparent;
+  padding: 6px 12px; border-radius: 3px; transform: rotate(-3deg);
 }
-.dossier-tags { color: #6b7480; font-size: 13px; font-style: italic; margin-top: 12px; }
-.dossier-card { display: flex; flex-direction: column; gap: 14px; animation: dossier-fade 0.32s ease; }
-@keyframes dossier-fade { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.dossier-tags { color: var(--ink-faint); font-family: var(--type); font-size: 12px; font-style: italic; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(120,100,60,0.35); }
+.dossier-card { display: flex; flex-direction: column; gap: 12px; animation: dossier-fade 0.3s ease; }
+@keyframes dossier-fade { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .dossier-card { animation: none; } }
 .dossier-card-label {
-  font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: #7fd8c4;
+  font-family: var(--type); font-size: 11.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ox-deep);
 }
-.dossier-card-text { font-size: clamp(18px, 4.4vw, 22px); line-height: 1.5; color: #eef1f4; text-wrap: pretty; }
-.dossier-objective .dossier-card-label { color: #f0b7c8; }
-.dossier-objective-hint { color: #9aa3af; font-size: 14px; line-height: 1.55; margin-top: 4px; }
-.dossier-dots { display: flex; gap: 7px; justify-content: center; flex-shrink: 0; }
-.dossier-dot { width: 7px; height: 7px; border-radius: 50%; background: #2e343e; transition: background 0.2s; }
-.dossier-dot-on { background: #7fd8c4; }
+.dossier-card-text { font-family: var(--serif); font-size: clamp(17px, 4.2vw, 21px); line-height: 1.5; color: #2f2820; text-wrap: pretty; }
+.dossier-objective .dossier-card-label { color: var(--ox); }
+.dossier-objective-hint { font-family: var(--type); color: var(--ink-dim); font-size: 13px; line-height: 1.55; margin-top: 6px; padding-top: 10px; border-top: 1px dashed rgba(120,100,60,0.35); }
+.dossier-dots { display: flex; gap: 7px; justify-content: center; flex-shrink: 0; padding: 2px 0; }
+.dossier-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(184,147,63,0.28); transition: background 0.2s; }
+.dossier-dot-on { background: var(--brass); }
 .dossier-controls { display: flex; gap: 12px; flex-shrink: 0; }
 .dossier-nav {
-  flex: 1; text-align: center; padding: 15px; border-radius: 12px;
-  font-weight: 650; font-size: 15px; min-height: 48px;
+  flex: 1; text-align: center; padding: 15px; border-radius: 6px;
+  font-family: var(--type); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; min-height: 50px;
 }
-.dossier-back { background: transparent; border: 1px solid #2e343e; color: #c3ccd4; }
-.dossier-next { background: #7fd8c4; color: #08110e; }
+.dossier-back { background: transparent; border: 1px solid rgba(184,147,63,0.4); color: #cdbf9c; }
+.dossier-next { background: linear-gradient(180deg, #d9b455, #b8933f); color: #16110b; }
 .dossier-skip {
-  align-self: center; color: #6b7480; font-size: 13px; padding: 8px 16px; min-height: 44px;
+  align-self: center; font-family: var(--type); color: var(--ink-faint); font-size: 12.5px; letter-spacing: 0.04em;
+  padding: 8px 16px; min-height: 44px; color: #9a8d70;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1510,6 +1529,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* --- the room --- */
 .app-interviews.iv-room {
+  overflow: hidden;
   background:
     radial-gradient(90% 60% at 50% 34%, rgba(210,180,110,0.12), transparent 60%),
     radial-gradient(120% 90% at 50% 120%, rgba(0,0,0,0.6), transparent 60%),
@@ -1546,7 +1566,7 @@ h1, h2, h3, p { margin: 0; }
 .iv-shake { animation: iv-shake 0.4s ease; }
 @keyframes iv-shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
 
-.iv-room-scroll { flex: 1; padding: 16px 14px 8px; }
+.iv-room-scroll { flex: 1 1 0; min-height: 0; padding: 16px 14px 8px; }
 .iv-transcript { display: flex; flex-direction: column; gap: 12px; }
 .iv-said { max-width: 88%; font-size: 14.5px; line-height: 1.55; }
 .iv-said-intro { align-self: stretch; max-width: 100%; text-align: center; font-family: var(--serif); font-style: italic; color: #b6a884; padding: 4px 8px 8px; border-bottom: 1px solid #23201a; }
@@ -1566,7 +1586,8 @@ h1, h2, h3, p { margin: 0; }
 @keyframes iv-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* --- the approach options --- */
-.iv-options { padding: 10px 14px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid #201d16; background: rgba(8,7,6,0.6); display: flex; flex-direction: column; gap: 9px; max-height: 46%; overflow-y: auto; }
+.iv-options { flex: 0 0 auto; padding: 10px 14px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid #201d16; background: rgba(8,7,6,0.6); display: flex; flex-direction: column; gap: 9px; max-height: 44dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+@media (min-width: 720px) { .iv-options { max-height: 360px; } }
 .iv-choose { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8a7c5e; }
 .iv-opt {
   width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px;
