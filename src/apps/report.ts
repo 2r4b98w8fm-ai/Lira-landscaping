@@ -9,6 +9,7 @@ import { scoreCase, totalXp, rankFor, evaluateAchievements, type CaseScore } fro
 import { vibrate } from "../lib/haptics";
 import { aftermathFor } from "../cases/aftermath";
 import { nextUnfinishedCase } from "../caseselect";
+import { caseShareText, doShare } from "../share";
 
 const APP_LABELS: Record<string, string> = {
   messages: "Messages",
@@ -195,6 +196,22 @@ function renderResults(
       })()),
     ),
   );
+
+  // Spoiler-free share card — the virality hook, revealed with the stars.
+  const shareBtn = h("button", { class: "results-share", type: "button" }, "📣  Share your result");
+  shareBtn.addEventListener("click", () => {
+    void doShare(
+      caseShareText({
+        title: rt.caseFile.title,
+        stars: score.stars,
+        canonReached: score.canonReached,
+        usedHint: !rt.progress.codeNoHint,
+        confession: !!rt.progress.confessionHeard,
+      }),
+      { title: `COLD CASE — ${rt.caseFile.title}` },
+    );
+  });
+  results.appendChild(shareBtn);
 
   body.appendChild(results);
 

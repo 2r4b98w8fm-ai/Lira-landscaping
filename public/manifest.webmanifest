@@ -1,11 +1,13 @@
 {
-  "name": "LAST SEEN",
-  "short_name": "LAST SEEN",
-  "description": "Explore recovered phones and piece together what happened.",
+  "name": "COLD CASE",
+  "short_name": "COLD CASE",
+  "description": "Read a missing person's recovered phone, question the suspects, and file your verdict. A free noir detective game.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#07080a",
-  "theme_color": "#07080a",
+  "orientation": "portrait",
+  "background_color": "#0e0c08",
+  "theme_color": "#0e0c08",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "/icon.svg",

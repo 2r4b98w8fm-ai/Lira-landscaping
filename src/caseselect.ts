@@ -12,6 +12,7 @@ import { buildLockScreen } from "./device/lockscreen";
 import { buildHomeScreen } from "./device/homescreen";
 import { syncAmbient, syncMenuMusic, stopMenuMusic } from "./audio";
 import { totalXp, rankFor, ACHIEVEMENTS, unlockedAchievements, RANKS } from "./progression";
+import { profileShareText, doShare } from "./share";
 
 /**
  * The out-of-fiction shell: a case archive. Selecting a case lazily loads
@@ -341,6 +342,15 @@ export function renderProfile(host: HTMLElement): void {
       "div",
       { class: "profile" },
       hero,
+      (() => {
+        const share = h("button", { class: "profile-share", type: "button" }, "📣  Share your detective card");
+        share.addEventListener("click", () => {
+          void doShare(profileShareText({ solved, total: PLAYABLE.length, canon, stars: totalStars }), {
+            title: "COLD CASE — my case file",
+          });
+        });
+        return share;
+      })(),
       h("h2", { class: "section-label" }, "Statistics"),
       stats,
       h("h2", { class: "section-label" }, "Detective ID"),
