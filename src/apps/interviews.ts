@@ -2,28 +2,36 @@ import type { DeviceRuntime } from "../device/runtime";
 import { h, svgEl } from "../lib/dom";
 import { persist, settings } from "../save";
 import { uiGlyph } from "../icons";
-import { playTap } from "../audio";
+import { playTap, playStinger } from "../audio";
 import { vibrate } from "../lib/haptics";
-import { interrogationFor, type Suspect, type SuspectQuestion, type QEffect } from "../cases/interviews";
+import { interrogationFor, type Suspect, type Line, type Tactic, type Outcome } from "../cases/interviews";
 
 /**
- * The Interview Room — the investigator's own tool on the evidence terminal.
- * Question persons of interest by text; press them with evidence you've
- * found. Answers are tagged guilt / cleared / stonewall / redirect.
+ * The Interview Room — a branching interrogation. Pick a tactic; the suspect's
+ * composure moves. Read them right and they break; push wrong and they wall up
+ * and lawyer out. Different choices, different endings.
  */
 
-const EFFECT: Record<QEffect, { tag: string; cls: string }> = {
-  guilt: { tag: "● INCRIMINATING", cls: "iv-guilt" },
-  cleared: { tag: "● CLEARED", cls: "iv-cleared" },
-  stonewall: { tag: "● NO COMMENT", cls: "iv-stonewall" },
-  redirect: { tag: "→ POINTS ELSEWHERE", cls: "iv-redirect" },
+const TACTIC: Record<Tactic, { label: string; glyph: string; cls: string }> = {
+  press: { label: "PRESS", glyph: "🔨", cls: "iv-t-press" },
+  empathize: { label: "EMPATHIZE", glyph: "🤝", cls: "iv-t-emp" },
+  bluff: { label: "BLUFF", glyph: "🎭", cls: "iv-t-bluff" },
+  evidence: { label: "EVIDENCE", glyph: "📎", cls: "iv-t-ev" },
+  probe: { label: "PROBE", glyph: "🔍", cls: "iv-t-probe" },
+};
+
+const OUTCOME_UI: Record<Outcome, { title: string; sub: string; cls: string }> = {
+  confession: { title: "SUBJECT BROKE", sub: "Confession on the record.", cls: "iv-out-guilt" },
+  cleared: { title: "SUBJECT CLEARED", sub: "Their account holds. Rule them out.", cls: "iv-out-cleared" },
+  clammed: { title: "SUBJECT LAWYERED UP", sub: "Interview suspended. You pushed too hard — try again.", cls: "iv-out-clam" },
+  redirect: { title: "NEW LEAD", sub: "They've handed you the next name.", cls: "iv-out-lead" },
 };
 
 export function openInterviews(rt: DeviceRuntime, targetId?: string): HTMLElement {
   const data = interrogationFor(rt.caseFile.id);
   const view = h("div", { class: "app app-interviews" });
   view.appendChild(rt.appHeader("Interview Room"));
-  const body = h("div", { class: "app-scroll" });
+  const body = h("div", { class: "app-scroll iv-list" });
   view.appendChild(body);
 
   if (!data) {
@@ -32,24 +40,27 @@ export function openInterviews(rt: DeviceRuntime, targetId?: string): HTMLElemen
   }
 
   body.appendChild(h("p", { class: "iv-brief" }, data.brief));
-  body.appendChild(h("h2", { class: "section-label" }, "Persons of interest"));
+  body.appendChild(h("h2", { class: "iv-section" }, "Persons of Interest"));
 
   for (const s of data.suspects) {
-    const status = suspectStatus(rt, s);
-    const rowEl = h(
+    const outcome = rt.progress.interviewOutcomes?.[s.id];
+    const card = h(
       "button",
-      { class: "iv-row", type: "button" },
-      h("span", { class: "iv-avatar", style: `--iv-hue:${s.hue}`, "aria-hidden": "true" }, initials(s.name)),
+      { class: "iv-file", type: "button", style: `--iv-hue:${s.hue}` },
+      svgEl(mugshot(s), "iv-mug"),
       h(
         "span",
-        { class: "row-main" },
-        h("span", { class: "iv-name" }, s.name),
-        h("span", { class: "row-sub" }, s.role),
+        { class: "iv-file-main" },
+        h("span", { class: "iv-file-name" }, s.name),
+        h("span", { class: "iv-file-role" }, s.role),
+        outcome
+          ? h("span", { class: `iv-file-verdict iv-v-${outcome}` }, outcomeLabel(outcome))
+          : h("span", { class: "iv-file-status" }, "PERSON OF INTEREST"),
       ),
-      status ? h("span", { class: `iv-chip ${status.cls}` }, status.label) : svgEl(uiGlyph("chevron"), "glyph row-chevron"),
+      svgEl(uiGlyph("chevron"), "glyph iv-file-chev"),
     );
-    rowEl.addEventListener("click", () => rt.push(suspectView(rt, s)));
-    body.appendChild(rowEl);
+    card.addEventListener("click", () => rt.push(suspectView(rt, s)));
+    body.appendChild(card);
   }
 
   if (targetId) {
@@ -59,133 +70,260 @@ export function openInterviews(rt: DeviceRuntime, targetId?: string): HTMLElemen
   return view;
 }
 
-/** A short read on a suspect from the answers you've already gotten. */
-function suspectStatus(rt: DeviceRuntime, s: Suspect): { label: string; cls: string } | null {
-  const asked = rt.progress.interviewAsked ?? [];
-  const got = s.questions.filter((q) => asked.includes(q.id));
-  if (!got.length) return null;
-  if (got.some((q) => q.effect === "guilt")) return { label: "SUSPECT", cls: "iv-guilt" };
-  if (got.every((q) => q.effect === "cleared")) return { label: "CLEARED", cls: "iv-cleared" };
-  if (got.some((q) => q.effect === "redirect")) return { label: "LEAD", cls: "iv-redirect" };
-  return { label: "STONEWALLING", cls: "iv-stonewall" };
+function outcomeLabel(o: Outcome): string {
+  return { confession: "● CONFESSION", cleared: "● CLEARED", clammed: "● STONEWALLED", redirect: "→ LEAD GIVEN" }[o];
 }
 
-function suspectView(rt: DeviceRuntime, s: Suspect): HTMLElement {
-  const view = h("div", { class: "app app-interviews" });
-  view.appendChild(rt.appHeader(s.name));
-  const body = h("div", { class: "app-scroll iv-thread" });
-  view.appendChild(body);
+// ---------------------------------------------------------------------------
+// The interrogation itself
+// ---------------------------------------------------------------------------
 
-  body.appendChild(
+function suspectView(rt: DeviceRuntime, s: Suspect): HTMLElement {
+  const view = h("div", { class: "app app-interviews iv-room", style: `--iv-hue:${s.hue}` });
+  view.appendChild(rt.appHeader(s.name));
+
+  // --- state ---
+  let composure = s.composure;
+  let guard = 0;
+  const guardMax = s.guardMax ?? 3;
+  const flags = new Set<string>();
+  const used = new Set<string>();
+  let over = false;
+
+  // --- suspect file / meter header ---
+  const meterFill = h("div", { class: "iv-meter-fill" });
+  const meterWord = h("span", { class: "iv-meter-word" }, "Composed");
+  const recTime = h("span", { class: "iv-rec-time" }, "00:00");
+  const fileCard = h(
+    "div",
+    { class: "iv-room-file" },
     h(
       "div",
-      { class: "iv-suspect-head" },
-      h("span", { class: "iv-avatar iv-avatar-lg", style: `--iv-hue:${s.hue}`, "aria-hidden": "true" }, initials(s.name)),
-      h("span", { class: "iv-name" }, s.name),
-      h("span", { class: "iv-role" }, s.role),
+      { class: "iv-room-rec" },
+      h("span", { class: "iv-rec-dot" }),
+      h("span", {}, "REC"),
+      recTime,
+    ),
+    svgEl(mugshot(s), "iv-room-mug"),
+    h(
+      "div",
+      { class: "iv-room-id" },
+      h("span", { class: "iv-room-name" }, s.name),
+      h("span", { class: "iv-room-role" }, s.role),
+    ),
+    h(
+      "div",
+      { class: "iv-meter" },
+      h("div", { class: "iv-meter-head" }, h("span", {}, "COMPOSURE"), meterWord),
+      h("div", { class: "iv-meter-track" }, meterFill),
     ),
   );
+  view.appendChild(fileCard);
 
   const transcript = h("div", { class: "iv-transcript" });
-  transcript.appendChild(h("div", { class: "iv-bubble iv-them iv-intro" }, s.intro));
-  body.appendChild(transcript);
+  const scroll = h("div", { class: "app-scroll iv-room-scroll" }, transcript);
+  view.appendChild(scroll);
 
-  const chips = h("div", { class: "iv-questions" });
-  body.appendChild(chips);
+  const options = h("div", { class: "iv-options" });
+  view.appendChild(options);
 
-  const asked = new Set(rt.progress.interviewAsked ?? []);
+  // REC timer
+  let secs = 0;
+  const timer = window.setInterval(() => {
+    secs++;
+    recTime.textContent = `${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`;
+  }, 1000);
+  view.addEventListener("view-removed", () => window.clearInterval(timer));
 
-  // Replay any already-asked questions immediately (no animation).
-  for (const q of s.questions) {
-    if (asked.has(q.id)) appendExchange(transcript, q, false);
+  function refreshMeter(hit = false): void {
+    meterFill.style.width = `${composure}%`;
+    const state = composure > 66 ? "Composed" : composure > 33 ? "Rattled" : composure > 12 ? "Cracking" : "Breaking";
+    meterWord.textContent = state;
+    meterFill.classList.toggle("iv-meter-low", composure <= 33);
+    meterFill.classList.toggle("iv-meter-crit", composure <= 12);
+    if (hit && !settings().reducedIntensity) {
+      meterFill.classList.remove("iv-meter-hit");
+      void meterFill.offsetWidth;
+      meterFill.classList.add("iv-meter-hit");
+    }
   }
 
-  function refreshChips(): void {
-    chips.replaceChildren();
-    const remaining = s.questions.filter((q) => !asked.has(q.id));
-    if (!remaining.length) {
-      chips.appendChild(h("p", { class: "iv-done-note" }, "You've asked everything you can for now."));
-      maybeRedirect();
+  function line(cls: string, ...kids: (Node | string | null)[]): HTMLElement {
+    const el = h("div", { class: cls }, ...kids);
+    transcript.appendChild(el);
+    return el;
+  }
+  function beat(text: string): void {
+    line("iv-beat", text);
+  }
+
+  function saveOutcome(o: Outcome): void {
+    rt.progress.interviewOutcomes = { ...(rt.progress.interviewOutcomes ?? {}), [s.id]: o };
+    if (o === "confession") rt.progress.confessionHeard = true;
+    persist();
+  }
+
+  function endInterview(o: Outcome, redirectTo?: string): void {
+    over = true;
+    saveOutcome(o);
+    const ui = OUTCOME_UI[o];
+    if (o === "confession") {
+      vibrate([14, 50, 24]);
+      if (!settings().reducedIntensity) playStinger();
+    }
+    const banner = h(
+      "div",
+      { class: `iv-outcome ${ui.cls}` },
+      h("span", { class: "iv-outcome-title" }, ui.title),
+      h("span", { class: "iv-outcome-sub" }, ui.sub),
+    );
+    options.replaceChildren(banner);
+
+    if (o === "confession") window.setTimeout(() => rt.awardCheck(), 500);
+
+    if (o === "redirect" && redirectTo) {
+      const target = interrogationFor(rt.caseFile.id)?.suspects.find((x) => x.id === redirectTo);
+      if (target && target.id !== s.id) {
+        const jump = h("button", { class: "iv-jump", type: "button" }, `Bring in ${target.name} →`);
+        jump.addEventListener("click", () => rt.push(suspectView(rt, target)));
+        options.appendChild(jump);
+      }
+    }
+    if (o === "clammed") {
+      const retry = h("button", { class: "iv-retry", type: "button" }, "↺ Resume the interview");
+      retry.addEventListener("click", () => rt.push(suspectView(rt, s)));
+      options.appendChild(retry);
+    }
+    const leave = h("button", { class: "iv-leave", type: "button" }, "Leave the room");
+    leave.addEventListener("click", () => rt.pop());
+    options.appendChild(leave);
+    window.setTimeout(() => (scroll.scrollTop = scroll.scrollHeight), 40);
+  }
+
+  function isAvailable(l: Line): boolean {
+    if ((l.once ?? true) && used.has(l.id)) return false;
+    if (l.needFlag && !flags.has(l.needFlag)) return false;
+    if (l.blockFlag && flags.has(l.blockFlag)) return false;
+    if (l.minComposure != null && composure < l.minComposure) return false;
+    if (l.maxComposure != null && composure > l.maxComposure) return false;
+    return true;
+  }
+  /** Passes everything except the evidence gate (so we can show it as locked). */
+  function lockedByEvidence(l: Line): boolean {
+    return !!l.requiresEvidenceId && !rt.hasViewed(l.requiresEvidenceId) && isAvailable(l);
+  }
+
+  function renderOptions(): void {
+    if (over) return;
+    options.replaceChildren();
+    const open = s.lines.filter((l) => isAvailable(l) && (!l.requiresEvidenceId || rt.hasViewed(l.requiresEvidenceId)));
+    const locked = s.lines.filter((l) => lockedByEvidence(l));
+    if (!open.length && !locked.length) {
+      options.appendChild(h("p", { class: "iv-nothing" }, "Nothing more to pull from this one right now."));
+      const leave = h("button", { class: "iv-leave", type: "button" }, "Leave the room");
+      leave.addEventListener("click", () => rt.pop());
+      options.appendChild(leave);
       return;
     }
-    chips.appendChild(h("p", { class: "iv-prompt" }, "Ask:"));
-    for (const q of remaining) {
-      const locked = !!q.requiresEvidenceId && !rt.hasViewed(q.requiresEvidenceId);
-      const chip = h(
-        "button",
-        { class: `iv-q${locked ? " iv-q-locked" : ""}`, type: "button", disabled: locked },
-        locked ? svgEl(uiGlyph("lock"), "glyph iv-q-lock") : null,
-        h("span", {}, q.q),
-        locked ? h("span", { class: "iv-q-hint" }, "Find the evidence first") : null,
-      );
-      if (!locked) chip.addEventListener("click", () => ask(q));
-      chips.appendChild(chip);
-    }
-    maybeRedirect();
+    options.appendChild(h("p", { class: "iv-choose" }, "Choose your approach"));
+    for (const l of open) options.appendChild(optionCard(l, false));
+    for (const l of locked) options.appendChild(optionCard(l, true));
   }
 
-  function maybeRedirect(): void {
-    // If any answered question points elsewhere, offer a jump.
-    const answered = s.questions.filter((q) => asked.has(q.id));
-    const lead = answered.find((q) => q.effect === "redirect" && q.redirectTo);
-    if (!lead?.redirectTo) return;
-    const target = interrogationFor(rt.caseFile.id)?.suspects.find((x) => x.id === lead.redirectTo);
-    if (!target || target.id === s.id) return;
-    const jump = h("button", { class: "iv-jump", type: "button" }, `Go question ${target.name} →`);
-    jump.addEventListener("click", () => rt.push(suspectView(rt, target)));
-    chips.appendChild(jump);
+  function optionCard(l: Line, locked: boolean): HTMLElement {
+    const t = TACTIC[l.tactic];
+    const card = h(
+      "button",
+      { class: `iv-opt ${t.cls}${locked ? " iv-opt-locked" : ""}`, type: "button", disabled: locked },
+      h("span", { class: "iv-opt-tactic" }, h("span", { class: "iv-opt-glyph" }, t.glyph), t.label),
+      h("span", { class: "iv-opt-text" }, l.text),
+      locked ? h("span", { class: "iv-opt-lock" }, svgEl(uiGlyph("lock"), "glyph"), "Find the evidence first") : null,
+    );
+    if (!locked) card.addEventListener("click", () => choose(l));
+    return card;
   }
 
-  function ask(q: SuspectQuestion): void {
-    asked.add(q.id);
-    rt.progress.interviewAsked = [...asked];
-    if (q.effect === "guilt") rt.progress.confessionHeard = true;
-    persist();
+  function choose(l: Line): void {
+    if (over) return;
+    used.add(l.id);
     if (settings().uiSounds) playTap();
-    // your question bubble
-    const mine = h("div", { class: "iv-bubble iv-me" }, q.q);
-    transcript.appendChild(mine);
-    chips.replaceChildren();
-    // typing indicator, then the reply
+    // your line
+    line("iv-said iv-said-you", h("span", { class: "iv-speaker" }, "YOU"), h("span", {}, l.text));
+    options.replaceChildren();
+    scroll.scrollTop = scroll.scrollHeight;
+
+    const reveal = (): void => {
+      if (l.setFlag) flags.add(l.setFlag);
+      const before = composure;
+      composure = Math.max(0, Math.min(100, composure + (l.composure ?? 0)));
+      guard += l.guard ?? 0;
+      // their reply
+      line("iv-said iv-said-them", h("span", { class: "iv-speaker" }, surname(s.name)), h("span", { class: "iv-reply-in" }, l.reply));
+      refreshMeter(composure < before);
+      // narrate the shift
+      if (composure < before - 1) beat(composure <= 12 ? "— they're breaking —" : "— composure slips —");
+      if ((l.guard ?? 0) > 0) {
+        beat("— they wall up —");
+        if (!settings().reducedIntensity) {
+          fileCard.classList.remove("iv-shake");
+          void fileCard.offsetWidth;
+          fileCard.classList.add("iv-shake");
+        }
+      }
+      window.setTimeout(() => (scroll.scrollTop = scroll.scrollHeight), 20);
+
+      if (l.outcome) {
+        window.setTimeout(() => endInterview(l.outcome!, l.redirectTo), 650);
+      } else if (guard >= guardMax) {
+        if (s.clamReply) line("iv-said iv-said-them", h("span", { class: "iv-speaker" }, surname(s.name)), h("span", { class: "iv-reply-in" }, s.clamReply));
+        window.setTimeout(() => endInterview("clammed"), 650);
+      } else {
+        renderOptions();
+        window.setTimeout(() => (scroll.scrollTop = scroll.scrollHeight), 20);
+      }
+    };
+
     if (settings().reducedIntensity) {
-      appendExchange(transcript, q, false, true);
-      finish(q);
+      reveal();
     } else {
-      const typing = h("div", { class: "iv-bubble iv-them iv-typing" }, h("span"), h("span"), h("span"));
-      transcript.appendChild(typing);
-      body.scrollTop = body.scrollHeight;
+      const typing = line("iv-said iv-said-them", h("span", { class: "iv-speaker" }, surname(s.name)), h("div", { class: "iv-typing" }, h("span"), h("span"), h("span")));
+      scroll.scrollTop = scroll.scrollHeight;
       window.setTimeout(() => {
         typing.remove();
-        appendExchange(transcript, q, true, true);
-        finish(q);
-      }, 900);
+        reveal();
+      }, 850);
     }
   }
 
-  function finish(q: SuspectQuestion): void {
-    if (q.effect === "guilt") {
-      vibrate([12, 40, 20]);
-      window.setTimeout(() => rt.awardCheck(), 400);
-    }
-    refreshChips();
-    window.setTimeout(() => (body.scrollTop = body.scrollHeight), 30);
-  }
-
-  refreshChips();
+  // intro + first options
+  line("iv-said iv-said-intro", s.intro);
+  refreshMeter();
+  renderOptions();
   return view;
 }
 
-/** Append a reply bubble (+ effect tag) for an already-asked question. */
-function appendExchange(transcript: HTMLElement, q: SuspectQuestion, animate: boolean, replyOnly = false): void {
-  if (!replyOnly) transcript.appendChild(h("div", { class: "iv-bubble iv-me iv-past" }, q.q));
-  const e = EFFECT[q.effect];
-  const reply = h("div", { class: `iv-bubble iv-them${animate ? " iv-reply-in" : ""}` }, q.reply);
-  transcript.appendChild(reply);
-  transcript.appendChild(h("div", { class: `iv-tag ${e.cls}${animate ? " iv-reply-in" : ""}` }, e.tag));
+// ---------------------------------------------------------------------------
+// Procedural mugshot (silhouette bust over a height chart)
+// ---------------------------------------------------------------------------
+
+function mugshot(s: Suspect): string {
+  const h1 = s.hue;
+  return (
+    `<svg viewBox="0 0 64 72" role="img" aria-hidden="true">` +
+    `<defs><linearGradient id="mg${s.id}" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0" stop-color="hsl(${h1} 22% 32%)"/><stop offset="1" stop-color="hsl(${h1} 24% 16%)"/>` +
+    `</linearGradient></defs>` +
+    `<rect x="0" y="0" width="64" height="72" fill="url(#mg${s.id})"/>` +
+    // height-chart lines
+    Array.from({ length: 6 }, (_, i) => `<line x1="0" y1="${10 + i * 11}" x2="64" y2="${10 + i * 11}" stroke="rgba(255,255,255,0.09)" stroke-width="1"/>`).join("") +
+    // silhouette
+    `<ellipse cx="32" cy="30" rx="12" ry="14" fill="rgba(0,0,0,0.55)"/>` +
+    `<path d="M14 72 C14 54 22 47 32 47 C42 47 50 54 50 72 Z" fill="rgba(0,0,0,0.55)"/>` +
+    `</svg>`
+  );
 }
 
-function initials(name: string): string {
-  const parts = name.replace(/[^A-Za-z ]/g, "").trim().split(/\s+/);
-  if (!parts[0]) return "?";
-  return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
+function surname(name: string): string {
+  const parts = name.replace(/["'()]/g, "").trim().split(/\s+/);
+  return (parts[parts.length - 1] || name).toUpperCase();
 }

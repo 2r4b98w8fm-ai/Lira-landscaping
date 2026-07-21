@@ -273,6 +273,8 @@ export interface CaseProgress {
   lastPlayedAt?: number;
   /** Interrogation: question ids the player has already asked. */
   interviewAsked?: string[];
+  /** Interrogation outcome reached per suspect id. */
+  interviewOutcomes?: Record<string, "confession" | "cleared" | "clammed" | "redirect">;
   /** Set once a suspect has incriminated themselves in this case. */
   confessionHeard?: boolean;
 }

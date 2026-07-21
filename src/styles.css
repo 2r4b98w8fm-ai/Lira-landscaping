@@ -1480,61 +1480,130 @@ h1, h2, h3, p { margin: 0; }
 :root[data-board="slate"] .archive-kicker { color: #6f9fd0; }
 :root[data-board="slate"] .archive-section { color: #b9c8d8; border-left-color: #6f9fd0; background: linear-gradient(180deg, rgba(111,159,208,0.14), rgba(111,159,208,0.05)); }
 
-/* ---------------------------------------------------------------------------
-   Interview Room
---------------------------------------------------------------------------- */
-.iv-brief { font-size: 14px; line-height: 1.55; color: var(--text-dim); margin: 4px 2px 8px; }
-.iv-row { display: flex; align-items: center; gap: 13px; padding: 13px 4px; border-bottom: 1px solid var(--line); width: 100%; }
-.iv-avatar {
-  width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center;
-  font-weight: 700; font-size: 15px; color: #fff; letter-spacing: 0.02em;
-  background: linear-gradient(150deg, hsl(var(--iv-hue,220) 45% 52%), hsl(calc(var(--iv-hue,220) + 25) 50% 38%));
-  box-shadow: inset 0 1px 2px rgba(255,255,255,0.25);
+/* ===========================================================================
+   THE INTERVIEW ROOM — a filmic interrogation. Dark room, one lamp, a suspect
+   file with a live composure meter and a rolling tape. Not a chat app.
+=========================================================================== */
+/* --- the roster (list of persons of interest) --- */
+.app-interviews.iv-list { background: #12100c; color: #e7dcc2; }
+.iv-brief { font-size: 14px; line-height: 1.6; color: #b6a884; margin: 6px 2px 14px; font-family: var(--serif); font-style: italic; }
+.iv-section { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #cdbf9c; margin: 6px 2px 12px; }
+.iv-file {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; margin-bottom: 12px;
+  background: linear-gradient(160deg, #221d15 0%, #17120c 100%);
+  border: 1px solid rgba(184,147,63,0.28); border-radius: 6px; padding: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4); transition: border-color 0.15s, transform 0.12s;
 }
-.iv-avatar-lg { width: 62px; height: 62px; font-size: 20px; }
-.iv-name { font-weight: 700; font-size: 15.5px; }
-.iv-chip {
-  font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px;
-  border-radius: 4px; border: 1.5px solid currentColor;
+.iv-file:hover { border-color: rgba(184,147,63,0.6); transform: translateY(-1px); }
+.iv-mug { width: 52px; height: 58px; flex-shrink: 0; border-radius: 3px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+.iv-mug svg { width: 100%; height: 100%; display: block; }
+.iv-file-main { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.iv-file-name { font-family: var(--serif); font-size: 17px; font-weight: 700; color: #f0e6cd; }
+.iv-file-role { font-size: 12.5px; color: #9a8d70; }
+.iv-file-status { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; color: #b8933f; margin-top: 2px; }
+.iv-file-verdict { font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: 0.06em; margin-top: 2px; }
+.iv-v-confession { color: #e2542f; }
+.iv-v-cleared { color: #4bbf6f; }
+.iv-v-clammed { color: #9a8d70; }
+.iv-v-redirect { color: #e0a458; }
+.iv-file-chev { color: #6a5f48; }
+
+/* --- the room --- */
+.app-interviews.iv-room {
+  background:
+    radial-gradient(90% 60% at 50% 34%, rgba(210,180,110,0.12), transparent 60%),
+    radial-gradient(120% 90% at 50% 120%, rgba(0,0,0,0.6), transparent 60%),
+    linear-gradient(180deg, #0f0e0c 0%, #080706 100%);
+  color: #e7dcc2;
 }
-.iv-suspect-head { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 0 16px; text-align: center; }
-.iv-role { font-size: 13px; color: var(--text-dim); }
-.iv-transcript { display: flex; flex-direction: column; gap: 9px; }
-.iv-bubble { max-width: 84%; padding: 11px 14px; border-radius: 16px; font-size: 14.5px; line-height: 1.5; }
-.iv-them { align-self: flex-start; background: var(--bubble-them); color: var(--text); border-bottom-left-radius: 5px; }
-.iv-me { align-self: flex-end; background: var(--bubble-owner); color: #fff; border-bottom-right-radius: 5px; }
-.iv-past { opacity: 0.72; }
-.iv-intro { font-style: italic; background: var(--surface-2); color: var(--text-dim); max-width: 100%; align-self: stretch; text-align: center; border-radius: 12px; }
-.iv-tag { align-self: flex-start; font-family: var(--mono); font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 2px 6px; }
-.iv-guilt { color: #c8321f; }
-.iv-cleared { color: #1d7a3e; }
-.iv-stonewall { color: var(--text-faint); }
-.iv-redirect { color: #a05a00; }
-.iv-questions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
-.iv-prompt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); }
-.iv-q {
-  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
-  font-size: 14px; color: var(--text); min-height: 46px; transition: border-color 0.15s, transform 0.1s;
+.iv-room .app-hdr { background: rgba(12,11,9,0.9); border-bottom-color: #26221a; }
+.iv-room .hdr-title, .iv-room .hdr-back { color: #e7dcc2; }
+
+.iv-room-file {
+  margin: 8px 12px 0; padding: 13px 14px; display: grid; grid-template-columns: auto 1fr; gap: 12px 14px;
+  align-items: center; position: relative;
+  background: linear-gradient(160deg, #221d15 0%, #14100b 100%);
+  border: 1px solid rgba(184,147,63,0.3); border-radius: 8px; box-shadow: 0 8px 22px rgba(0,0,0,0.5);
 }
-.iv-q:not(.iv-q-locked):hover { border-color: var(--accent-dim); }
-.iv-q:not(.iv-q-locked):active { transform: scale(0.99); }
-.iv-q-locked { opacity: 0.6; color: var(--text-dim); }
-.iv-q-lock svg { width: 15px; height: 15px; }
-.iv-q-hint { margin-left: auto; font-size: 11px; color: var(--text-faint); font-style: italic; white-space: nowrap; }
-.iv-jump {
-  margin-top: 6px; text-align: center; width: 100%; background: #fff4e2; color: #a05a00;
-  border: 1px solid #f0d5a8; border-radius: 12px; padding: 13px; font-weight: 650; font-size: 14px; min-height: 46px;
-}
-.iv-done-note { font-size: 13px; color: var(--text-faint); font-style: italic; text-align: center; padding: 6px; }
-/* typing indicator */
-.iv-typing { display: inline-flex; gap: 4px; align-items: center; }
-.iv-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); animation: iv-blink 1s infinite; }
+.iv-room-rec { position: absolute; top: 11px; right: 13px; display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; color: #d9534f; }
+.iv-rec-dot { width: 8px; height: 8px; border-radius: 50%; background: #d9534f; animation: iv-rec 1.4s ease-in-out infinite; }
+@keyframes iv-rec { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+.iv-rec-time { color: #9a8d70; }
+.iv-room-mug { grid-row: span 2; width: 62px; height: 70px; border-radius: 4px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.6); }
+.iv-room-mug svg { width: 100%; height: 100%; display: block; }
+.iv-room-id { align-self: end; }
+.iv-room-name { display: block; font-family: var(--serif); font-size: 20px; font-weight: 750; color: #f2e8ce; }
+.iv-room-role { display: block; font-size: 12.5px; color: #9a8d70; }
+.iv-meter { grid-column: 2; }
+.iv-meter-head { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: #9a8d70; margin-bottom: 5px; }
+.iv-meter-word { color: #cdbf9c; }
+.iv-meter-track { height: 9px; background: rgba(0,0,0,0.45); border-radius: 99px; overflow: hidden; border: 1px solid rgba(184,147,63,0.2); }
+.iv-meter-fill { height: 100%; width: 100%; border-radius: 99px; background: linear-gradient(90deg, #7fe0a8, #4bbf6f); transition: width 0.6s cubic-bezier(0.25,1,0.4,1), background 0.4s; }
+.iv-meter-low { background: linear-gradient(90deg, #f0c65a, #e0a458); }
+.iv-meter-crit { background: linear-gradient(90deg, #e2542f, #b81e1e); }
+.iv-meter-hit { animation: iv-meter-hit 0.4s ease; }
+@keyframes iv-meter-hit { 0% { filter: brightness(2); } 100% { filter: none; } }
+.iv-shake { animation: iv-shake 0.4s ease; }
+@keyframes iv-shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+
+.iv-room-scroll { flex: 1; padding: 16px 14px 8px; }
+.iv-transcript { display: flex; flex-direction: column; gap: 12px; }
+.iv-said { max-width: 88%; font-size: 14.5px; line-height: 1.55; }
+.iv-said-intro { align-self: stretch; max-width: 100%; text-align: center; font-family: var(--serif); font-style: italic; color: #b6a884; padding: 4px 8px 8px; border-bottom: 1px solid #23201a; }
+.iv-speaker { display: block; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em; margin-bottom: 3px; }
+.iv-said-you { align-self: flex-end; text-align: right; }
+.iv-said-you .iv-speaker { color: #b8933f; }
+.iv-said-you > span:last-child { color: #d8cdb2; font-family: var(--mono); font-size: 13.5px; }
+.iv-said-them .iv-speaker { color: #7f9fc0; }
+.iv-said-them > span:last-child, .iv-said-them .iv-reply-in { color: #eee3c9; font-family: var(--serif); font-size: 15.5px; display: block; }
+.iv-beat { align-self: center; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; color: #8a7c5e; font-style: italic; }
+.iv-typing { display: inline-flex; gap: 4px; align-items: center; padding: 3px 0; }
+.iv-typing span { width: 7px; height: 7px; border-radius: 50%; background: #8a7c5e; animation: iv-blink 1s infinite; }
 .iv-typing span:nth-child(2) { animation-delay: 0.18s; }
 .iv-typing span:nth-child(3) { animation-delay: 0.36s; }
 @keyframes iv-blink { 0%, 60%, 100% { opacity: 0.28; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
-.iv-reply-in { animation: iv-pop 0.32s cubic-bezier(0.2, 1.3, 0.4, 1); }
-@keyframes iv-pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
+.iv-reply-in { animation: iv-pop 0.34s cubic-bezier(0.2,1.3,0.4,1); }
+@keyframes iv-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* --- the approach options --- */
+.iv-options { padding: 10px 14px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid #201d16; background: rgba(8,7,6,0.6); display: flex; flex-direction: column; gap: 9px; max-height: 46%; overflow-y: auto; }
+.iv-choose { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8a7c5e; }
+.iv-opt {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px;
+  background: linear-gradient(160deg, #201b13 0%, #15110b 100%);
+  border: 1px solid rgba(184,147,63,0.22); border-left: 3px solid #6a5f48; border-radius: 6px;
+  padding: 11px 13px; transition: border-color 0.15s, transform 0.1s, background 0.15s;
+}
+.iv-opt:not(.iv-opt-locked):hover { border-color: rgba(184,147,63,0.55); background: linear-gradient(160deg, #26200f 0%, #191308 100%); }
+.iv-opt:not(.iv-opt-locked):active { transform: scale(0.995); }
+.iv-opt-tactic { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 9.5px; font-weight: 800; letter-spacing: 0.1em; }
+.iv-opt-glyph { font-size: 12px; }
+.iv-opt-text { color: #e7dcc2; font-size: 14px; line-height: 1.45; }
+.iv-t-press { border-left-color: #c0402f; } .iv-t-press .iv-opt-tactic { color: #d9694f; }
+.iv-t-emp { border-left-color: #4bbf6f; } .iv-t-emp .iv-opt-tactic { color: #6cd08a; }
+.iv-t-bluff { border-left-color: #b07fd0; } .iv-t-bluff .iv-opt-tactic { color: #c69ae0; }
+.iv-t-ev { border-left-color: #6f9fd0; } .iv-t-ev .iv-opt-tactic { color: #8fb6e0; }
+.iv-t-probe { border-left-color: #b8933f; } .iv-t-probe .iv-opt-tactic { color: #d9b455; }
+.iv-opt-locked { opacity: 0.55; border-left-color: #4a4030; }
+.iv-opt-lock { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #8a7c5e; font-style: italic; }
+.iv-opt-lock svg { width: 14px; height: 14px; }
+
+.iv-outcome { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px; border-radius: 8px; text-align: center; }
+.iv-outcome-title { font-family: var(--serif); font-size: 19px; font-weight: 800; letter-spacing: 0.02em; }
+.iv-outcome-sub { font-size: 13px; opacity: 0.9; }
+.iv-out-guilt { background: linear-gradient(160deg, #6f1414, #4a0d0d); color: #ffd9cf; box-shadow: 0 6px 20px rgba(140,20,20,0.4); }
+.iv-out-cleared { background: linear-gradient(160deg, #14431f, #0d2f16); color: #d6f4de; }
+.iv-out-clam { background: linear-gradient(160deg, #2a2620, #1a1712); color: #cdbf9c; border: 1px solid #3a3428; }
+.iv-out-lead { background: linear-gradient(160deg, #5a3f14, #3f2c0d); color: #f4e0c0; }
+.iv-jump, .iv-retry, .iv-leave {
+  width: 100%; text-align: center; border-radius: 8px; padding: 13px; font-family: var(--mono); font-size: 12.5px;
+  letter-spacing: 0.06em; min-height: 46px; font-weight: 700;
+}
+.iv-jump { background: linear-gradient(180deg, #d9b455, #b8933f); color: #16110b; }
+.iv-retry { background: rgba(184,147,63,0.14); border: 1px solid rgba(184,147,63,0.4); color: #e7dcc2; }
+.iv-leave { background: transparent; border: 1px solid #3a3428; color: #9a8d70; }
+.iv-nothing { font-size: 13px; color: #8a7c5e; font-style: italic; text-align: center; padding: 8px; }
+@media (prefers-reduced-motion: reduce) { .iv-rec-dot, .iv-reply-in, .iv-meter-hit, .iv-shake { animation: none; } }
 
 /* ---------------------------------------------------------------------------
    Premium animation pass
