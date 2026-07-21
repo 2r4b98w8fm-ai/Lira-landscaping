@@ -567,3 +567,108 @@ h1, h2, h3, p { margin: 0; }
 .epilogue { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: 0 1px 2px rgba(20,20,40,0.04); }
 .epilogue-title { font-size: 18px; font-weight: 750; margin-bottom: 12px; }
 .epilogue-para { color: #3c3c43; font-size: 15px; line-height: 1.65; margin-bottom: 12px; }
+
+/* ---------------------------------------------------------------------------
+   Archive: "How to play" panel
+--------------------------------------------------------------------------- */
+.howto {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(20, 20, 40, 0.06); overflow: hidden;
+}
+.howto-summary {
+  list-style: none; cursor: pointer; padding: 16px 20px;
+  font-weight: 650; font-size: 15px; color: var(--accent);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.howto-summary::-webkit-details-marker { display: none; }
+.howto[open] .howto-summary { border-bottom: 1px solid var(--line); }
+.howto-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.howto-step { display: flex; gap: 14px; align-items: flex-start; }
+.howto-num {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 13px; font-weight: 700;
+  display: grid; place-items: center;
+}
+.howto-step-text { display: flex; flex-direction: column; gap: 2px; }
+.howto-step-title { font-weight: 650; font-size: 14.5px; }
+.howto-step-body { color: var(--text-dim); font-size: 13.5px; line-height: 1.5; }
+.howto-foot { color: var(--text-faint); font-size: 13px; line-height: 1.5; margin-top: 4px; }
+
+/* ---------------------------------------------------------------------------
+   Case briefing dossier (out-of-phone, dark investigator frame)
+--------------------------------------------------------------------------- */
+.dossier {
+  height: 100%; overflow-y: auto;
+  background: radial-gradient(120% 90% at 50% 0%, #141821 0%, #0a0c11 70%);
+  color: #e7eaee;
+  display: flex; flex-direction: column;
+  padding: clamp(24px, 6vw, 64px) clamp(20px, 5vw, 56px);
+  max-width: 640px; margin: 0 auto; gap: 20px;
+}
+.dossier-hdr { flex-shrink: 0; }
+.dossier-kicker {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em;
+  text-transform: uppercase; color: #6b7480;
+}
+.dossier-stage { flex: 1; display: flex; align-items: center; min-height: 340px; touch-action: pan-y; }
+.dossier-cover { display: flex; flex-direction: column; gap: 10px; }
+.dossier-file { font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em; color: #7f8b98; }
+.dossier-title { font-size: clamp(30px, 8vw, 46px); font-weight: 750; line-height: 1.05; text-wrap: balance; }
+.dossier-victim { font-size: 17px; color: #9fd8c4; font-weight: 500; }
+.dossier-ruling {
+  align-self: flex-start; margin-top: 8px;
+  font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.04em;
+  color: #e0a458; border: 1px solid #5c4a2c; background: rgba(224,164,88,0.08);
+  padding: 8px 14px; border-radius: 8px;
+}
+.dossier-tags { color: #6b7480; font-size: 13px; font-style: italic; margin-top: 12px; }
+.dossier-card { display: flex; flex-direction: column; gap: 14px; animation: dossier-fade 0.32s ease; }
+@keyframes dossier-fade { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dossier-card { animation: none; } }
+.dossier-card-label {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #7fd8c4;
+}
+.dossier-card-text { font-size: clamp(18px, 4.4vw, 22px); line-height: 1.5; color: #eef1f4; text-wrap: pretty; }
+.dossier-objective .dossier-card-label { color: #f0b7c8; }
+.dossier-objective-hint { color: #9aa3af; font-size: 14px; line-height: 1.55; margin-top: 4px; }
+.dossier-dots { display: flex; gap: 7px; justify-content: center; flex-shrink: 0; }
+.dossier-dot { width: 7px; height: 7px; border-radius: 50%; background: #2e343e; transition: background 0.2s; }
+.dossier-dot-on { background: #7fd8c4; }
+.dossier-controls { display: flex; gap: 12px; flex-shrink: 0; }
+.dossier-nav {
+  flex: 1; text-align: center; padding: 15px; border-radius: 12px;
+  font-weight: 650; font-size: 15px; min-height: 48px;
+}
+.dossier-back { background: transparent; border: 1px solid #2e343e; color: #c3ccd4; }
+.dossier-next { background: #7fd8c4; color: #08110e; }
+.dossier-skip {
+  align-self: center; color: #6b7480; font-size: 13px; padding: 8px 16px; min-height: 44px;
+}
+
+/* ---------------------------------------------------------------------------
+   First-run coach overlay (inside the phone)
+--------------------------------------------------------------------------- */
+.coach {
+  position: absolute; inset: 0; z-index: 60;
+  background: rgba(6, 8, 12, 0.7); backdrop-filter: blur(3px);
+  display: grid; place-items: center; padding: 22px;
+  animation: coach-in 0.28s ease;
+}
+@keyframes coach-in { from { opacity: 0; } to { opacity: 1; } }
+.coach-out { opacity: 0; transition: opacity 0.24s; }
+@media (prefers-reduced-motion: reduce) { .coach { animation: none; } }
+.coach-card {
+  background: var(--surface); border-radius: 20px; padding: 24px 22px;
+  max-width: 320px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.coach-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-faint); }
+.coach-title { font-size: 22px; font-weight: 750; }
+.coach-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 9px; }
+.coach-list li { font-size: 14px; line-height: 1.5; color: var(--text-dim); }
+.coach-list b { color: var(--text); font-weight: 650; }
+.coach-btn {
+  margin-top: 6px; text-align: center; background: var(--accent); color: #fff;
+  border-radius: 13px; padding: 14px; font-weight: 700; font-size: 15.5px; min-height: 48px;
+}

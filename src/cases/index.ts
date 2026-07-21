@@ -142,7 +142,24 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
   },
 ];
 
+/**
+ * Weave each victim's everyday photos into their camera roll. Done here (not
+ * in the case files) so every case gains a realistic roll from one place; the
+ * Photos app sorts by timestamp, so life and evidence shots interleave.
+ */
+async function injectLifePhotos(caseFile: CaseFile): Promise<CaseFile> {
+  const { lifePhotosFor } = await import("./lifespecs");
+  const life = lifePhotosFor(caseFile.id);
+  if (life.length) caseFile.photos = [...caseFile.photos, ...life];
+  return caseFile;
+}
+
+/** Load a single case with its life photos woven in. */
+export async function loadCase(entry: CaseManifestEntry): Promise<CaseFile> {
+  return injectLifePhotos(await entry.load());
+}
+
 /** Load every case (validator + dev checks). Production UI never calls this. */
 export async function loadAllCases(): Promise<CaseFile[]> {
-  return Promise.all(CASE_MANIFEST.map((entry) => entry.load()));
+  return Promise.all(CASE_MANIFEST.map((entry) => loadCase(entry)));
 }

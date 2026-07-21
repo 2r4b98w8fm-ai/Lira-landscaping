@@ -9,8 +9,9 @@ export function openPhotos(rt: DeviceRuntime, targetId?: string): HTMLElement {
   const view = h("div", { class: "app app-photos" });
   view.appendChild(rt.appHeader("Photos"));
 
-  const main = rt.caseFile.photos.filter((p) => !p.deleted);
-  const deleted = rt.caseFile.photos.filter((p) => p.deleted);
+  const byTime = (a: Photo, b: Photo) => Date.parse(a.timestamp) - Date.parse(b.timestamp);
+  const main = rt.caseFile.photos.filter((p) => !p.deleted).sort(byTime);
+  const deleted = rt.caseFile.photos.filter((p) => p.deleted).sort(byTime);
 
   const grid = h("div", { class: "photo-grid", role: "list" });
   for (const p of main) grid.appendChild(thumb(rt, p, main));

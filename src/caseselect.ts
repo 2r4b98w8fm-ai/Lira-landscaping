@@ -1,5 +1,5 @@
 import type { CaseFile } from "./types";
-import { CASE_MANIFEST, type CaseManifestEntry } from "./cases";
+import { CASE_MANIFEST, loadCase, type CaseManifestEntry } from "./cases";
 import { h, clear } from "./lib/dom";
 import { caseProgress } from "./save";
 import { DeviceRuntime } from "./device/runtime";
@@ -29,6 +29,8 @@ export function renderCaseSelect(host: HTMLElement): void {
       ),
     ),
   );
+
+  root.appendChild(buildHowToPanel());
 
   const list = h("div", { class: "archive-list", role: "list" });
   for (const entry of CASE_MANIFEST) {
@@ -74,14 +76,62 @@ async function openCase(host: HTMLElement, entry: CaseManifestEntry, card: HTMLB
   card.setAttribute("disabled", "");
   card.classList.add("archive-loading");
   try {
-    const caseFile = await entry.load();
-    bootCase(host, caseFile);
+    const caseFile = await loadCase(entry);
+    const { briefingFor } = await import("./cases/briefings");
+    const briefing = briefingFor(caseFile.id);
+    const alreadyPlayed = caseProgress(caseFile.id).unlocked;
+    if (briefing && !alreadyPlayed) {
+      const { renderDossier } = await import("./dossier");
+      renderDossier(host, entry, briefing, () => bootCase(host, caseFile), () => renderCaseSelect(host));
+    } else {
+      bootCase(host, caseFile);
+    }
   } catch {
     // chunk failed to load (offline before first cache, flaky network) — recover
     card.removeAttribute("disabled");
     card.classList.remove("archive-loading");
     card.querySelector(".archive-status")!.textContent = "Load failed — tap to retry";
   }
+}
+
+function buildHowToPanel(): HTMLElement {
+  const steps: Array<[string, string]> = [
+    ["Open a case", "Tap a phone below. Swipe up (or tap “open”) to unlock it."],
+    ["Explore the apps", "Read the Messages, Photos, Notes, Voicemail, Calendar, Maps and Browser. The story is scattered across all of them."],
+    ["Crack the locked notes", "Some notes need a 4-digit code. Every code is hidden somewhere else on the same phone — a photo, a text, a search. No outside knowledge needed."],
+    ["Watch for the wrong details", "A timestamp that can’t be real, a photo that edited itself, an app that isn’t what it says. Those are the clues."],
+    ["File your verdict", "When you think you know, open the red Case Report app: pick a theory, tap the evidence that backs it, and submit."],
+  ];
+  const details = h(
+    "details",
+    { class: "howto" },
+    h("summary", { class: "howto-summary" }, "How to play  ›"),
+  );
+  const body = h("div", { class: "howto-body" });
+  steps.forEach(([title, text], i) => {
+    body.appendChild(
+      h(
+        "div",
+        { class: "howto-step" },
+        h("span", { class: "howto-num" }, String(i + 1)),
+        h(
+          "span",
+          { class: "howto-step-text" },
+          h("span", { class: "howto-step-title" }, title),
+          h("span", { class: "howto-step-body" }, text),
+        ),
+      ),
+    );
+  });
+  body.appendChild(
+    h(
+      "p",
+      { class: "howto-foot" },
+      "There’s no way to lose and no timer. Poke at everything. Your progress saves automatically on this device.",
+    ),
+  );
+  details.appendChild(body);
+  return details;
 }
 
 function bootCase(host: HTMLElement, caseFile: CaseFile): void {

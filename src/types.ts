@@ -242,6 +242,8 @@ export interface PlayerSettings {
   reducedIntensity: boolean;
   ambientAudio: boolean;
   transcriptsOpen: boolean;
+  /** Cleared once the player has seen the in-phone how-to coach overlay. */
+  coachSeen?: boolean;
 }
 
 export interface SaveFile {

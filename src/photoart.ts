@@ -9,30 +9,55 @@ import { mulberry32, seedFrom } from "./lib/rng";
 
 let filterCounter = 0;
 
-/** Wraps authored scene markup in a lens-processed, grain-textured photo. */
+/**
+ * Wraps authored scene markup in a lens-processed, grain-textured photo.
+ * `grade` selects the color science: "cold" for the murky evidence shots,
+ * "warm" for the everyday life photos (iPhone-ish auto white balance).
+ */
 export function photoSvg(
   inner: string,
-  opts: { aspect: "landscape" | "portrait"; base?: string; grain?: number },
+  opts: {
+    aspect: "landscape" | "portrait";
+    base?: string;
+    grain?: number;
+    grade?: "cold" | "warm" | "neutral";
+    softness?: number;
+    vignette?: number;
+  },
 ): string {
   const w = opts.aspect === "landscape" ? 400 : 300;
   const h = opts.aspect === "landscape" ? 300 : 400;
   const base = opts.base ?? "#101216";
   const grainOp = opts.grain ?? 0.16;
+  const soft = opts.softness ?? 0.7;
+  const vig = opts.vignette ?? 0.62;
   const fid = `g${filterCounter++}`;
+  // color-science matrices: subtle, so scenes keep their authored hues
+  const grade =
+    opts.grade === "warm"
+      ? "1.05 0.02 -0.02 0 0.01  0.01 1.0 0.0 0 0.006  -0.02 0.0 0.94 0 -0.004  0 0 0 1 0"
+      : opts.grade === "neutral"
+        ? "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"
+        : "0.96 0.03 0.04 0 0  0.02 0.98 0.05 0 0  0.04 0.05 1.03 0 0  0 0 0 1 0";
   return (
     `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" role="img">` +
     `<defs>` +
-    // lens: soften vector edges and pull color toward a cold low-light grade
-    `<filter id="${fid}l" x="-5%" y="-5%" width="110%" height="110%">` +
-    `<feGaussianBlur stdDeviation="0.7"/>` +
-    `<feColorMatrix type="matrix" values="0.96 0.03 0.04 0 0  0.02 0.98 0.05 0 0  0.04 0.05 1.03 0 0  0 0 0 1 0"/>` +
+    // lens: chromatic-aberration split + softening blur + color grade
+    `<filter id="${fid}l" x="-6%" y="-6%" width="112%" height="112%">` +
+    `<feGaussianBlur stdDeviation="${soft}" result="sb"/>` +
+    `<feOffset in="sb" dx="0.6" dy="0" result="cr"/>` +
+    `<feColorMatrix in="cr" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0" result="crR"/>` +
+    `<feOffset in="sb" dx="-0.6" dy="0" result="cb"/>` +
+    `<feColorMatrix in="cb" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 0.5 0" result="crB"/>` +
+    `<feMerge><feMergeNode in="sb"/><feMergeNode in="crR"/><feMergeNode in="crB"/></feMerge>` +
+    `<feColorMatrix type="matrix" values="${grade}"/>` +
     `</filter>` +
     // fine luminance grain (sensor noise)
     `<filter id="${fid}" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope="${grainOp}"/></feComponentTransfer><feComposite operator="over" in2="SourceGraphic"/></filter>` +
     // coarse blotch (high-ISO color noise)
     `<filter id="${fid}b" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.05 0.07" numOctaves="2" stitchTiles="stitch" seed="7"/><feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.4  0 0 0 0 0.55  0.4 0 0 0 0"/></filter>` +
-    `<radialGradient id="${fid}v" cx="50%" cy="45%" r="78%"><stop offset="48%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="0.62"/></radialGradient>` +
-    `<radialGradient id="${fid}h" cx="38%" cy="26%" r="55%"><stop offset="0%" stop-color="#cfd8e6" stop-opacity="0.06"/><stop offset="60%" stop-color="#cfd8e6" stop-opacity="0.015"/><stop offset="100%" stop-color="#cfd8e6" stop-opacity="0"/></radialGradient>` +
+    `<radialGradient id="${fid}v" cx="50%" cy="45%" r="78%"><stop offset="46%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="${vig}"/></radialGradient>` +
+    `<radialGradient id="${fid}h" cx="36%" cy="24%" r="58%"><stop offset="0%" stop-color="#fff" stop-opacity="${opts.grade === "warm" ? 0.1 : 0.05}"/><stop offset="60%" stop-color="#fff" stop-opacity="0.012"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>` +
     `</defs>` +
     `<rect width="${w}" height="${h}" fill="${base}"/>` +
     `<g filter="url(#${fid}l)">${inner}</g>` +
