@@ -56,6 +56,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "all_cases", emoji: "🏆", name: "The Closer", desc: "File a report on all 15 cases.", test: (s) => countCases(s, (p) => p.completed) >= 15 },
   { id: "all_canon", emoji: "👁️", name: "The Whole Truth", desc: "Reach the true ending of all 15 cases.", test: (s) => countCases(s, (p) => !!p.canonReached) >= 15 },
   { id: "perfect", emoji: "💎", name: "Meticulous", desc: "Earn 3 stars on 5 cases.", test: (s) => countCases(s, (p) => (p.stars ?? 0) >= 3) >= 5 },
+  { id: "thorough", emoji: "🔍", name: "Left No Stone", desc: "Find 100% of the evidence in a case.", test: (s) => anyCase(s, (p) => !!p.citableTotal && (p.citableFound ?? 0) >= p.citableTotal) },
+  { id: "streak3", emoji: "🔥", name: "On the Case", desc: "Play three days in a row.", test: (s) => (s.streak?.best ?? 0) >= 3 },
 ];
 
 // ---------------------------------------------------------------------------

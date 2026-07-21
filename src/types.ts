@@ -265,6 +265,11 @@ export interface CaseProgress {
   allNotesUnlocked?: boolean;
   codeNoHint?: boolean;
   flashlightUsed?: boolean;
+  /** Exploration tracking for the archive progress ring. */
+  citableTotal?: number;
+  citableFound?: number;
+  /** Epoch ms of the most recent time this case was opened. */
+  lastPlayedAt?: number;
 }
 
 export interface PlayerSettings {
@@ -292,4 +297,6 @@ export interface SaveFile {
     /** ISO date (YYYY-MM-DD) of the most recent day played. */
     lastDay: string;
   };
+  /** Most recently opened case, for the archive "Continue" banner. */
+  lastCaseId?: string;
 }

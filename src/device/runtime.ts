@@ -6,6 +6,7 @@ import { mountGlitchLayer, triggerGlitch } from "../glitch";
 import { playStinger } from "../audio";
 import { appIconSvg, uiGlyph } from "../icons";
 import { evaluateAchievements } from "../progression";
+import { citableEvidence } from "../validator";
 
 export interface AppDef {
   id: string;
@@ -55,6 +56,8 @@ export class DeviceRuntime {
     this.registry = new Map(opts.apps.map((a) => [a.id, a]));
     this.onExit = opts.onExit;
     this.onNextCase = opts.onNextCase;
+    this.progress.lastPlayedAt = Date.now();
+    this.updateExploration();
 
     clear(opts.host);
     const frame = h("div", { class: "device-frame" });
@@ -185,8 +188,16 @@ export class DeviceRuntime {
   markViewed(id: string): void {
     if (this.progress.viewed.includes(id)) return;
     this.progress.viewed.push(id);
+    this.updateExploration();
     persist();
     this.checkHiddenReveal();
+  }
+
+  /** Recompute how much of the citable evidence has been discovered (for the archive ring). */
+  private updateExploration(): void {
+    const citable = citableEvidence(this.caseFile);
+    this.progress.citableTotal = citable.length;
+    this.progress.citableFound = citable.filter((i) => this.progress.viewed.includes(i.discoveredBy)).length;
   }
 
   hasViewed(id: string): boolean {

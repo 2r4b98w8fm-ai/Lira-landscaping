@@ -3,6 +3,10 @@ import { h } from "../lib/dom";
 import { mulberry32, seedFrom } from "../lib/rng";
 import { extrasFor } from "../cases/caseextras";
 import { socialFor } from "../cases/social";
+import { storiesFor, dmsFor, type StorySeg, type DMThread } from "../cases/social2";
+import { svgEl } from "../lib/dom";
+import { uiGlyph } from "../icons";
+import { settings } from "../save";
 
 /**
  * Flavor apps: believable, mostly non-clue screens that make the phone feel
@@ -305,11 +309,49 @@ export function openShopping(rt: DeviceRuntime): HTMLElement {
 
 export function openGlimpse(rt: DeviceRuntime): HTMLElement {
   const g = socialFor(rt.caseFile.id)?.glimpse;
-  const { view, body } = scroll(rt, "Glimpse");
+  const dms = dmsFor(rt.caseFile.id);
+  const view = h("div", { class: "app" });
+  // header with a DM (paper-plane) action
+  const dmBtn = h("button", { class: "hdr-action", type: "button", "aria-label": "Direct messages" }, svgEl(uiGlyph("send"), "glyph"));
+  const unread = (dms ?? []).filter((t) => t.unread).length;
+  if (unread > 0) dmBtn.appendChild(h("span", { class: "hdr-badge" }, String(unread)));
+  dmBtn.addEventListener("click", () => rt.push(openDMs(rt)));
+  view.appendChild(rt.appHeader("Glimpse", { trailing: dms ? dmBtn : undefined }));
+  const body = h("div", { class: "app-scroll" });
+  view.appendChild(body);
   if (!g) {
     body.appendChild(h("p", { class: "folder-note" }, "No account."));
     return view;
   }
+
+  // stories row
+  const stories = storiesFor(rt.caseFile.id);
+  if (stories?.length) {
+    const row = h("div", { class: "gl-stories" });
+    const own = h(
+      "button",
+      { class: "gl-story", type: "button" },
+      h("span", { class: "gl-story-ring gl-story-live" }, h("span", { class: "gl-story-face" }, "📷")),
+      h("span", { class: "gl-story-name" }, g.handle.split(/[._]/)[0]),
+    );
+    own.addEventListener("click", () => rt.push(storyViewer(rt, g.handle, stories)));
+    row.appendChild(own);
+    // a few friends' rings for texture (open a short generic reel)
+    for (const [face, name] of FRIEND_RINGS) {
+      const s = h(
+        "button",
+        { class: "gl-story", type: "button" },
+        h("span", { class: "gl-story-ring" }, h("span", { class: "gl-story-face" }, face)),
+        h("span", { class: "gl-story-name" }, name),
+      );
+      s.addEventListener("click", () =>
+        rt.push(storyViewer(rt, name, [{ scene: face, text: "hope you're doing ok. call me back? 🩶", when: "1d" }])),
+      );
+      row.appendChild(s);
+    }
+    body.appendChild(row);
+  }
+
   // profile header
   body.appendChild(
     h(
@@ -372,6 +414,139 @@ function glimpsePost(rt: DeviceRuntime, g: GlimpseProfileLike, post: import("../
 
 interface GlimpseProfileLike {
   handle: string;
+}
+
+const FRIEND_RINGS: Array<[string, string]> = [
+  ["🌻", "mom"],
+  ["🎧", "dev"],
+  ["🍜", "friends"],
+  ["🐈", "the cat"],
+];
+
+/** Full-screen story reel: auto-advancing segments with a progress bar per segment. */
+function storyViewer(rt: DeviceRuntime, who: string, segs: StorySeg[]): HTMLElement {
+  const view = h("div", { class: "app story-viewer" });
+  const bars = h("div", { class: "story-bars" });
+  const segBars = segs.map(() => {
+    const track = h("div", { class: "story-bar" });
+    const fill = h("div", { class: "story-bar-fill" });
+    track.appendChild(fill);
+    bars.appendChild(track);
+    return fill;
+  });
+  const closeBtn = h("button", { class: "story-close", type: "button", "aria-label": "Close" }, "✕");
+  const head = h(
+    "div",
+    { class: "story-head" },
+    bars,
+    h("div", { class: "story-head-row" }, h("span", { class: "story-who" }, `@${who}`), closeBtn),
+  );
+  const stage = h("div", { class: "story-stage" });
+  const tapL = h("button", { class: "story-tap story-tap-l", type: "button", "aria-label": "Previous" });
+  const tapR = h("button", { class: "story-tap story-tap-r", type: "button", "aria-label": "Next" });
+  view.append(head, stage, tapL, tapR);
+
+  let index = 0;
+  let timer = 0;
+  const DURATION = 4200;
+
+  function stopTimer(): void {
+    if (timer) window.clearTimeout(timer);
+    timer = 0;
+  }
+  function close(): void {
+    stopTimer();
+    rt.pop();
+  }
+  function render(): void {
+    stopTimer();
+    const s = segs[index];
+    segBars.forEach((f, i) => {
+      f.style.transition = "none";
+      f.style.width = i < index ? "100%" : "0%";
+    });
+    stage.replaceChildren(
+      h("div", { class: "story-scene", style: `--gl-hue:${seedFrom(s.text) % 360}` }, h("span", { class: "story-emoji" }, s.scene)),
+      h("p", { class: "story-text" }, s.text),
+      h("span", { class: "story-when" }, `${s.when} ago`),
+    );
+    // animate the current bar unless reduced motion
+    const cur = segBars[index];
+    if (settings().reducedIntensity) {
+      cur.style.width = "100%";
+    } else {
+      requestAnimationFrame(() => {
+        cur.style.transition = `width ${DURATION}ms linear`;
+        cur.style.width = "100%";
+      });
+    }
+    timer = window.setTimeout(next, DURATION);
+  }
+  function next(): void {
+    if (index < segs.length - 1) {
+      index++;
+      render();
+    } else {
+      close();
+    }
+  }
+  function prev(): void {
+    if (index > 0) {
+      index--;
+      render();
+    } else {
+      render();
+    }
+  }
+  closeBtn.addEventListener("click", close);
+  tapR.addEventListener("click", next);
+  tapL.addEventListener("click", prev);
+  view.addEventListener("view-removed", stopTimer);
+  render();
+  return view;
+}
+
+/** DM inbox: private threads. Where people say what they'd never post. */
+function openDMs(rt: DeviceRuntime): HTMLElement {
+  const threads = dmsFor(rt.caseFile.id) ?? [];
+  const view = h("div", { class: "app" });
+  view.appendChild(rt.appHeader("Messages"));
+  const body = h("div", { class: "app-scroll" });
+  view.appendChild(body);
+  if (!threads.length) {
+    body.appendChild(h("p", { class: "folder-note" }, "No messages."));
+    return view;
+  }
+  for (const t of threads) {
+    const rowEl = h(
+      "button",
+      { class: "dm-row", type: "button" },
+      h("span", { class: "dm-avatar", "aria-hidden": "true" }),
+      h(
+        "span",
+        { class: "row-main" },
+        h("span", { class: "dm-name" }, t.name, t.unread ? h("span", { class: "dm-dot", "aria-label": "unread" }) : null),
+        h("span", { class: "row-sub" }, t.lines[t.lines.length - 1]?.text ?? ""),
+      ),
+      h("span", { class: "row-time" }, t.when),
+    );
+    rowEl.addEventListener("click", () => rt.push(dmThread(rt, t)));
+    body.appendChild(rowEl);
+  }
+  return view;
+}
+
+function dmThread(rt: DeviceRuntime, t: DMThread): HTMLElement {
+  const view = h("div", { class: "app" });
+  view.appendChild(rt.appHeader(t.name));
+  const body = h("div", { class: "app-scroll dm-thread" });
+  view.appendChild(body);
+  body.appendChild(h("div", { class: "dm-handle-head" }, `@${t.handle}`));
+  for (const line of t.lines) {
+    body.appendChild(h("div", { class: `dm-bubble dm-${line.from}` }, line.text));
+  }
+  body.appendChild(h("div", { class: "dm-end" }, "•"));
+  return view;
 }
 
 export function openChatter(rt: DeviceRuntime): HTMLElement {
