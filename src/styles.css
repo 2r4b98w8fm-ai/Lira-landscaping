@@ -235,7 +235,23 @@ h1, h2, h3, p { margin: 0; }
 .lock-hint { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #3c3c43; font-size: 12.5px; cursor: pointer; padding: 8px 24px; }
 .lock-hint-bar { width: 130px; height: 5px; border-radius: 3px; background: #0b0b0f; opacity: 0.85; }
 
-.home-screen { padding: 60px 18px 20px; }
+.home-screen { padding: 60px 0 16px; }
+.home-pager {
+  flex: 1; min-height: 0;
+  display: flex; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+.home-pager::-webkit-scrollbar { display: none; }
+.home-page {
+  flex: 0 0 100%; scroll-snap-align: center;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: min-content; gap: 22px 8px; align-content: start;
+  padding: 0 18px;
+}
+.home-page-dots { display: flex; gap: 7px; justify-content: center; padding: 8px 0 12px; }
+.home-page-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.22); transition: background 0.2s; }
+.home-page-dot-on { background: rgba(0,0,0,0.5); }
 .home-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -271,8 +287,41 @@ h1, h2, h3, p { margin: 0; }
   background: rgba(255,255,255,0.5);
   backdrop-filter: blur(16px);
   border-radius: 28px; padding: 12px 6px 8px;
+  margin: 0 18px;
 }
 .home-dock .home-icon-label { display: none; }
+
+/* ---------------------------------------------------------------------------
+   Flavor apps
+--------------------------------------------------------------------------- */
+.np-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 1px 2px rgba(20,20,40,0.04); }
+.np-art { width: 150px; height: 150px; border-radius: 12px; background: linear-gradient(135deg, #fc5b6e, #8e3fd0); }
+.np-title { font-weight: 700; font-size: 17px; }
+.np-artist { color: var(--text-dim); font-size: 14px; }
+.np-bar { width: 100%; height: 4px; border-radius: 2px; background: var(--surface-3); margin-top: 6px; }
+.np-bar-fill { width: 38%; height: 100%; border-radius: 2px; background: var(--text-dim); }
+.wx-hero { text-align: center; padding: 24px 0 10px; }
+.wx-city { font-size: 22px; font-weight: 600; }
+.wx-temp { font-size: 68px; font-weight: 200; line-height: 1; }
+.wx-cond { color: var(--text-dim); font-size: 15px; }
+.wx-range { color: var(--text-dim); font-size: 14px; margin-top: 4px; }
+.wx-hours { display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 8px; }
+.wx-hour { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 44px; color: var(--text-dim); font-size: 13px; }
+.wx-hour-t { font-weight: 650; color: var(--text); }
+.feed-post { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(20,20,40,0.04); }
+.feed-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.feed-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #a0b0c8, #6a7488); }
+.feed-user { font-weight: 650; font-size: 14px; }
+.feed-body { font-size: 15px; line-height: 1.4; }
+.feed-meta { color: var(--text-faint); font-size: 12px; margin-top: 8px; }
+.rem-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--text-faint); flex-shrink: 0; }
+.rem-check-done { border-color: var(--accent); background: var(--accent); }
+.rem-done { text-decoration: line-through; color: var(--text-faint); }
+.wallet-card { background: linear-gradient(135deg, #3a3f4a, #1c1f26); color: #fff; border-radius: 16px; padding: 22px 18px; display: flex; flex-direction: column; gap: 30px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+.wallet-bank { font-size: 13px; letter-spacing: 0.14em; opacity: 0.8; }
+.wallet-num { font-family: var(--mono); font-size: 16px; letter-spacing: 0.1em; }
+.wallet-amt { font-variant-numeric: tabular-nums; font-size: 14px; color: var(--text); font-weight: 600; }
+.wallet-in { color: #1d7a3e; }
 
 /* ---------------------------------------------------------------------------
    Shared app chrome
@@ -374,13 +423,21 @@ h1, h2, h3, p { margin: 0; }
 --------------------------------------------------------------------------- */
 .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
 .photo-thumb { position: relative; aspect-ratio: 1; border-radius: 4px; overflow: hidden; background: #d9dade; min-width: 44px; min-height: 44px; }
-.photo-thumb-art, .photo-thumb-art svg { width: 100%; height: 100%; display: block; }
-.photo-thumb-art svg { object-fit: cover; }
-.photo-thumb-dark { position: absolute; inset: 0; background: rgba(0,0,0,0.25); }
+.photo-thumb-art { position: relative; width: 100%; height: 100%; }
+.photo-thumb-art svg, .photo-thumb-art img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.photo-thumb-dark { position: absolute; inset: 0; background: rgba(0,0,0,0.25); z-index: 2; }
+/* real photo layers over the SVG fallback */
+.photo-media-fallback { position: absolute; inset: 0; }
+.photo-media-fallback svg { width: 100%; height: 100%; display: block; }
+.photo-media-img { position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; }
+.photo-img-loaded { opacity: 1; }
+.photo-fit-cover { object-fit: cover; }
+.photo-fit-contain { object-fit: contain; }
 .photo-stage { flex: 1; min-height: 0; position: relative; display: grid; place-items: center; background: #000; overflow: hidden; touch-action: none; }
-.photo-full, .photo-full svg { width: 100%; height: 100%; }
-.photo-full svg { object-fit: contain; transition: transform 0.25s; }
-.photo-zoomed svg, .photo-full.photo-zoomed svg { transform: scale(2); }
+.photo-full { position: relative; width: 100%; height: 100%; }
+.photo-full svg, .photo-full > svg { width: 100%; height: 100%; object-fit: contain; transition: transform 0.25s; }
+.photo-full .photo-media-img { object-fit: contain; transition: transform 0.25s, opacity 0.3s; }
+.photo-zoomed svg, .photo-full.photo-zoomed svg, .photo-zoomed .photo-media-img { transform: scale(2); }
 .photo-caption { padding: 12px 16px; color: var(--text-dim); font-size: 14px; text-align: center; flex-shrink: 0; background: var(--surface); }
 .photo-meta { border-top: 1px solid var(--line); padding: 10px 16px 16px; flex-shrink: 0; background: var(--surface); }
 .meta-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }

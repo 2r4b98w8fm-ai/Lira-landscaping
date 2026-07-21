@@ -26,7 +26,8 @@ export function buildCodePad(
   const dotEls = Array.from({ length: 4 }, () => h("span", { class: "code-dot" }));
   dots.append(...dotEls);
 
-  const hint = h("p", { class: "code-hint" }, opts.hintText);
+  // Hint starts hidden — the player must find the code, not read it.
+  const hint = h("p", { class: "code-hint" }, "The code is somewhere on this phone.");
   const feedback = h("p", { class: "code-feedback", role: "alert" }, "");
 
   const pad = h("div", { class: "code-pad" });
@@ -72,7 +73,17 @@ export function buildCodePad(
       void dots.offsetWidth;
       dots.classList.add("code-shake");
     }
-    feedback.textContent = wrongCount >= 3 ? "Incorrect. The digits are on this phone somewhere." : "Incorrect code.";
+    feedback.textContent = "Incorrect code.";
+    // Difficulty: the real hint stays hidden. Only after real effort — and
+    // never in Hard mode — does a nudge, then the full hint, surface, so the
+    // puzzle is hard but never a dead end.
+    if (settings().hardMode) {
+      hint.textContent = wrongCount >= 6 ? "The code is somewhere on this phone. Keep looking." : "";
+    } else if (wrongCount >= 8) {
+      hint.textContent = opts.hintText;
+    } else if (wrongCount >= 4) {
+      hint.textContent = "The four digits are hidden on this phone — a photo, a note, a message. Two pieces, put together.";
+    }
   }
 
   view.tabIndex = 0;

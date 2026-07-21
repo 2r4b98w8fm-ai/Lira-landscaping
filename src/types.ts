@@ -19,7 +19,19 @@ export type IconName =
   | "calculator"
   | "weather"
   | "clock"
-  | "report";
+  | "report"
+  | "music"
+  | "wallet"
+  | "health"
+  | "podcasts"
+  | "mail"
+  | "social"
+  | "reminders"
+  | "appstore"
+  | "camera"
+  | "translate"
+  | "fitness"
+  | "news";
 
 export interface Message {
   id: string;
@@ -57,6 +69,12 @@ export interface Photo {
   timestamp: string;
   /** Inner SVG markup rendered inside a fixed-viewBox frame (see photoart.ts). */
   svg: string;
+  /**
+   * Optional real photograph URL (fetched by the player's browser). When set,
+   * it renders over the SVG, which stays as an offline/failure fallback. Used
+   * by the generated everyday "life" photos; authored evidence shots omit it.
+   */
+  photoUrl?: string;
   /** viewBox aspect: "landscape" 400x300, "portrait" 300x400. */
   aspect: "landscape" | "portrait";
   meta: PhotoMeta;
@@ -242,6 +260,8 @@ export interface PlayerSettings {
   reducedIntensity: boolean;
   ambientAudio: boolean;
   transcriptsOpen: boolean;
+  /** Hard mode: no code hints, no evidence prompts — pure deduction. */
+  hardMode?: boolean;
   /** Cleared once the player has seen the in-phone how-to coach overlay. */
   coachSeen?: boolean;
 }

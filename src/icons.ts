@@ -94,6 +94,78 @@ const GLYPHS: Record<IconName, { bg: string; bg2: string; glyph: string }> = {
     glyph:
       '<rect x="17" y="12" width="30" height="40" rx="4" fill="#fff"/><path d="M23 23h18M23 30h18M23 37h9" stroke="#c7c7cc" stroke-width="3" stroke-linecap="round"/><path d="M35 40l4 4 8-9" fill="none" stroke="#d92a1c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
   },
+  music: {
+    bg: "#fc5b6e",
+    bg2: "#f11e46",
+    glyph:
+      '<path d="M26 44V24l16-4v18" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><circle cx="22" cy="44" r="5" fill="#fff"/><circle cx="38" cy="40" r="5" fill="#fff"/>',
+  },
+  wallet: {
+    bg: "#3a3f4a",
+    bg2: "#1c1f26",
+    glyph:
+      '<rect x="14" y="20" width="36" height="26" rx="5" fill="#fff"/><rect x="14" y="26" width="36" height="6" fill="#c7c7cc"/><rect x="38" y="35" width="9" height="6" rx="2" fill="#7a7f8a"/>',
+  },
+  health: {
+    bg: "#ffffff",
+    bg2: "#f2f2f7",
+    glyph:
+      '<path d="M32 46s-14-8-14-18a8 8 0 0 1 14-5 8 8 0 0 1 14 5c0 10-14 18-14 18z" fill="#fc3d5a"/>',
+  },
+  podcasts: {
+    bg: "#c86bf0",
+    bg2: "#8e3fd0",
+    glyph:
+      '<circle cx="32" cy="26" r="7" fill="#fff"/><path d="M22 44c2-8 4-11 10-11s8 3 10 11" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>',
+  },
+  mail: {
+    bg: "#4dc4ff",
+    bg2: "#0a8cff",
+    glyph:
+      '<rect x="13" y="20" width="38" height="26" rx="5" fill="#fff"/><path d="M15 23l17 13 17-13" fill="none" stroke="#4dc4ff" stroke-width="4" stroke-linejoin="round"/>',
+  },
+  social: {
+    bg: "#f7c34a",
+    bg2: "#e8734a",
+    glyph:
+      '<rect x="15" y="15" width="34" height="34" rx="10" fill="none" stroke="#fff" stroke-width="4"/><circle cx="32" cy="32" r="8" fill="none" stroke="#fff" stroke-width="4"/><circle cx="42" cy="22" r="2.5" fill="#fff"/>',
+  },
+  reminders: {
+    bg: "#ffffff",
+    bg2: "#f2f2f7",
+    glyph:
+      '<circle cx="22" cy="24" r="4" fill="none" stroke="#fc5b6e" stroke-width="3"/><circle cx="22" cy="40" r="4" fill="none" stroke="#f7a23a" stroke-width="3"/><path d="M31 24h13M31 40h13" stroke="#c7c7cc" stroke-width="3" stroke-linecap="round"/>',
+  },
+  appstore: {
+    bg: "#3aa0ff",
+    bg2: "#0a6cff",
+    glyph:
+      '<path d="M24 44l16-24 8 24M20 38h20" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
+  },
+  camera: {
+    bg: "#3a3f4a",
+    bg2: "#1c1f26",
+    glyph:
+      '<rect x="14" y="22" width="36" height="24" rx="5" fill="#e5e5ea"/><path d="M24 22l3-5h10l3 5" fill="#e5e5ea"/><circle cx="32" cy="34" r="8" fill="none" stroke="#7a7f8a" stroke-width="3"/>',
+  },
+  translate: {
+    bg: "#4a80f0",
+    bg2: "#2a54d0",
+    glyph:
+      '<text x="22" y="34" text-anchor="middle" font-size="20" fill="#fff" font-family="inherit">A</text><text x="42" y="42" text-anchor="middle" font-size="18" fill="#fff" font-family="inherit">文</text>',
+  },
+  fitness: {
+    bg: "#0a0a0e",
+    bg2: "#1c1c22",
+    glyph:
+      '<circle cx="32" cy="32" r="16" fill="none" stroke="#7cf7c4" stroke-width="4"/><circle cx="32" cy="32" r="9" fill="none" stroke="#fc5b8e" stroke-width="4"/>',
+  },
+  news: {
+    bg: "#fc5b6e",
+    bg2: "#f11e46",
+    glyph:
+      '<rect x="15" y="16" width="34" height="32" rx="4" fill="#fff"/><path d="M20 24h10v8H20zM33 24h11M33 30h11M20 37h24M20 42h24" stroke="#c7c7cc" stroke-width="2.5" stroke-linecap="round"/>',
+  },
 };
 
 let iconUid = 0;

@@ -10,6 +10,18 @@ import { openFiles } from "../apps/files";
 import { openSettings } from "../apps/settings";
 import { openHidden } from "../apps/hidden";
 import { openReport } from "../apps/report";
+import {
+  openMusic,
+  openWeather,
+  openHealth,
+  openPodcasts,
+  openMail,
+  openSocial,
+  openReminders,
+  openWallet,
+  openAppStore,
+  openNews,
+} from "../apps/flavor";
 
 export function buildAppRegistry(): AppDef[] {
   return [
@@ -35,6 +47,17 @@ export function buildAppRegistry(): AppDef[] {
     { id: "files", label: "Files", icon: "files", open: (rt) => openFiles(rt) },
     { id: "settings", label: "Settings", icon: "settings", open: (rt) => openSettings(rt) },
     { id: "hidden", label: "Hidden", icon: "flashlight", open: (rt) => openHidden(rt) },
-    { id: "report", label: "Report", icon: "report", open: (rt) => openReport(rt) },
+    { id: "report", label: "Case Report", icon: "report", open: (rt) => openReport(rt) },
+    // Flavor apps — believable surface to search; none required to solve.
+    { id: "music", label: "Music", icon: "music", open: (rt) => openMusic(rt) },
+    { id: "weather", label: "Weather", icon: "weather", open: (rt) => openWeather(rt) },
+    { id: "health", label: "Health", icon: "health", open: (rt) => openHealth(rt) },
+    { id: "podcasts", label: "Podcasts", icon: "podcasts", open: (rt) => openPodcasts(rt) },
+    { id: "mail", label: "Mail", icon: "mail", open: (rt) => openMail(rt) },
+    { id: "social", label: "Feed", icon: "social", open: (rt) => openSocial(rt) },
+    { id: "reminders", label: "Reminders", icon: "reminders", open: (rt) => openReminders(rt) },
+    { id: "wallet", label: "Wallet", icon: "wallet", open: (rt) => openWallet(rt) },
+    { id: "appstore", label: "App Store", icon: "appstore", open: (rt) => openAppStore(rt) },
+    { id: "news", label: "News", icon: "news", open: (rt) => openNews(rt) },
   ];
 }

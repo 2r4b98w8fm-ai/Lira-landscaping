@@ -148,8 +148,9 @@ export const CASE_MANIFEST: CaseManifestEntry[] = [
  * Photos app sorts by timestamp, so life and evidence shots interleave.
  */
 async function injectLifePhotos(caseFile: CaseFile): Promise<CaseFile> {
-  const { lifePhotosFor } = await import("./lifespecs");
-  const life = lifePhotosFor(caseFile.id);
+  if (caseFile.photos.some((p) => p.id.includes("-roll-"))) return caseFile; // already injected
+  const { generateLifePhotos } = await import("./lifegen");
+  const life = generateLifePhotos(caseFile.id, caseFile.phone.recoveredAt);
   if (life.length) caseFile.photos = [...caseFile.photos, ...life];
   return caseFile;
 }

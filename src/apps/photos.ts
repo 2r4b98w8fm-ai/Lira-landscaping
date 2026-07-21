@@ -72,9 +72,28 @@ function deletedFolder(rt: DeviceRuntime, photos: Photo[]): HTMLElement {
   return view;
 }
 
+/** SVG fallback with the real photo (if any) layered on top; img hides itself on error. */
+function photoMedia(p: Photo, className: string, fit: "cover" | "contain"): HTMLElement {
+  const wrap = h("div", { class: className });
+  wrap.appendChild(svgEl(p.svg, "photo-media-fallback"));
+  if (p.photoUrl) {
+    const img = h("img", {
+      class: `photo-media-img photo-fit-${fit}`,
+      src: p.photoUrl,
+      alt: p.caption ?? "Photo",
+      loading: "lazy",
+      decoding: "async",
+    }) as HTMLImageElement;
+    img.addEventListener("error", () => img.remove());
+    img.addEventListener("load", () => img.classList.add("photo-img-loaded"));
+    wrap.appendChild(img);
+  }
+  return wrap;
+}
+
 function thumb(rt: DeviceRuntime, p: Photo, album: Photo[]): HTMLElement {
   const cell = h("button", { class: "photo-thumb", type: "button", role: "listitem", "aria-label": p.caption ?? "Photo" });
-  cell.appendChild(svgEl(p.svg, "photo-thumb-art"));
+  cell.appendChild(photoMedia(p, "photo-thumb-art", "cover"));
   if (p.flashlight) cell.appendChild(h("span", { class: "photo-thumb-dark", "aria-hidden": "true" }));
   cell.addEventListener("click", () => rt.push(photoViewer(rt, p, album)));
   return cell;
@@ -104,7 +123,7 @@ function photoViewer(rt: DeviceRuntime, start: Photo, album: Photo[]): HTMLEleme
     stage.replaceChildren();
     zoomed = false;
 
-    const art = svgEl(p.svg, "photo-full");
+    const art = p.flashlight ? svgEl(p.svg, "photo-full") : photoMedia(p, "photo-full", "contain");
     stage.appendChild(art);
 
     if (p.flashlight) {

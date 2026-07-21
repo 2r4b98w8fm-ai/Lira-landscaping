@@ -8,6 +8,19 @@ export function openSettings(rt: DeviceRuntime): HTMLElement {
   view.appendChild(rt.appHeader("Settings"));
   const body = h("div", { class: "app-scroll" });
 
+  body.appendChild(h("h2", { class: "section-label" }, "Difficulty"));
+  body.appendChild(
+    toggleRow(
+      "Hard mode",
+      "No code hints, no evidence prompts in the case report. Pure deduction — for players who want to earn it.",
+      () => !!settings().hardMode,
+      (v) => {
+        loadSave().settings.hardMode = v;
+        persist();
+      },
+    ),
+  );
+
   body.appendChild(h("h2", { class: "section-label" }, "Experience"));
   body.appendChild(
     toggleRow(
