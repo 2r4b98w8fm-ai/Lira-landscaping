@@ -90,6 +90,11 @@ function dayStamp(d = new Date()): string {
  */
 export function recordPlayDay(): { count: number; best: number; extended: boolean } {
   const save = loadSave();
+  const hour = new Date().getHours();
+  if (hour < 5 && !save.playedLate) {
+    save.playedLate = true;
+    persist();
+  }
   const today = dayStamp();
   const s = save.streak ?? { count: 0, best: 0, lastDay: "" };
   let extended = false;

@@ -40,6 +40,12 @@ function anyCase(save: SaveFile, pred: (p: CaseProgress) => boolean): boolean {
 function countCases(save: SaveFile, pred: (p: CaseProgress) => boolean): number {
   return Object.values(save.cases).filter(pred).length;
 }
+function caseCanon(save: SaveFile, id: string): boolean {
+  return !!save.cases[id]?.canonReached;
+}
+function caseDone(save: SaveFile, id: string): boolean {
+  return !!save.cases[id]?.completed;
+}
 
 export const ACHIEVEMENTS: Achievement[] = [
   { id: "first_case", emoji: "🗂️", name: "Case Closed", desc: "File your first case report.", test: (s) => anyCase(s, (p) => p.completed) },
@@ -58,6 +64,12 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "perfect", emoji: "💎", name: "Meticulous", desc: "Earn 3 stars on 5 cases.", test: (s) => countCases(s, (p) => (p.stars ?? 0) >= 3) >= 5 },
   { id: "thorough", emoji: "🔍", name: "Left No Stone", desc: "Find 100% of the evidence in a case.", test: (s) => anyCase(s, (p) => !!p.citableTotal && (p.citableFound ?? 0) >= p.citableTotal) },
   { id: "streak3", emoji: "🔥", name: "On the Case", desc: "Play three days in a row.", test: (s) => (s.streak?.best ?? 0) >= 3 },
+  { id: "graduate", emoji: "🎓", name: "Larry's Protégé", desc: "Finish the training case.", test: (s) => caseDone(s, "case-00") },
+  { id: "tuned_in", emoji: "📻", name: "You're Not Alone", desc: "Reach the truth of “The 3:33 Caller.”", test: (s) => caseCanon(s, "case-16") },
+  { id: "checked_out", emoji: "🛎️", name: "Do Not Disturb", desc: "Reach the truth of “The Night Auditor.”", test: (s) => caseCanon(s, "case-17") },
+  { id: "season_two", emoji: "🎬", name: "Second Wave", desc: "Close both Season Two cases.", test: (s) => caseDone(s, "case-16") && caseDone(s, "case-17") },
+  { id: "night_owl", emoji: "🦉", name: "Small Hours", desc: "Open a case between midnight and 5 AM.", test: (s) => !!s.playedLate },
+  { id: "deep_diver", emoji: "🧷", name: "Case Cracker", desc: "Find 100% of the evidence in three cases.", test: (s) => countCases(s, (p) => !!p.citableTotal && (p.citableFound ?? 0) >= p.citableTotal) >= 3 },
 ];
 
 // ---------------------------------------------------------------------------

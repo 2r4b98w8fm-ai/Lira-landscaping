@@ -287,6 +287,10 @@ export interface PlayerSettings {
   music?: boolean;
   /** Light haptic feedback on supported devices. Default on. */
   haptics?: boolean;
+  /** The player's chosen investigator name, shown across the desk. */
+  investigatorName?: string;
+  /** Case-board colour theme for the menu. */
+  boardTheme?: "noir" | "sepia" | "slate";
 }
 
 export interface SaveFile {
@@ -305,4 +309,6 @@ export interface SaveFile {
   };
   /** Most recently opened case, for the archive "Continue" banner. */
   lastCaseId?: string;
+  /** Set the first time the game is opened between midnight and 5 AM. */
+  playedLate?: boolean;
 }

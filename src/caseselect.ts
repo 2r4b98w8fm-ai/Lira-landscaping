@@ -4,7 +4,7 @@ import { CASE_MANIFEST, loadCase, type CaseManifestEntry } from "./cases";
 /** The real cases — the tutorial is excluded from all progress counts. */
 const PLAYABLE = CASE_MANIFEST.filter((e) => !e.tutorial);
 import { h, clear, svgEl } from "./lib/dom";
-import { caseProgress, loadSave, currentStreak, persist } from "./save";
+import { caseProgress, loadSave, currentStreak, persist, settings } from "./save";
 import { renderIntro } from "./intro";
 import { DeviceRuntime } from "./device/runtime";
 import { buildAppRegistry } from "./device/apps";
@@ -17,8 +17,14 @@ import { totalXp, rankFor, ACHIEVEMENTS, unlockedAchievements, RANKS } from "./p
  * The out-of-fiction shell: a case archive. Selecting a case lazily loads
  * its data chunk and boots the phone.
  */
+/** Apply the chosen case-board colour theme to the document. */
+function applyBoardTheme(): void {
+  document.documentElement.dataset.board = settings().boardTheme ?? "noir";
+}
+
 export function renderCaseSelect(host: HTMLElement): void {
   clear(host);
+  applyBoardTheme();
   syncMenuMusic(); // the archive/title carries the soundtrack; cases fall silent
   const root = h("div", { class: "archive" });
 
@@ -268,6 +274,7 @@ function buildFinaleCard(host: HTMLElement, root: HTMLElement): void {
 
 export function renderProfile(host: HTMLElement): void {
   clear(host);
+  applyBoardTheme();
   const save = loadSave();
   const xp = totalXp(save);
   const { rank, index, next, progress } = rankFor(xp);
@@ -283,10 +290,12 @@ export function renderProfile(host: HTMLElement): void {
   back.addEventListener("click", () => renderCaseSelect(host));
   root.appendChild(back);
 
+  const name = (settings().investigatorName ?? "").trim();
   const hero = h(
     "div",
     { class: "profile-hero" },
     h("div", { class: "profile-badge" }, rankBadge(index)),
+    name ? h("div", { class: "profile-name" }, `Det. ${name}`) : null,
     h("div", { class: "profile-rank" }, rank.name),
     h(
       "div",
@@ -334,6 +343,8 @@ export function renderProfile(host: HTMLElement): void {
       hero,
       h("h2", { class: "section-label" }, "Statistics"),
       stats,
+      h("h2", { class: "section-label" }, "Detective ID"),
+      buildIdentityPanel(host),
       h("h2", { class: "section-label" }, "Achievements"),
       grid,
       h("h2", { class: "section-label" }, "Game"),
@@ -341,6 +352,47 @@ export function renderProfile(host: HTMLElement): void {
     ),
   );
   host.appendChild(root);
+}
+
+/** Name yourself and set the board theme — the personalization panel. */
+function buildIdentityPanel(host: HTMLElement): HTMLElement {
+  const wrap = h("div", { class: "id-panel" });
+
+  const nameRow = h("label", { class: "id-field" }, h("span", { class: "id-label" }, "Your name, detective"));
+  const input = h("input", {
+    class: "id-input",
+    type: "text",
+    maxlength: "22",
+    placeholder: "e.g. Vega, Okafor, Larry Jr.",
+    value: (settings().investigatorName ?? ""),
+  }) as HTMLInputElement;
+  input.addEventListener("input", () => {
+    loadSave().settings.investigatorName = input.value.slice(0, 22);
+    persist();
+  });
+  nameRow.appendChild(input);
+  wrap.appendChild(nameRow);
+
+  const themeRow = h("div", { class: "id-field" }, h("span", { class: "id-label" }, "Case-board theme"));
+  const seg = h("div", { class: "id-seg" });
+  const themes: Array<["noir" | "sepia" | "slate", string]> = [
+    ["noir", "Noir"],
+    ["sepia", "Sepia"],
+    ["slate", "Nightshift"],
+  ];
+  const current = settings().boardTheme ?? "noir";
+  for (const [id, label] of themes) {
+    const b = h("button", { class: `id-seg-btn${current === id ? " id-seg-on" : ""}`, type: "button" }, label);
+    b.addEventListener("click", () => {
+      loadSave().settings.boardTheme = id;
+      persist();
+      renderProfile(host); // re-render so the swatch updates live
+    });
+    seg.appendChild(b);
+  }
+  themeRow.appendChild(seg);
+  wrap.appendChild(themeRow);
+  return wrap;
 }
 
 /** Replay the title, restart the tutorial, or wipe progress on this device. */
@@ -395,6 +447,7 @@ function statCell(num: string, label: string): HTMLElement {
 /** The endgame: a commendation letter once all fifteen files are closed. */
 export function renderFinale(host: HTMLElement): void {
   clear(host);
+  applyBoardTheme();
   const save = loadSave();
   const canon = PLAYABLE.filter((e) => caseProgress(e.id).canonReached).length;
   const stars = PLAYABLE.reduce((s, e) => s + (caseProgress(e.id).stars ?? 0), 0);
@@ -407,13 +460,16 @@ export function renderFinale(host: HTMLElement): void {
   back.addEventListener("click", () => renderCaseSelect(host));
   root.appendChild(back);
 
+  const finaleName = (settings().investigatorName ?? "").trim();
+  const salutation = finaleName ? `Detective ${finaleName},` : "Detective,";
   const letter = h(
     "div",
     { class: "finale-letter" },
     h("p", { class: "finale-seal" }, "🏅"),
     h("p", { class: "finale-kicker" }, "COLD CASE UNIT · OFFICE OF THE DIRECTOR"),
     h("h1", { class: "finale-head" }, "Commendation"),
-    h("p", { class: "finale-para" }, `Fifteen files. Every one of them had been closed before you arrived — voluntary departure, walked off the job, wandered off, ran. Fifteen people the paperwork had already given up on.`),
+    h("p", { class: "finale-salut" }, salutation),
+    h("p", { class: "finale-para" }, `${PLAYABLE.length} files. Every one of them had been closed before you arrived — voluntary departure, walked off the job, wandered off, ran. ${PLAYABLE.length} people the paperwork had already given up on.`),
     h("p", { class: "finale-para" }, `You opened the phones anyway. You read the messages nobody re-read, found the photos that shouldn't develop, and listened to the voicemails that were still, quietly, waiting for a call back. You reached ${canon} of ${PLAYABLE.length} true endings and earned ${stars} of ${PLAYABLE.length * 3} stars.`),
     h("p", { class: "finale-para" }, allCanon
       ? `You reached the truth of every single one. Some of those truths could be arrested. Some could only be witnessed. You did not look away from either kind. That is the whole job, and almost no one does all of it.`
