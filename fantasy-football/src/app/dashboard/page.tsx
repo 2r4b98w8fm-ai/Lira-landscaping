@@ -1,0 +1,75 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { NotConnectedBanner } from "@/components/NotConnectedBanner";
+import { RosterTable } from "@/components/RosterTable";
+import type { RosterPlayer } from "@/types/domain";
+
+interface RosterResponse {
+  connected: boolean;
+  teamSelected?: boolean;
+  leagueName?: string;
+  lastSyncedAt?: string | null;
+  roster?: RosterPlayer[];
+}
+
+export default function DashboardPage() {
+  const [data, setData] = useState<RosterResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  async function load() {
+    setLoading(true);
+    const res = await fetch("/api/league/roster");
+    setData(await res.json());
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function refresh() {
+    setSyncing(true);
+    await fetch("/api/league/sync", { method: "POST" });
+    await load();
+    setSyncing(false);
+  }
+
+  if (loading) {
+    return <p className="text-slate-400">Loading your roster…</p>;
+  }
+
+  if (!data?.connected) {
+    return <NotConnectedBanner reason="not_connected" />;
+  }
+  if (!data.teamSelected) {
+    return <NotConnectedBanner reason="no_team_selected" />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-bold">{data.leagueName}</h1>
+          <p className="text-xs text-slate-500">
+            Last synced from ESPN:{" "}
+            {data.lastSyncedAt ? new Date(data.lastSyncedAt).toLocaleString() : "never"}
+          </p>
+        </div>
+        <button
+          onClick={refresh}
+          disabled={syncing}
+          className="rounded-md border border-white/10 bg-field-800 px-3 py-1.5 text-sm hover:bg-field-800/70 disabled:opacity-50"
+        >
+          {syncing ? "Refreshing…" : "Refresh from ESPN"}
+        </button>
+      </div>
+      {data.roster && data.roster.length > 0 ? (
+        <RosterTable roster={data.roster} />
+      ) : (
+        <p className="text-slate-400">This roster came back empty — try refreshing.</p>
+      )}
+    </div>
+  );
+}
