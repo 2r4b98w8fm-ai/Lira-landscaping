@@ -67,6 +67,22 @@ export const ESPN_LINEUP_SLOT_MAP: Record<number, string> = {
   23: "FLEX",
 };
 
+/**
+ * ESPN lineupSlotId -> canonical starting-slot key, used to read real
+ * starting requirements (QB/RB/WR/TE/FLEX/K/DST) out of a league's own
+ * settings for scarcity/replacement-level math. Deliberately excludes
+ * bench (20) and IR (21) — those aren't "starters" for scarcity purposes.
+ */
+export const STARTING_SLOT_ID_MAP: Record<number, string> = {
+  0: "QB",
+  2: "RB",
+  4: "WR",
+  6: "TE",
+  16: "DST",
+  17: "K",
+  23: "FLEX",
+};
+
 export const ALL_NFL_TEAMS = [
   "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN",
   "DET", "GB", "HOU", "IND", "JAX", "KC", "LAC", "LAR", "LV", "MIA",

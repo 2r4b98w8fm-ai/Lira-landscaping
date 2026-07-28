@@ -6,6 +6,7 @@ import {
   real,
   timestamp,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const leagues = pgTable(
@@ -15,6 +16,13 @@ export const leagues = pgTable(
     espnLeagueId: text("espn_league_id").notNull(),
     season: integer("season").notNull(),
     name: text("name").notNull(),
+    currentWeek: integer("current_week").notNull().default(1),
+    /**
+     * Starting lineup slot counts for this league (e.g. {"QB":1,"RB":2,...}),
+     * read from ESPN's own settings rather than assumed — used to compute
+     * real positional scarcity/replacement level for trade value.
+     */
+    rosterSlotCounts: jsonb("roster_slot_counts").$type<Record<string, number>>(),
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
     lastSyncError: text("last_sync_error"),
   },
@@ -83,6 +91,10 @@ export const rosterSlots = pgTable(
     opponent: text("opponent"),
     weekProjection: real("week_projection"),
     seasonPoints: real("season_points"),
+    /** Rest-of-season projected points, for trade value. See restOfSeasonSource. */
+    restOfSeasonProjection: real("rest_of_season_projection"),
+    /** 'espn' = ESPN's own ROS projection field; 'pace_estimate' = season-points-so-far/week * remaining weeks, used only when ESPN doesn't provide one. Never silently treated as equally authoritative in the UI. */
+    restOfSeasonSource: text("rest_of_season_source"),
   },
   (t) => ({
     teamPlayerIdx: uniqueIndex("roster_slots_team_player_idx").on(
@@ -135,6 +147,30 @@ export const defenseVsPosition = pgTable(
       t.season,
       t.team,
       t.position
+    ),
+  })
+);
+
+/**
+ * Full-season NFL schedule (every team, every week), pulled once per sync
+ * from ESPN's proTeamSchedules_wl view. Used to compute rest-of-season
+ * strength of schedule for trade value without re-fetching per request.
+ */
+export const proTeamSchedule = pgTable(
+  "pro_team_schedule",
+  {
+    id: serial("id").primaryKey(),
+    season: integer("season").notNull(),
+    nflTeam: text("nfl_team").notNull(),
+    week: integer("week").notNull(),
+    /** Null on a bye week. */
+    opponent: text("opponent"),
+  },
+  (t) => ({
+    seasonTeamWeekIdx: uniqueIndex("pro_team_schedule_season_team_week_idx").on(
+      t.season,
+      t.nflTeam,
+      t.week
     ),
   })
 );

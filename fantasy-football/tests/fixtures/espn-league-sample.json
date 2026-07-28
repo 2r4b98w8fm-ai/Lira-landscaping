@@ -1,7 +1,10 @@
 {
   "id": 123456,
   "seasonId": 2026,
-  "settings": { "name": "The League of Ordinary Gentlemen" },
+  "settings": {
+    "name": "The League of Ordinary Gentlemen",
+    "rosterSettings": { "lineupSlotCounts": { "0": 1, "2": 2, "4": 2, "6": 1, "16": 1, "17": 1, "20": 6, "21": 2, "23": 1 } }
+  },
   "status": { "currentMatchupPeriod": 4 },
   "teams": [
     {
@@ -40,6 +43,23 @@
                 "defaultPositionId": 2,
                 "proTeamId": 99,
                 "injuryStatus": "QUESTIONABLE"
+              }
+            }
+          },
+          {
+            "playerId": 5555,
+            "lineupSlotId": 4,
+            "playerPoolEntry": {
+              "player": {
+                "id": 5555,
+                "fullName": "Season Projected Guy",
+                "defaultPositionId": 3,
+                "proTeamId": 15,
+                "injuryStatus": "ACTIVE",
+                "stats": [
+                  { "statSourceId": 0, "statSplitTypeId": 0, "seasonId": 2026, "appliedTotal": 100 },
+                  { "statSourceId": 1, "statSplitTypeId": 0, "seasonId": 2026, "appliedTotal": 300 }
+                ]
               }
             }
           }

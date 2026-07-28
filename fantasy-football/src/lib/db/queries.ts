@@ -1,9 +1,10 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "./client";
 import {
   defenseVsPosition,
   leagues,
   players,
+  proTeamSchedule,
   rosterSlots,
   syncLog,
   teams,
@@ -66,6 +67,17 @@ export async function upsertLeague(summary: LeagueSummary): Promise<number> {
   }
 
   return row.id;
+}
+
+export async function updateLeagueMeta(
+  leagueRowId: number,
+  currentWeek: number,
+  rosterSlotCounts: Record<string, number>
+) {
+  await db
+    .update(leagues)
+    .set({ currentWeek, rosterSlotCounts })
+    .where(eq(leagues.id, leagueRowId));
 }
 
 export async function recordLeagueSyncError(
@@ -131,6 +143,8 @@ export async function upsertRoster(
         opponent: p.opponent,
         weekProjection: p.weekProjection,
         seasonPoints: p.seasonPoints,
+        restOfSeasonProjection: p.restOfSeasonProjection,
+        restOfSeasonSource: p.restOfSeasonSource,
       })
       .onConflictDoUpdate({
         target: [rosterSlots.teamId, rosterSlots.espnPlayerId],
@@ -140,33 +154,69 @@ export async function upsertRoster(
           opponent: p.opponent,
           weekProjection: p.weekProjection,
           seasonPoints: p.seasonPoints,
+          restOfSeasonProjection: p.restOfSeasonProjection,
+          restOfSeasonSource: p.restOfSeasonSource,
         },
       });
   }
 }
 
+const rosterPlayerSelection = {
+  espnPlayerId: players.espnPlayerId,
+  name: players.name,
+  position: players.position,
+  nflTeam: players.nflTeam,
+  injuryStatus: players.injuryStatus,
+  lineupSlot: rosterSlots.lineupSlot,
+  opponent: rosterSlots.opponent,
+  weekProjection: rosterSlots.weekProjection,
+  seasonPoints: rosterSlots.seasonPoints,
+  restOfSeasonProjection: rosterSlots.restOfSeasonProjection,
+  restOfSeasonSource: rosterSlots.restOfSeasonSource,
+} as const;
+
+function toRosterPlayer(r: {
+  espnPlayerId: number;
+  name: string;
+  position: string;
+  nflTeam: string;
+  injuryStatus: string;
+  lineupSlot: string;
+  opponent: string | null;
+  weekProjection: number | null;
+  seasonPoints: number | null;
+  restOfSeasonProjection: number | null;
+  restOfSeasonSource: string | null;
+}): RosterPlayer {
+  return {
+    ...r,
+    position: r.position as RosterPlayer["position"],
+    injuryStatus: r.injuryStatus as RosterPlayer["injuryStatus"],
+    restOfSeasonSource: r.restOfSeasonSource as RosterPlayer["restOfSeasonSource"],
+  };
+}
+
 export async function getRosterForTeam(teamId: number): Promise<RosterPlayer[]> {
   const rows = await db
-    .select({
-      espnPlayerId: players.espnPlayerId,
-      name: players.name,
-      position: players.position,
-      nflTeam: players.nflTeam,
-      injuryStatus: players.injuryStatus,
-      lineupSlot: rosterSlots.lineupSlot,
-      opponent: rosterSlots.opponent,
-      weekProjection: rosterSlots.weekProjection,
-      seasonPoints: rosterSlots.seasonPoints,
-    })
+    .select(rosterPlayerSelection)
     .from(rosterSlots)
     .innerJoin(players, eq(players.espnPlayerId, rosterSlots.espnPlayerId))
     .where(eq(rosterSlots.teamId, teamId));
 
-  return rows.map((r) => ({
-    ...r,
-    position: r.position as RosterPlayer["position"],
-    injuryStatus: r.injuryStatus as RosterPlayer["injuryStatus"],
-  }));
+  return rows.map(toRosterPlayer);
+}
+
+/** Every team's roster in the league, for league-wide scarcity/needs analysis. */
+export async function getAllTeamRosters(
+  leagueId: number
+): Promise<Array<{ teamId: number; teamName: string; roster: RosterPlayer[] }>> {
+  const leagueTeams = await getTeamsForLeague(leagueId);
+  const results: Array<{ teamId: number; teamName: string; roster: RosterPlayer[] }> = [];
+  for (const team of leagueTeams) {
+    const roster = await getRosterForTeam(team.id);
+    results.push({ teamId: team.id, teamName: team.name, roster });
+  }
+  return results;
 }
 
 export async function getTeamByEspnTeamId(leagueId: number, espnTeamId: number) {
@@ -225,4 +275,38 @@ export async function getDefenseVsPosition(season: number) {
     .select()
     .from(defenseVsPosition)
     .where(eq(defenseVsPosition.season, season));
+}
+
+export async function upsertProTeamSchedule(
+  season: number,
+  rows: Array<{ nflTeam: string; week: number; opponent: string | null }>
+) {
+  for (const row of rows) {
+    await db
+      .insert(proTeamSchedule)
+      .values({ season, nflTeam: row.nflTeam, week: row.week, opponent: row.opponent })
+      .onConflictDoUpdate({
+        target: [proTeamSchedule.season, proTeamSchedule.nflTeam, proTeamSchedule.week],
+        set: { opponent: row.opponent },
+      });
+  }
+}
+
+/** Opponents for every week after `afterWeek`, skipping byes. Used for rest-of-season SOS. */
+export async function getRestOfSeasonOpponents(
+  season: number,
+  nflTeam: string,
+  afterWeek: number
+): Promise<string[]> {
+  const rows = await db
+    .select({ opponent: proTeamSchedule.opponent })
+    .from(proTeamSchedule)
+    .where(
+      and(
+        eq(proTeamSchedule.season, season),
+        eq(proTeamSchedule.nflTeam, nflTeam),
+        gt(proTeamSchedule.week, afterWeek)
+      )
+    );
+  return rows.map((r) => r.opponent).filter((o): o is string => o !== null);
 }

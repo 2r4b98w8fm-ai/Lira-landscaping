@@ -2,6 +2,7 @@ import {
   ESPN_LINEUP_SLOT_MAP,
   ESPN_POSITION_MAP,
   ESPN_PRO_TEAM_MAP,
+  STARTING_SLOT_ID_MAP,
   type Position,
 } from "@/lib/constants";
 import type { InjuryStatus, LeagueSummary, RosterPlayer, TeamSummary } from "@/types/domain";
@@ -13,6 +14,13 @@ import type {
   EspnStatEntry,
   EspnTeam,
 } from "./types";
+
+/**
+ * NFL regular season length used only for the season-pace ROS fallback
+ * (see mapRosterEntry) when ESPN doesn't supply its own rest-of-season
+ * projection. Approximate — doesn't account for each team's individual bye.
+ */
+const SEASON_WEEKS = 18;
 
 /** Collects non-fatal problems encountered while mapping a sync, for sync_log. */
 export class MappingWarnings {
@@ -92,6 +100,67 @@ export function buildOpponentMap(
     if (opponentId !== undefined) map.set(team.id, opponentId);
   }
   return map;
+}
+
+/**
+ * Full-season schedule for every NFL team, for rest-of-season strength of
+ * schedule. Unlike buildOpponentMap (one week), this walks every week
+ * present in the response so trade value can look ahead.
+ */
+export function buildFullSeasonSchedule(
+  raw: EspnProTeamSchedulesResponse,
+  warnings: MappingWarnings
+): Array<{ nflTeam: string; week: number; opponent: string | null }> {
+  const rows: Array<{ nflTeam: string; week: number; opponent: string | null }> = [];
+  const proTeams = raw.settings?.proTeams;
+  if (!proTeams) {
+    warnings.add("proTeamSchedules response missing settings.proTeams; full schedule unavailable.");
+    return rows;
+  }
+  for (const team of proTeams) {
+    if (team.id === undefined) continue;
+    const nflTeam = mapProTeam(team.id);
+    const byWeek = team.proGamesByScoringPeriod ?? {};
+    for (const weekKey of Object.keys(byWeek)) {
+      const week = Number(weekKey);
+      if (!Number.isFinite(week)) continue;
+      const game = byWeek[weekKey]?.[0];
+      const opponentId = game
+        ? game.homeProTeamId === team.id
+          ? game.awayProTeamId
+          : game.homeProTeamId
+        : undefined;
+      rows.push({ nflTeam, week, opponent: opponentId !== undefined ? mapProTeam(opponentId) : null });
+    }
+  }
+  return rows;
+}
+
+/**
+ * Reads real starting-lineup requirements (QB/RB/WR/TE/FLEX/K/DST counts)
+ * out of the league's own settings, for scarcity/replacement-level math.
+ * Falls back to a standard single-league default (with a warning) if ESPN
+ * didn't return rosterSettings at all — never silently assumes.
+ */
+export function mapStartingSlotCounts(
+  raw: EspnLeagueResponse,
+  warnings: MappingWarnings
+): Record<string, number> {
+  const counts = raw.settings?.rosterSettings?.lineupSlotCounts;
+  if (!counts) {
+    warnings.add(
+      "League settings didn't include rosterSettings.lineupSlotCounts; falling back to a standard 1QB/2RB/2WR/1TE/1FLEX/1K/1DST assumption."
+    );
+    return { QB: 1, RB: 2, WR: 2, TE: 1, FLEX: 1, K: 1, DST: 1 };
+  }
+
+  const result: Record<string, number> = {};
+  for (const [slotId, count] of Object.entries(counts)) {
+    const key = STARTING_SLOT_ID_MAP[Number(slotId)];
+    if (!key || !count) continue;
+    result[key] = (result[key] ?? 0) + count;
+  }
+  return result;
 }
 
 export function mapLeagueSummary(
@@ -183,6 +252,27 @@ function mapRosterEntry(
     statSplitTypeId: 0,
   });
 
+  // Prefer ESPN's own rest-of-season/full-season projection (statSourceId 1,
+  // season split). ESPN doesn't document whether that total is "full season"
+  // or "remaining", so we treat it as full-season and net out points already
+  // scored — if that goes negative (a bad ESPN season total, or the player
+  // has badly outperformed it) we fall back to the pace estimate instead of
+  // showing a negative or clearly-wrong ROS number.
+  const espnSeasonProjection = extractStat(player.stats, {
+    statSourceId: 1,
+    statSplitTypeId: 0,
+  });
+  let restOfSeasonProjection: number | null = null;
+  let restOfSeasonSource: "espn" | "pace_estimate" | null = null;
+  if (espnSeasonProjection !== null && seasonPoints !== null && espnSeasonProjection - seasonPoints > 0) {
+    restOfSeasonProjection = espnSeasonProjection - seasonPoints;
+    restOfSeasonSource = "espn";
+  } else if (seasonPoints !== null && week > 1) {
+    const remainingWeeks = Math.max(SEASON_WEEKS - week, 0);
+    restOfSeasonProjection = (seasonPoints / (week - 1)) * remainingWeeks;
+    restOfSeasonSource = "pace_estimate";
+  }
+
   return {
     espnPlayerId: player.id,
     name: player.fullName,
@@ -193,5 +283,7 @@ function mapRosterEntry(
     opponent,
     seasonPoints,
     weekProjection,
+    restOfSeasonProjection,
+    restOfSeasonSource,
   };
 }

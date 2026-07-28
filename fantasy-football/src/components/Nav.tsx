@@ -7,6 +7,7 @@ const links = [
   { href: "/", label: "Connect" },
   { href: "/dashboard", label: "Roster" },
   { href: "/start-sit", label: "Start/Sit" },
+  { href: "/trade", label: "Trade" },
 ];
 
 export function Nav() {

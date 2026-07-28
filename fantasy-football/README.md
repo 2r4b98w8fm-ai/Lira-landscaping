@@ -4,9 +4,10 @@ Data-driven decision support for your ESPN Fantasy Football league: start/sit ca
 visible reasoning, backed by real ESPN roster/projection data and real historical NFL stats
 (no fabricated numbers).
 
-**Phase 1 (this build):** connect an ESPN league, browse your roster, get a start/sit board
-per position. Phases 2–4 (trade analyzer, playoff simulator, waiver/power-rankings layer) are
-not built yet.
+**Phase 1:** connect an ESPN league, browse your roster, get a start/sit board per position.
+**Phase 2 (this build):** trade value calculator, "who should I target," and "what should I
+offer" — all with the math shown, not a black-box score. Phases 3–4 (playoff simulator,
+waiver/power-rankings layer) are not built yet.
 
 ## Tech stack
 
@@ -26,10 +27,43 @@ not built yet.
 | Season-to-date points | Same ESPN roster response (`statSourceId: 0`) | **Real** |
 | Defense-vs-position (matchup difficulty) | [nflverse-data](https://github.com/nflverse/nflverse-data) weekly player stats, aggregated by opponent+position | **Real**, computed from actual box scores, free and no API key needed |
 | Opponent this week | ESPN pro team schedule endpoint | **Real** |
+| Rest-of-season projection | ESPN's season-total projected stat, net of points already scored | **Real** when ESPN provides it; **estimated** from season-to-date scoring pace when it doesn't (always labeled which, in both the API response and the UI's "show math") |
+| Starting lineup requirements (for scarcity math) | ESPN league settings (`rosterSettings.lineupSlotCounts`) | **Real**, falls back to a standard assumption (with a logged warning) only if ESPN omits it |
+| Positional scarcity / replacement level | Computed from every rostered player's real rest-of-season projection in your league | **Real**, no external "average draft position" or similar service used |
 
 Nothing here is mocked or hardcoded. Where ESPN doesn't return a value (a rookie the API hasn't
 projected yet, a bye week, etc.), the UI says so explicitly instead of showing a plausible-looking
 fake number.
+
+## Trade value methodology (Phase 2)
+
+Every player's trade value is built from four visible steps — the API returns each one and the
+UI's "show math" toggle prints them per player:
+
+1. **Rest-of-season projection.** ESPN's own number when available, otherwise (season points so
+   far ÷ weeks played) × weeks remaining — always labeled which one you're looking at.
+2. **Value over replacement (VORP).** Projection minus the "replacement level" for that
+   position — the rest-of-season projection of the last player who'd actually be startable
+   league-wide, given your league's real starting slot counts (including a proportional split of
+   FLEX across RB/WR/TE). This is what makes a scarce position worth more than a deep one for the
+   same raw points.
+3. **Injury discount.** A fixed multiplier by ESPN's reported status (ACTIVE 1.0×, QUESTIONABLE
+   0.9×, DOUBTFUL 0.75×, OUT 0.4×, IR 0.15×, SUSPENSION 0.5×).
+4. **Rest-of-season schedule.** The average defense-vs-position rank of a player's remaining
+   opponents nudges value ±10% at most — real nflverse-derived data, or no adjustment at all
+   (never a guess) if there's no matchup data yet.
+
+**Team needs** (surplus/weakness per position) compare a team's total value at a position against
+the league-average value per starting slot there — so an empty position reads as a real, sharply
+negative need rather than a false "neutral."
+
+**"Who should I target"** ranks other teams by how well their weak spots match your surplus (and
+vice versa), weighting a mutual fit above a one-sided favor.
+
+**"What should I offer"** builds a give/receive package from your surplus at a target's weak
+position, matched against their surplus at one of your weak positions, picking whichever
+combination lands closest to even value (returns nothing rather than inventing a trade when there
+isn't real surplus on both sides).
 
 ### A note on ESPN's API
 
@@ -82,27 +116,33 @@ Start/Sit pages.
   real league before calling this fully proven end-to-end.
 - nflverse data and the Postgres/Drizzle layer **were** verified live in this environment
   (real 2024 season stats downloaded, parsed, and written to a local Postgres instance).
+- Phase 2's trade math (value, scarcity, needs, target-finding, offer-building) was verified
+  end-to-end against a seeded 4-team league with realistic values in this environment — screenshot-
+  tested through all three Trade tabs, including a 0%-gap offer the algorithm found on its own.
+  It still depends on the same ESPN roster sync as Phase 1, so it inherits that same "needs one
+  live league to fully confirm" caveat.
 
-## What's next (Phase 2)
+## What's next (Phase 3)
 
-Trade value calculator, "who should I target," and "what should I offer" — not started. Let me
-know when you want to move on and I'll pick up from there.
+Monte Carlo playoff probability simulator — not started. Let me know when you want to move on and
+I'll pick up from there.
 
 ## Project layout
 
 ```
 src/
-  app/                    pages (connect, dashboard, start-sit) + API route handlers
-  components/             UI components
+  app/                    pages (connect, dashboard, start-sit, trade) + API route handlers
+  components/             UI components (components/trade/ for the trade tabs)
   lib/
     espn/                 ESPN API client + defensive mappers
     nflverse/              real weekly stats ingestion + defense-vs-position math
     startsit/              ranking engine with human-readable reasoning
+    trade/                 value/scarcity/schedule/needs/targets/offers — all pure, tested functions
     db/                    Drizzle schema, client, queries
-    sync/                  orchestrates an ESPN pull -> DB cache write
+    sync/                  orchestrates an ESPN pull -> DB cache write; resolves session -> cached team
     session.ts             encrypted session cookie (league/team selection + ESPN creds)
 scripts/
   migrate.ts               applies Drizzle migrations
   sync-defense-rankings.ts  one-off/cron entry point for the nflverse ingest
-tests/                     fixture-based unit tests for mappers, ingest math, ranking engine
+tests/                     fixture-based unit tests for mappers, ingest math, ranking/trade engines
 ```

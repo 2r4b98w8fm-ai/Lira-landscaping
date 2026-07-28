@@ -1,11 +1,20 @@
 import { fetchLeagueRaw, fetchProTeamSchedulesRaw, type EspnCredentials } from "@/lib/espn/client";
 import {
   MappingWarnings,
+  buildFullSeasonSchedule,
   buildOpponentMap,
   mapLeagueSummary,
   mapRosterPlayers,
+  mapStartingSlotCounts,
 } from "@/lib/espn/mappers";
-import { logSync, recordLeagueSyncError, upsertLeague, upsertRoster } from "@/lib/db/queries";
+import {
+  logSync,
+  recordLeagueSyncError,
+  updateLeagueMeta,
+  upsertLeague,
+  upsertProTeamSchedule,
+  upsertRoster,
+} from "@/lib/db/queries";
 import type { LeagueSummary } from "@/types/domain";
 
 export interface LeagueSyncResult {
@@ -44,6 +53,14 @@ export async function syncLeague(
 
     const league = mapLeagueSummary(raw, espnLeagueId, season, warnings);
     const leagueRowId = await upsertLeague(league);
+
+    const rosterSlotCounts = mapStartingSlotCounts(raw, warnings);
+    await updateLeagueMeta(leagueRowId, week, rosterSlotCounts);
+
+    const fullSchedule = buildFullSeasonSchedule(schedule, warnings);
+    if (fullSchedule.length > 0) {
+      await upsertProTeamSchedule(season, fullSchedule);
+    }
 
     for (const team of raw.teams ?? []) {
       if (team.id === undefined) continue;

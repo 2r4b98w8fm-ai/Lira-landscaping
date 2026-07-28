@@ -9,6 +9,9 @@ export interface ResolvedTeam {
   lastSyncedAt: Date | null;
   teamRowId: number;
   roster: RosterPlayer[];
+  season: number;
+  currentWeek: number;
+  rosterSlotCounts: Record<string, number>;
 }
 
 export type ResolveResult =
@@ -42,6 +45,9 @@ export async function resolveMyTeam(): Promise<ResolveResult> {
       lastSyncedAt: league.lastSyncedAt,
       teamRowId: team.id,
       roster,
+      season: league.season,
+      currentWeek: league.currentWeek,
+      rosterSlotCounts: league.rosterSlotCounts ?? {},
     },
   };
 }

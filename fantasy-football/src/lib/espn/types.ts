@@ -58,6 +58,10 @@ export interface EspnTeam {
 
 export interface EspnLeagueSettings {
   name?: string;
+  /** Starting lineup slot requirements, keyed by lineupSlotId (as a string). */
+  rosterSettings?: {
+    lineupSlotCounts?: Record<string, number>;
+  };
 }
 
 export interface EspnLeagueResponse {

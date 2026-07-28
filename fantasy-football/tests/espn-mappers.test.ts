@@ -3,6 +3,7 @@ import {
   MappingWarnings,
   mapLeagueSummary,
   mapRosterPlayers,
+  mapStartingSlotCounts,
 } from "@/lib/espn/mappers";
 import type { EspnLeagueResponse } from "@/lib/espn/types";
 import fixture from "./fixtures/espn-league-sample.json";
@@ -91,5 +92,52 @@ describe("mapRosterPlayers", () => {
     const players = mapRosterPlayers(malformedTeam, 4, new Map(), warnings);
     expect(players).toHaveLength(1);
     expect(players[0]?.name).toBe("OK Guy");
+  });
+
+  it("prefers ESPN's own rest-of-season projection when present", () => {
+    const warnings = new MappingWarnings();
+    const team = fixture.teams[0] as any;
+    const players = mapRosterPlayers(team, 4, new Map(), warnings);
+
+    const projected = players.find((p) => p.name === "Season Projected Guy");
+    expect(projected?.restOfSeasonSource).toBe("espn");
+    expect(projected?.restOfSeasonProjection).toBe(200); // 300 season total - 100 already scored
+  });
+
+  it("falls back to a season-pace estimate when ESPN has no ROS projection, and labels it as such", () => {
+    const warnings = new MappingWarnings();
+    const team = fixture.teams[0] as any;
+    const players = mapRosterPlayers(team, 4, new Map(), warnings);
+
+    const allen = players.find((p) => p.name === "Josh Allen");
+    expect(allen?.restOfSeasonSource).toBe("pace_estimate");
+    // 88.3 pts over 3 played weeks (week 4 means 3 prior weeks) * 14 remaining weeks
+    expect(allen?.restOfSeasonProjection).toBeCloseTo((88.3 / 3) * 14, 2);
+  });
+
+  it("never estimates a rest-of-season projection with no season data at all", () => {
+    const warnings = new MappingWarnings();
+    const team = fixture.teams[0] as any;
+    const players = mapRosterPlayers(team, 4, new Map(), warnings);
+
+    const backup = players.find((p) => p.name === "Some Backup");
+    expect(backup?.restOfSeasonProjection).toBeNull();
+    expect(backup?.restOfSeasonSource).toBeNull();
+  });
+});
+
+describe("mapStartingSlotCounts", () => {
+  it("reads real starting requirements from league settings", () => {
+    const warnings = new MappingWarnings();
+    const counts = mapStartingSlotCounts(fixture as EspnLeagueResponse, warnings);
+    expect(counts).toEqual({ QB: 1, RB: 2, WR: 2, TE: 1, DST: 1, K: 1, FLEX: 1 });
+    expect(warnings.messages).toHaveLength(0);
+  });
+
+  it("falls back to a standard default and warns when settings are missing", () => {
+    const warnings = new MappingWarnings();
+    const counts = mapStartingSlotCounts({ id: 1 } as EspnLeagueResponse, warnings);
+    expect(counts).toEqual({ QB: 1, RB: 2, WR: 2, TE: 1, FLEX: 1, K: 1, DST: 1 });
+    expect(warnings.messages.length).toBeGreaterThan(0);
   });
 });

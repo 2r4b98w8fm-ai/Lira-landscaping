@@ -13,6 +13,8 @@ function player(partial: Partial<RosterPlayer>): RosterPlayer {
     opponent: "NE",
     seasonPoints: 50,
     weekProjection: 10,
+    restOfSeasonProjection: 120,
+    restOfSeasonSource: "espn",
     ...partial,
   };
 }
