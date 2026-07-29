@@ -185,11 +185,23 @@ Most leagues are private. ESPN requires two cookie values instead of an API key:
 
 1. Log into fantasy.espn.com and open your league.
 2. Open dev tools → Application (Chrome) / Storage (Firefox) → Cookies → `fantasy.espn.com`.
-3. Copy `espn_s2` and `SWID` (SWID includes the curly braces).
+3. Copy `espn_s2` and `SWID`.
 
-The connect form has this explainer built in. These values are encrypted into an httpOnly
-session cookie server-side and are **never written to the database** — only your league/team
-IDs and cached stats are persisted.
+The connect form has this explainer built in, plus a smart-paste parser
+(`src/lib/espnCookieParse.ts`): paste whatever you actually copied — the whole cookie row, a full
+`Cookie:` header, a GUID missing its curly braces — into either field, and it extracts both values
+correctly rather than requiring an exact, trimmed value in an exact field. This exists because a
+real ESPN/Disney-style "click a button, log in on their page, come back connected" flow is not
+achievable for a plain website: ESPN has no OAuth for Fantasy, so there's no protocol for their
+login page to hand anything back to a third-party site, regardless of whether it's a popup, an
+iframe, or a redirect — that's true for any website, not a limitation specific to this one. (A
+browser extension *could* read your existing ESPN cookies directly and skip this entirely, but
+that's a separate piece of software with its own install/trust/store-review overhead; the
+smart-paste flow was the more practical choice for now — see the git history around this decision
+if you want the fuller reasoning.)
+
+These values are encrypted into an httpOnly session cookie server-side and are **never written to
+the database** — only your league/team IDs and cached stats are persisted.
 
 ## Local setup
 

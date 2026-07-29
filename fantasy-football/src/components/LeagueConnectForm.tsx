@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { parseEspnCookiePaste } from "@/lib/espnCookieParse";
 import type { LeagueSummary } from "@/types/domain";
 
 interface ConnectResponse {
@@ -42,6 +43,26 @@ export function LeagueConnectForm() {
 
   const [discovered, setDiscovered] = useState<DiscoveredLeague[] | null>(null);
   const [discoveryNote, setDiscoveryNote] = useState<string | null>(null);
+  const [pasteDetected, setPasteDetected] = useState(false);
+
+  /**
+   * People following the dev-tools instructions rarely copy just the bare
+   * value — the whole cookie row, a `Cookie:` header, a GUID missing its
+   * braces. Works no matter which of the two fields you paste into.
+   */
+  function handleCookiePaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    const text = e.clipboardData.getData("text");
+    const parsed = parseEspnCookiePaste(text);
+    if (parsed.espnS2 || parsed.swid) {
+      e.preventDefault();
+      if (parsed.espnS2) setEspnS2(parsed.espnS2);
+      if (parsed.swid) setSwid(parsed.swid);
+      if (parsed.espnS2 && parsed.swid) {
+        setPasteDetected(true);
+        setTimeout(() => setPasteDetected(false), 4000);
+      }
+    }
+  }
 
   useEffect(() => {
     fetch("/api/account/leagues")
@@ -244,8 +265,9 @@ export function LeagueConnectForm() {
               <li>Open developer tools (F12 or Cmd+Opt+I) → Application (Chrome) or Storage (Firefox) tab.</li>
               <li>Under Cookies, click fantasy.espn.com.</li>
               <li>
-                Copy the values of <code>espn_s2</code> and <code>SWID</code> (SWID includes the curly
-                braces, e.g. <code>{"{ABC-123}"}</code>).
+                Select and copy the <code>espn_s2</code> row's value, then the <code>SWID</code>
+                row's value. Don&apos;t worry about copying extra whitespace or forgetting the
+                curly braces on SWID — pasting either one into the boxes below sorts that out.
               </li>
             </ol>
             <p className="mt-2">
@@ -254,11 +276,17 @@ export function LeagueConnectForm() {
             </p>
           </details>
 
+          <p className="text-xs text-slate-500">
+            Paste whatever you copied — the whole cookie row, a full <code>Cookie:</code> header,
+            or just the bare value — into either box below and we&apos;ll pull out the right
+            values automatically.
+          </p>
           <label className="block text-sm">
             <span className="text-slate-300">espn_s2</span>
             <input
               value={espnS2}
               onChange={(e) => setEspnS2(e.target.value)}
+              onPaste={handleCookiePaste}
               className="mt-1 w-full rounded-md border border-white/10 bg-field-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
             />
           </label>
@@ -267,10 +295,14 @@ export function LeagueConnectForm() {
             <input
               value={swid}
               onChange={(e) => setSwid(e.target.value)}
+              onPaste={handleCookiePaste}
               placeholder="{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
               className="mt-1 w-full rounded-md border border-white/10 bg-field-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
             />
           </label>
+          {pasteDetected && (
+            <p className="text-xs text-emerald-400">✓ Detected both espn_s2 and SWID from that paste.</p>
+          )}
           <p className="text-xs text-slate-500">
             Public league and just want the quick path? Leave both blank and use the "I have a
             league ID" tab.
