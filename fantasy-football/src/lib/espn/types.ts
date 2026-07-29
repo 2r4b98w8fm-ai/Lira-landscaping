@@ -124,3 +124,28 @@ export interface EspnFreeAgentEntry {
 export interface EspnFreeAgentsResponse {
   players?: EspnFreeAgentEntry[];
 }
+
+/**
+ * The "which leagues does this ESPN account belong to" endpoint that
+ * powers ESPN's own My Leagues page — a different host (fan.api.espn.com)
+ * and the least documented, least stable shape in this whole app. Used
+ * only to let a user discover their leagues after pasting espn_s2/SWID
+ * once, instead of needing to already know a league ID. If this shape
+ * drifts, discovery degrades to an empty list (see mapFanLeagues) and the
+ * UI falls back to manual league-ID entry — it's never the only path in.
+ */
+export interface EspnFanLeagueEntry {
+  groupId?: string;
+  seasonId?: number;
+  gameId?: string;
+}
+
+export interface EspnFanPreference {
+  metadata?: {
+    entry?: EspnFanLeagueEntry;
+  };
+}
+
+export interface EspnFanResponse {
+  preferences?: EspnFanPreference[];
+}

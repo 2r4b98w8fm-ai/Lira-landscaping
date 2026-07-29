@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { RosterTable } from "@/components/RosterTable";
 import { InjuryWatchPanel } from "@/components/InjuryWatchPanel";
+import { NotificationSettings } from "@/components/NotificationSettings";
 import type { RosterPlayer } from "@/types/domain";
 
 interface RosterResponse {
@@ -74,6 +75,7 @@ export default function DashboardPage() {
       ) : (
         <p className="text-slate-400">This roster came back empty — try refreshing.</p>
       )}
+      <NotificationSettings />
     </div>
   );
 }

@@ -36,6 +36,13 @@
       "when": 1785351892904,
       "tag": "0004_lazy_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785361615780,
+      "tag": "0005_deep_annihilus",
+      "breakpoints": true
     }
   ]
 }

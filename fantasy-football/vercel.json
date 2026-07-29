@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/waiver-digest",
+      "schedule": "0 13 * * *"
+    }
+  ]
+}

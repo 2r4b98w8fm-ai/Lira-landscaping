@@ -15,8 +15,8 @@ export async function GET() {
     return NextResponse.json({ connected: true, teamSelected: false });
   }
 
-  const { session, roster } = result.data;
-  const defenseRows = await getDefenseVsPosition(session.season);
+  const { season, roster } = result.data;
+  const defenseRows = await getDefenseVsPosition(season);
   const defenseRankings: DefenseRanking[] = defenseRows.map((r) => ({
     team: r.team,
     position: r.position as Position,

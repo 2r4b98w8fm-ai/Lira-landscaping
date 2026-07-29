@@ -5,6 +5,7 @@ import {
   freeAgents,
   leagues,
   matchups,
+  notificationSubscriptions,
   players,
   positionVariance,
   powerRankingSnapshots,
@@ -311,6 +312,11 @@ export async function getLeagueByEspnId(espnLeagueId: string, season: number) {
   return league ?? null;
 }
 
+export async function getLeagueById(leagueId: number) {
+  const [league] = await db.select().from(leagues).where(eq(leagues.id, leagueId));
+  return league ?? null;
+}
+
 export async function getTeamsForLeague(leagueId: number) {
   return db.select().from(teams).where(eq(teams.leagueId, leagueId));
 }
@@ -471,4 +477,48 @@ export async function savePowerRankingSnapshot(leagueId: number, week: number, r
         set: { rank: r.rank },
       });
   }
+}
+
+export async function upsertNotificationSubscription(
+  teamId: number,
+  email: string,
+  injuryAlerts: boolean,
+  waiverAlerts: boolean
+) {
+  await db
+    .insert(notificationSubscriptions)
+    .values({ teamId, email, injuryAlerts, waiverAlerts })
+    .onConflictDoUpdate({
+      target: notificationSubscriptions.teamId,
+      set: { email, injuryAlerts, waiverAlerts },
+    });
+}
+
+export async function getNotificationSubscriptionForTeam(teamId: number) {
+  const [row] = await db
+    .select()
+    .from(notificationSubscriptions)
+    .where(eq(notificationSubscriptions.teamId, teamId));
+  return row ?? null;
+}
+
+export async function updateInjurySnapshot(teamId: number, snapshot: Record<string, string>) {
+  await db
+    .update(notificationSubscriptions)
+    .set({ lastInjurySnapshot: snapshot, lastDigestSentAt: new Date() })
+    .where(eq(notificationSubscriptions.teamId, teamId));
+}
+
+export async function getSubscriptionsWithWaiverAlerts() {
+  return db
+    .select({
+      teamId: notificationSubscriptions.teamId,
+      email: notificationSubscriptions.email,
+      leagueId: teams.leagueId,
+      leagueName: leagues.name,
+    })
+    .from(notificationSubscriptions)
+    .innerJoin(teams, eq(teams.id, notificationSubscriptions.teamId))
+    .innerJoin(leagues, eq(leagues.id, teams.leagueId))
+    .where(eq(notificationSubscriptions.waiverAlerts, true));
 }

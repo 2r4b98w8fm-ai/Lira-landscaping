@@ -1,15 +1,26 @@
 import { cookies } from "next/headers";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
-export interface SessionData {
+export interface ConnectedLeague {
   espnLeagueId: string;
   season: number;
   myTeamId: number | null;
+  /** Cached display name, purely for the league switcher — not authoritative (the DB copy from the last sync is). */
+  name?: string;
+}
+
+export interface SessionData {
   espnS2?: string;
   swid?: string;
+  leagues: ConnectedLeague[];
+  /** Index into `leagues` for whichever one the UI is currently showing. */
+  activeIndex: number;
 }
 
 const COOKIE_NAME = "gridiron_session";
+// Long-lived on purpose: once you've pasted espn_s2/SWID once, staying
+// "logged in" (i.e. not needing to paste them again) is the whole point.
+const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 180;
 
 function getKey(): Buffer {
   const secret = process.env.SESSION_SECRET;
@@ -39,7 +50,11 @@ function decrypt(payload: string): SessionData | null {
     const decipher = createDecipheriv("aes-256-gcm", getKey(), iv);
     decipher.setAuthTag(authTag);
     const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
-    return JSON.parse(decrypted.toString("utf8")) as SessionData;
+    const parsed = JSON.parse(decrypted.toString("utf8"));
+    // Guard against an older single-league cookie shape (pre-multi-league):
+    // treat it as "not connected" rather than crashing on missing fields.
+    if (!Array.isArray(parsed?.leagues)) return null;
+    return parsed as SessionData;
   } catch {
     return null;
   }
@@ -59,11 +74,33 @@ export async function setSession(data: SessionData): Promise<void> {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: COOKIE_MAX_AGE_SECONDS,
   });
 }
 
 export async function clearSession(): Promise<void> {
   const store = await cookies();
   store.delete(COOKIE_NAME);
+}
+
+export function getActiveLeague(session: SessionData): ConnectedLeague | null {
+  return session.leagues[session.activeIndex] ?? null;
+}
+
+/** Adds a league (or updates it in place if already connected) and makes it the active one. */
+export function withLeagueAdded(session: SessionData, league: ConnectedLeague): SessionData {
+  const existingIndex = session.leagues.findIndex(
+    (l) => l.espnLeagueId === league.espnLeagueId && l.season === league.season
+  );
+  if (existingIndex !== -1) {
+    const leagues = [...session.leagues];
+    leagues[existingIndex] = { ...leagues[existingIndex], ...league };
+    return { ...session, leagues, activeIndex: existingIndex };
+  }
+  return { ...session, leagues: [...session.leagues, league], activeIndex: session.leagues.length };
+}
+
+export function withActiveLeagueUpdated(session: SessionData, patch: Partial<ConnectedLeague>): SessionData {
+  const leagues = session.leagues.map((l, i) => (i === session.activeIndex ? { ...l, ...patch } : l));
+  return { ...session, leagues };
 }

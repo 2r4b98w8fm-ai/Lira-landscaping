@@ -7,6 +7,7 @@ import {
 } from "@/lib/constants";
 import type { InjuryStatus, LeagueSummary, RosterPlayer, TeamSummary } from "@/types/domain";
 import type {
+  EspnFanResponse,
   EspnFreeAgentsResponse,
   EspnLeagueResponse,
   EspnPlayer,
@@ -386,4 +387,36 @@ export function mapFreeAgents(
     }
   }
   return players;
+}
+
+export interface DiscoveredLeague {
+  espnLeagueId: string;
+  season: number;
+}
+
+/**
+ * Every football league an ESPN account belongs to, from the fan API
+ * (see client.ts for why this is the shakiest endpoint in the app).
+ * Degrades to an empty list — never throws — so the caller can always
+ * fall back to manual league-ID entry when ESPN's shape doesn't match
+ * what we expect, or the account simply isn't in any FFL league.
+ */
+export function mapFanLeagues(raw: EspnFanResponse, warnings: MappingWarnings): DiscoveredLeague[] {
+  const preferences = raw.preferences;
+  if (!preferences) {
+    warnings.add("ESPN's fan API response had no `preferences` array; league auto-discovery unavailable.");
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const leagues: DiscoveredLeague[] = [];
+  for (const pref of preferences) {
+    const entry = pref.metadata?.entry;
+    if (!entry || entry.gameId !== "ffl" || !entry.groupId || entry.seasonId === undefined) continue;
+    const key = `${entry.groupId}-${entry.seasonId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    leagues.push({ espnLeagueId: entry.groupId, season: entry.seasonId });
+  }
+  return leagues;
 }

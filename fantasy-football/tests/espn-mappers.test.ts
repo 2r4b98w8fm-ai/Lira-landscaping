@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   MappingWarnings,
+  mapFanLeagues,
   mapFreeAgents,
   mapLeagueSummary,
   mapRosterPlayers,
   mapStartingSlotCounts,
 } from "@/lib/espn/mappers";
-import type { EspnFreeAgentsResponse, EspnLeagueResponse } from "@/lib/espn/types";
+import type { EspnFanResponse, EspnFreeAgentsResponse, EspnLeagueResponse } from "@/lib/espn/types";
 import fixture from "./fixtures/espn-league-sample.json";
 
 describe("mapLeagueSummary", () => {
@@ -184,5 +185,27 @@ describe("mapFreeAgents", () => {
     const pool = mapFreeAgents(raw, 4, new Map(), warnings);
     expect(pool).toHaveLength(1);
     expect(pool[0]?.name).toBe("Good FA");
+  });
+});
+
+describe("mapFanLeagues", () => {
+  it("extracts FFL leagues and dedupes repeated entries", () => {
+    const warnings = new MappingWarnings();
+    const raw: EspnFanResponse = {
+      preferences: [
+        { metadata: { entry: { groupId: "123456", seasonId: 2026, gameId: "ffl" } } },
+        { metadata: { entry: { groupId: "123456", seasonId: 2026, gameId: "ffl" } } }, // duplicate
+        { metadata: { entry: { groupId: "999", seasonId: 2025, gameId: "flb" } } }, // baseball, not football
+      ],
+    };
+    const leagues = mapFanLeagues(raw, warnings);
+    expect(leagues).toEqual([{ espnLeagueId: "123456", season: 2026 }]);
+  });
+
+  it("degrades to an empty list with a warning rather than throwing on a missing shape", () => {
+    const warnings = new MappingWarnings();
+    const leagues = mapFanLeagues({}, warnings);
+    expect(leagues).toEqual([]);
+    expect(warnings.messages.length).toBeGreaterThan(0);
   });
 });

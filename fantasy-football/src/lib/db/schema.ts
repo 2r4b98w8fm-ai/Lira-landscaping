@@ -7,6 +7,7 @@ import {
   timestamp,
   uniqueIndex,
   jsonb,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const leagues = pgTable(
@@ -283,6 +284,33 @@ export const powerRankingSnapshots = pgTable(
       t.week,
       t.teamId
     ),
+  })
+);
+
+/**
+ * A durable (DB, not just session-cookie) record of "email this address
+ * about this team." Deliberately holds no ESPN credentials — notification
+ * sends only ever act on data already cached from a real user-triggered
+ * sync (see notifications/send.ts), so a stolen row here can't be used to
+ * pull anything from ESPN, unlike the session cookie.
+ */
+export const notificationSubscriptions = pgTable(
+  "notification_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    teamId: integer("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    injuryAlerts: boolean("injury_alerts").notNull().default(true),
+    waiverAlerts: boolean("waiver_alerts").notNull().default(true),
+    /** Last injury statuses we emailed about, keyed by espnPlayerId (string) -> InjuryStatus. */
+    lastInjurySnapshot: jsonb("last_injury_snapshot").$type<Record<string, string>>(),
+    lastDigestSentAt: timestamp("last_digest_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    teamIdx: uniqueIndex("notification_subscriptions_team_idx").on(t.teamId),
   })
 );
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LeagueSwitcher } from "./LeagueSwitcher";
 
 const links = [
   { href: "/", label: "Connect" },
@@ -18,7 +19,10 @@ export function Nav() {
   return (
     <header className="border-b border-white/10 bg-field-900/80 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-        <span className="text-lg font-semibold tracking-tight">🏈 Gridiron Desk</span>
+        <div className="flex items-center gap-3">
+          <span className="text-lg font-semibold tracking-tight">🏈 Gridiron Desk</span>
+          <LeagueSwitcher />
+        </div>
         <nav className="flex gap-1 text-sm">
           {links.map((link) => {
             const active = pathname === link.href;

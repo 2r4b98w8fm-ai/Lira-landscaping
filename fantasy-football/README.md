@@ -7,8 +7,10 @@ visible reasoning, backed by real ESPN roster/projection data and real historica
 **Phase 1:** connect an ESPN league, browse your roster, get a start/sit board per position.
 **Phase 2:** trade value calculator, "who should I target," and "what should I offer" — all with
 the math shown, not a black-box score. **Phase 3:** Monte Carlo playoff probability simulator.
-**Phase 4 (this build):** waiver wire recommendations, power rankings with an all-play "luck"
-read, and an injury watch panel. All four phases from the original brief are now built.
+**Phase 4:** waiver wire recommendations, power rankings with an all-play "luck" read, and an
+injury watch panel. **This build:** multi-league account connect (discover every league tied to
+your ESPN account instead of entering IDs one at a time), real email notifications, and ESPN
+client hardening (retry/backoff on transient failures).
 
 ## Tech stack
 
@@ -36,6 +38,7 @@ read, and an injury watch panel. All four phases from the original brief are now
 | Weekly scoring variance per position (for the playoff simulator) | Computed from every individual player-week in nflverse's real historical data | **Real** for QB/RB/WR/TE; K/DST use a documented fixed assumption (labeled as such) since nflverse's player-level file has no kicker/defense rows |
 | Free-agent / waiver-wire pool | ESPN's free-agent player endpoint (`kona_player_info` + an `X-Fantasy-Filter` header) | **Real**; this is one of the least stable corners of ESPN's API, so a broken pull degrades to "waiver wire unavailable this sync" rather than failing the whole league sync |
 | All-play record / power rankings / luck rating | Computed directly from every played matchup's real score (ESPN's own `mMatchup` data) | **Real**, no external "power ranking" service |
+| League auto-discovery ("connect my ESPN account") | ESPN's fan API (`fan.api.espn.com`, a different host from the fantasy API) | **Real**, the least documented/stable endpoint in this app by far — degrades to "enter your league ID directly" if the shape has drifted, never the only way in |
 
 Nothing here is mocked or hardcoded. Where ESPN doesn't return a value (a rookie the API hasn't
 projected yet, a bye week, etc.), the UI says so explicitly instead of showing a plausible-looking
@@ -116,6 +119,49 @@ list as fully active, worst-first — no new data pulled, just a surfaced view o
 sync already has. Push/email/SMS alerts would need a notification service (Twilio, a mail
 provider, a cron-triggered digest) that isn't built; this is the in-app equivalent.
 
+## Account model: why there's no ESPN password login
+
+ESPN doesn't offer OAuth or any sanctioned way for a third-party app to sign in as you. The only
+real credential is `espn_s2`/`SWID` — the cookies your own browser already holds after you log
+into fantasy.espn.com yourself. A form that took your actual ESPN password and had this app's
+server submit it to ESPN's login page would mean your real password flows through and potentially
+gets stored by a third-party app (exactly what security guidance says never to do), would likely
+violate ESPN's terms, and would break the moment their login page adds bot/CAPTCHA protection.
+
+What you get instead is the practical equivalent: paste `espn_s2`/`SWID` once (never a password),
+and the app calls ESPN's own "my leagues" endpoint to discover every league tied to that account,
+so you don't need to already know a league ID. Connect it, and the session cookie remembers it for
+180 days — so this genuinely is "log in once" for as long as your browser keeps that cookie. You
+can connect multiple leagues (a switcher appears in the nav once you have 2+) and add more anytime
+from the Connect page. If ESPN's discovery endpoint doesn't return anything usable, the manual
+"enter your league ID" path is still right there — auto-discovery is never the only way in.
+
+## Notifications (email digests)
+
+Two kinds, both opt-in from a panel on the Roster page, and both **inert until you set
+`RESEND_API_KEY`** in your deployment (the panel says so plainly, and the subscribe endpoint
+refuses to save with a clear error if it isn't set — no silent no-op):
+
+- **Injury alerts**: every time you (a real, session-having user) hit "Refresh from ESPN," the app
+  compares the new injury statuses against the last ones it emailed about and sends a digest if
+  anything changed. This deliberately does **not** run from an unattended cron job — see below.
+- **Waiver digest**: a periodic email of real upgrades on your waiver wire (same value-added-over-
+  worst-starter math as the Waivers page), meant to run from a scheduled job (`vercel.json` wires
+  up a daily cron hitting `/api/cron/waiver-digest`, protected by a `CRON_SECRET` you set — Vercel
+  automatically sends it as a bearer token to your own cron routes when that env var is present).
+
+**Why the injury digest isn't also on the cron job:** sending it would require re-authenticating to
+ESPN outside of a real user's session, which means storing your `espn_s2`/`SWID` in the database
+rather than only in an encrypted cookie. A leaked database row would then hand over live ESPN
+session access, not just app data — a meaningfully worse blast radius than anything else this app
+stores. So the cron path only ever reads what a real sync already cached in Postgres; it never
+calls ESPN itself. That's a deliberate scope limit, not an oversight — revisit it only if you
+decide that tradeoff is worth it for real-time-without-a-visit injury alerts.
+
+**Not yet exercised against a real Resend account** — I have no API key to test with, so sending
+is covered by unit tests up to the point of calling Resend's SDK (digest content, the "nothing to
+report" skip logic, the "not configured" guard) but an actual delivered email is unverified.
+
 ### A note on ESPN's API
 
 It's undocumented and has changed shape before (team ID renumbering, field renames). The client
@@ -124,6 +170,14 @@ is skipped with a warning instead of crashing the whole sync, and warnings are s
 and logged to the `sync_log` table rather than silently swallowed. If ESPN changes something and
 a sync starts failing, check `src/lib/espn/mappers.ts` and `src/lib/espn/types.ts` first — that's
 where the undocumented shape assumptions live.
+
+**Retry behavior:** every ESPN call now retries transient failures (429/5xx, network blips,
+timeouts) up to 3 total attempts with exponential backoff (300ms, 600ms) — genuinely tested with a
+mocked `fetch` (`tests/espn-client-retry.test.ts`), not just against fixtures. Permanent failures
+(401/403 bad credentials, 404 not found) fail immediately since retrying can't fix them. This is
+real hardening, but it's still hardening against *simulated* failure modes — it can't substitute
+for what only a live league can confirm: that the current response shapes still match what
+`mappers.ts` expects. That's still this app's biggest open unknown.
 
 ## Private leagues (espn_s2 / SWID)
 
@@ -142,6 +196,8 @@ IDs and cached stats are persisted.
 ```bash
 cp .env.example .env.local
 # fill in DATABASE_URL (a local Postgres is fine) and SESSION_SECRET (openssl rand -hex 32)
+# RESEND_API_KEY / RESEND_FROM_EMAIL / CRON_SECRET are optional — notifications
+# just stay off (with an honest "not configured" state) without them
 
 npm install
 npm run db:generate   # generate SQL migration from schema.ts (already checked in under drizzle/)
@@ -184,37 +240,54 @@ Start/Sit pages.
   rankings correctly separated record from scoring luck (one team's actual record ran well ahead
   of its all-play record and was flagged as such), the waiver board correctly told upgrades from
   non-upgrades with the exact math, and the injury watch panel correctly surfaced and severity-
-  sorted OUT/QUESTIONABLE players. The free-agent fetch (`fetchFreeAgentsRaw`) is the newest and
-  least-documented ESPN endpoint used in this app — it's the one I'd most want a live league to
-  confirm against first.
+  sorted OUT/QUESTIONABLE players. The free-agent fetch (`fetchFreeAgentsRaw`) was, at the time,
+  the newest and least-documented ESPN endpoint in this app.
+- **The fan-API league discovery (`fetchFanLeaguesRaw`) is now that newest, least-documented
+  endpoint** — a different host than everything else this app calls, and genuinely the most
+  speculative piece of this whole codebase. It's fixture-tested for its parsing logic
+  (`mapFanLeagues`) and degrades to "enter your league ID directly" rather than blocking anyone if
+  the shape has drifted, but a live account is what would actually confirm it works.
+- Multi-league session handling was verified end-to-end in this environment: seeded two leagues,
+  confirmed the "Your leagues" list and Roster page both reflect the connected leagues correctly,
+  and caught a real bug in the process — the nav's league switcher only fetched its state once on
+  mount, so switching leagues via the connect page's list left the switcher showing the stale
+  league even though the actual page data was correct. Fixed by re-fetching on every navigation.
+- Notification digest *content* (injury diff logic, waiver digest, the "not configured" and
+  "nothing to report" skip paths) is unit-tested; actual delivery through Resend is not verified —
+  I have no API key for it. Given one, sending a real test email would be the next thing to check.
 
 ## What's next
 
-All four phases from the original brief are built. Natural next steps if you want to keep going:
-multi-league support, a real notification service for injury/waiver alerts (this build only has
-the in-app panel), or hardening the ESPN client against a live league now that Phase 1-4 are all
-built on the same sync path.
+All four original phases plus this round's account/notification/hardening work are built. Natural
+next steps: a live league to shake out the fan-API discovery endpoint and confirm response shapes
+haven't drifted; a real Resend account to verify actual email delivery; and, if the injury digest
+ever needs to run without a live user session, a deliberate decision about whether storing
+encrypted ESPN credentials server-side is worth that tradeoff (see the Notifications section above
+for why this build doesn't do that today).
 
 ## Project layout
 
 ```
 src/
   app/                    pages (connect, dashboard, start-sit, trade, playoffs, waivers,
-                           power-rankings) + API routes
+                           power-rankings) + API routes (including account/, cron/, notifications/)
   components/             UI components (components/trade/ for the trade tabs)
   lib/
-    espn/                 ESPN API client + defensive mappers (rosters, schedule, free agents)
+    espn/                 ESPN API client + defensive mappers (rosters, schedule, free agents,
+                           fan-API league discovery) — retry/backoff lives in client.ts
     nflverse/              real weekly stats ingestion + defense-vs-position math + scoring variance
     startsit/              ranking engine with human-readable reasoning
     trade/                 value/scarcity/schedule/needs/targets/offers — all pure, tested functions
     simulation/             team score distribution + Monte Carlo season simulator
     waiver/                 free-agent value-added ranking engine
     analytics/              all-play records + power rankings + luck rating
+    notifications/          email digests (injury changes, waiver upgrades) via Resend
     db/                    Drizzle schema, client, queries
     sync/                  orchestrates an ESPN pull -> DB cache write; resolves session -> cached team
-    session.ts             encrypted session cookie (league/team selection + ESPN creds)
+    session.ts             encrypted, multi-league session cookie (leagues[], espn_s2/SWID)
 scripts/
   migrate.ts               applies Drizzle migrations
   sync-defense-rankings.ts  one-off/cron entry point for the nflverse ingest (defense rankings + variance)
 tests/                     fixture-based unit tests for mappers, ingest math, and every engine
+vercel.json                daily cron config for the waiver-digest email job
 ```
