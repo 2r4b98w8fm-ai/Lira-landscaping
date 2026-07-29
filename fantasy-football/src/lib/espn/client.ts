@@ -1,4 +1,5 @@
 import type {
+  EspnFreeAgentsResponse,
   EspnLeagueResponse,
   EspnProTeamSchedulesResponse,
 } from "./types";
@@ -29,7 +30,11 @@ function buildCookieHeader(creds: EspnCredentials): string | undefined {
   return parts.length > 0 ? parts.join("; ") : undefined;
 }
 
-async function espnFetch<T>(url: string, creds: EspnCredentials): Promise<T> {
+async function espnFetch<T>(
+  url: string,
+  creds: EspnCredentials,
+  extraHeaders?: Record<string, string>
+): Promise<T> {
   const cookie = buildCookieHeader(creds);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -39,6 +44,7 @@ async function espnFetch<T>(url: string, creds: EspnCredentials): Promise<T> {
       headers: {
         Accept: "application/json",
         ...(cookie ? { Cookie: cookie } : {}),
+        ...extraHeaders,
       },
       signal: controller.signal,
       cache: "no-store",
@@ -105,4 +111,32 @@ export async function fetchProTeamSchedulesRaw(
 ): Promise<EspnProTeamSchedulesResponse> {
   const url = `${BASE}/${season}?view=proTeamSchedules_wl`;
   return espnFetch<EspnProTeamSchedulesResponse>(url, creds);
+}
+
+/**
+ * Free agent / waiver-wire pool for the league. Uses `view=kona_player_info`
+ * plus the undocumented X-Fantasy-Filter header ESPN's own web app sends —
+ * this is one of the least stable corners of the API; if ESPN changes this
+ * shape, the sync degrades to "no free agents this cycle" (see
+ * mapFreeAgents) rather than failing the whole league sync.
+ */
+export async function fetchFreeAgentsRaw(
+  leagueId: string,
+  season: number,
+  scoringPeriodId: number,
+  creds: EspnCredentials,
+  limit = 100
+): Promise<EspnFreeAgentsResponse> {
+  const filter = {
+    players: {
+      filterStatus: { value: ["FREEAGENT", "WAIVERS"] },
+      filterSlotIds: { value: [0, 2, 4, 6, 16, 17, 23] },
+      limit,
+      sortPercOwned: { sortAsc: false, sortPriority: 1 },
+    },
+  };
+  const url = `${BASE}/${season}/segments/0/leagues/${leagueId}?scoringPeriodId=${scoringPeriodId}&view=kona_player_info`;
+  return espnFetch<EspnFreeAgentsResponse>(url, creds, {
+    "X-Fantasy-Filter": JSON.stringify(filter),
+  });
 }

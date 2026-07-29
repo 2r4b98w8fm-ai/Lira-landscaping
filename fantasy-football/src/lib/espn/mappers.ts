@@ -7,6 +7,7 @@ import {
 } from "@/lib/constants";
 import type { InjuryStatus, LeagueSummary, RosterPlayer, TeamSummary } from "@/types/domain";
 import type {
+  EspnFreeAgentsResponse,
   EspnLeagueResponse,
   EspnPlayer,
   EspnProTeamSchedulesResponse,
@@ -289,12 +290,12 @@ export function mapRosterPlayers(
   return players;
 }
 
-function mapRosterEntry(
-  entry: EspnRosterEntry,
+/** Every field a RosterPlayer needs except lineupSlot, which depends on where the caller found the player (a roster slot vs. the free-agent pool). */
+function mapCorePlayerFields(
+  player: EspnPlayer | undefined,
   week: number,
   opponentMap: Map<number, number>
-): RosterPlayer | null {
-  const player: EspnPlayer | undefined = entry.playerPoolEntry?.player;
+): Omit<RosterPlayer, "lineupSlot"> | null {
   if (!player || player.id === undefined || !player.fullName) return null;
 
   const position = mapPosition(player.defaultPositionId);
@@ -339,7 +340,6 @@ function mapRosterEntry(
     name: player.fullName,
     position,
     nflTeam: mapProTeam(player.proTeamId),
-    lineupSlot: ESPN_LINEUP_SLOT_MAP[entry.lineupSlotId ?? -1] ?? "BE",
     injuryStatus: mapInjuryStatus(player.injuryStatus),
     opponent,
     seasonPoints,
@@ -347,4 +347,43 @@ function mapRosterEntry(
     restOfSeasonProjection,
     restOfSeasonSource,
   };
+}
+
+function mapRosterEntry(
+  entry: EspnRosterEntry,
+  week: number,
+  opponentMap: Map<number, number>
+): RosterPlayer | null {
+  const core = mapCorePlayerFields(entry.playerPoolEntry?.player, week, opponentMap);
+  if (!core) return null;
+  return { ...core, lineupSlot: ESPN_LINEUP_SLOT_MAP[entry.lineupSlotId ?? -1] ?? "BE" };
+}
+
+/**
+ * Free agents/waiver-wire players. ESPN returns these from a different,
+ * undocumented endpoint shape (a top-level `players` array, no roster/slot
+ * wrapper) — reuses the same defensive per-player mapping as rosters, just
+ * without a lineup slot (tagged "FA").
+ */
+export function mapFreeAgents(
+  raw: EspnFreeAgentsResponse,
+  week: number,
+  opponentMap: Map<number, number>,
+  warnings: MappingWarnings
+): RosterPlayer[] {
+  const entries = raw.players ?? [];
+  if (entries.length === 0) {
+    warnings.add("ESPN free-agent response had no `players` array; waiver wire will be empty this sync.");
+  }
+
+  const players: RosterPlayer[] = [];
+  for (const entry of entries) {
+    try {
+      const core = mapCorePlayerFields(entry.player, week, opponentMap);
+      if (core) players.push({ ...core, lineupSlot: "FA" });
+    } catch (err) {
+      warnings.add(`Skipped one free agent entry: ${(err as Error).message}`);
+    }
+  }
+  return players;
 }

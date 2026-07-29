@@ -1,8 +1,9 @@
-import { fetchLeagueRaw, fetchProTeamSchedulesRaw, type EspnCredentials } from "@/lib/espn/client";
+import { fetchFreeAgentsRaw, fetchLeagueRaw, fetchProTeamSchedulesRaw, type EspnCredentials } from "@/lib/espn/client";
 import {
   MappingWarnings,
   buildFullSeasonSchedule,
   buildOpponentMap,
+  mapFreeAgents,
   mapLeagueSummary,
   mapRosterPlayers,
   mapSchedule,
@@ -14,6 +15,7 @@ import {
   logSync,
   recordLeagueSyncError,
   updateLeagueMeta,
+  upsertFreeAgents,
   upsertLeague,
   upsertMatchups,
   upsertProTeamSchedule,
@@ -93,6 +95,14 @@ export async function syncLeague(
       if (team.id === undefined) continue;
       const roster = mapRosterPlayers(team, week, opponentMap, warnings);
       await upsertRoster(leagueRowId, team.id, week, roster);
+    }
+
+    try {
+      const freeAgentsRaw = await fetchFreeAgentsRaw(espnLeagueId, season, week, creds);
+      const freeAgentPool = mapFreeAgents(freeAgentsRaw, week, opponentMap, warnings);
+      await upsertFreeAgents(leagueRowId, week, freeAgentPool);
+    } catch (err) {
+      warnings.add(`Could not load free agents (waiver wire will be unavailable this sync): ${(err as Error).message}`);
     }
 
     await logSync(

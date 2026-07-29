@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   MappingWarnings,
+  mapFreeAgents,
   mapLeagueSummary,
   mapRosterPlayers,
   mapStartingSlotCounts,
 } from "@/lib/espn/mappers";
-import type { EspnLeagueResponse } from "@/lib/espn/types";
+import type { EspnFreeAgentsResponse, EspnLeagueResponse } from "@/lib/espn/types";
 import fixture from "./fixtures/espn-league-sample.json";
 
 describe("mapLeagueSummary", () => {
@@ -139,5 +140,49 @@ describe("mapStartingSlotCounts", () => {
     const counts = mapStartingSlotCounts({ id: 1 } as EspnLeagueResponse, warnings);
     expect(counts).toEqual({ QB: 1, RB: 2, WR: 2, TE: 1, FLEX: 1, K: 1, DST: 1 });
     expect(warnings.messages.length).toBeGreaterThan(0);
+  });
+});
+
+describe("mapFreeAgents", () => {
+  it("maps the free-agent pool with an FA lineup slot and no warnings on a clean response", () => {
+    const warnings = new MappingWarnings();
+    const raw: EspnFreeAgentsResponse = {
+      players: [
+        {
+          player: {
+            id: 9001,
+            fullName: "Waiver Wire Wonder",
+            defaultPositionId: 4,
+            proTeamId: 9,
+            injuryStatus: "ACTIVE",
+            stats: [{ scoringPeriodId: 4, statSourceId: 1, statSplitTypeId: 1, appliedTotal: 8.5 }],
+          },
+        },
+      ],
+    };
+    const pool = mapFreeAgents(raw, 4, new Map(), warnings);
+    expect(pool).toHaveLength(1);
+    expect(pool[0]).toMatchObject({ name: "Waiver Wire Wonder", position: "TE", lineupSlot: "FA", weekProjection: 8.5 });
+    expect(warnings.messages).toHaveLength(0);
+  });
+
+  it("degrades to an empty pool with a warning rather than throwing when the shape is missing", () => {
+    const warnings = new MappingWarnings();
+    const pool = mapFreeAgents({}, 4, new Map(), warnings);
+    expect(pool).toEqual([]);
+    expect(warnings.messages.length).toBeGreaterThan(0);
+  });
+
+  it("skips a malformed free agent entry instead of crashing the whole pool", () => {
+    const warnings = new MappingWarnings();
+    const raw: EspnFreeAgentsResponse = {
+      players: [
+        { player: { id: 1, fullName: "Good FA", defaultPositionId: 2 } },
+        { player: { id: 2 } }, // no fullName -> skipped
+      ],
+    };
+    const pool = mapFreeAgents(raw, 4, new Map(), warnings);
+    expect(pool).toHaveLength(1);
+    expect(pool[0]?.name).toBe("Good FA");
   });
 });

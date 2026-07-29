@@ -9,6 +9,8 @@ const links = [
   { href: "/start-sit", label: "Start/Sit" },
   { href: "/trade", label: "Trade" },
   { href: "/playoffs", label: "Playoffs" },
+  { href: "/waivers", label: "Waivers" },
+  { href: "/power-rankings", label: "Power Rankings" },
 ];
 
 export function Nav() {

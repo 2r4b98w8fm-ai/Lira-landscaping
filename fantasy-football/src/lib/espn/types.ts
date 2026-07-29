@@ -110,3 +110,17 @@ export interface EspnProTeamSchedulesResponse {
     proTeams?: EspnProTeamScheduleEntry[];
   };
 }
+
+/**
+ * Free-agent/waiver-wire pool. From a different endpoint than the league
+ * roster pull (a `players` filter on the league resource, view=kona_player_info
+ * with an X-Fantasy-Filter header) — top-level `players` array, no team/roster
+ * wrapper, unlike EspnRosterEntry.
+ */
+export interface EspnFreeAgentEntry {
+  player?: EspnPlayer;
+}
+
+export interface EspnFreeAgentsResponse {
+  players?: EspnFreeAgentEntry[];
+}

@@ -123,6 +123,39 @@ export interface TradeTargetSuggestion {
   rationale: string[];
 }
 
+export interface AllPlayRecord {
+  wins: number;
+  losses: number;
+  ties: number;
+  gamesPlayed: number;
+}
+
+export interface PowerRanking {
+  teamId: number;
+  teamName: string;
+  rank: number;
+  powerScore: number;
+  /** Spots moved up (positive) or down (negative) since the last computed snapshot; null if there's no prior snapshot to compare against. */
+  trend: number | null;
+  actualRecord: { wins: number; losses: number; ties: number };
+  pointsFor: number;
+  pointsAgainst: number;
+  /** Record if this team had played every other team every week — the "luck" baseline. */
+  allPlayRecord: AllPlayRecord;
+  /** Actual wins minus all-play-implied expected wins: positive = winning more than their scoring supports (lucky), negative = the opposite. */
+  luckWins: number;
+  reasoning: string[];
+}
+
+export interface WaiverRecommendation {
+  player: RosterPlayer;
+  /** Rest-of-season projection of the worst starter you currently roster at this position. */
+  myWorstStarterValue: number;
+  /** Free agent's rest-of-season projection minus myWorstStarterValue. Null if the free agent has no usable projection. */
+  valueAdded: number | null;
+  reasoning: string[];
+}
+
 export interface TeamScoreDistribution {
   teamId: number;
   teamName: string;

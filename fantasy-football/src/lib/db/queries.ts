@@ -1,11 +1,13 @@
-import { and, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt, lt } from "drizzle-orm";
 import { db } from "./client";
 import {
   defenseVsPosition,
+  freeAgents,
   leagues,
   matchups,
   players,
   positionVariance,
+  powerRankingSnapshots,
   proTeamSchedule,
   rosterSlots,
   syncLog,
@@ -14,7 +16,7 @@ import {
 import type { DefenseRankRow } from "@/lib/nflverse/ingest";
 import type { PositionVarianceRow } from "@/lib/nflverse/variance";
 import type { MappedMatchup } from "@/lib/espn/mappers";
-import type { LeagueSummary, RosterPlayer } from "@/types/domain";
+import type { LeagueSummary, PowerRanking, RosterPlayer } from "@/types/domain";
 
 export async function logSync(
   source: string,
@@ -233,6 +235,66 @@ export async function getAllTeamRosters(
   return results;
 }
 
+/** Replaces the whole free-agent pool for a league — a player no longer returned by ESPN simply stops appearing rather than needing an explicit "picked up" delete. */
+export async function upsertFreeAgents(leagueId: number, week: number, pool: RosterPlayer[]) {
+  await db.delete(freeAgents).where(eq(freeAgents.leagueId, leagueId));
+
+  for (const p of pool) {
+    await db
+      .insert(players)
+      .values({
+        espnPlayerId: p.espnPlayerId,
+        name: p.name,
+        position: p.position,
+        nflTeam: p.nflTeam,
+        injuryStatus: p.injuryStatus,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: players.espnPlayerId,
+        set: {
+          name: p.name,
+          position: p.position,
+          nflTeam: p.nflTeam,
+          injuryStatus: p.injuryStatus,
+          updatedAt: new Date(),
+        },
+      });
+
+    await db.insert(freeAgents).values({
+      leagueId,
+      espnPlayerId: p.espnPlayerId,
+      week,
+      opponent: p.opponent,
+      weekProjection: p.weekProjection,
+      seasonPoints: p.seasonPoints,
+      restOfSeasonProjection: p.restOfSeasonProjection,
+      restOfSeasonSource: p.restOfSeasonSource,
+    });
+  }
+}
+
+export async function getFreeAgentsForLeague(leagueId: number): Promise<RosterPlayer[]> {
+  const rows = await db
+    .select({
+      espnPlayerId: players.espnPlayerId,
+      name: players.name,
+      position: players.position,
+      nflTeam: players.nflTeam,
+      injuryStatus: players.injuryStatus,
+      opponent: freeAgents.opponent,
+      weekProjection: freeAgents.weekProjection,
+      seasonPoints: freeAgents.seasonPoints,
+      restOfSeasonProjection: freeAgents.restOfSeasonProjection,
+      restOfSeasonSource: freeAgents.restOfSeasonSource,
+    })
+    .from(freeAgents)
+    .innerJoin(players, eq(players.espnPlayerId, freeAgents.espnPlayerId))
+    .where(eq(freeAgents.leagueId, leagueId));
+
+  return rows.map((r) => toRosterPlayer({ ...r, lineupSlot: "FA" }));
+}
+
 export async function getTeamByEspnTeamId(leagueId: number, espnTeamId: number) {
   const [team] = await db
     .select()
@@ -375,4 +437,38 @@ export async function savePositionVariance(season: number, rows: PositionVarianc
 
 export async function getPositionVariance(season: number) {
   return db.select().from(positionVariance).where(eq(positionVariance.season, season));
+}
+
+/** Most recent power-ranking snapshot strictly before `beforeWeek`, for trend arrows. Empty map if there's no prior snapshot at all. */
+export async function getPreviousPowerRankingSnapshot(
+  leagueId: number,
+  beforeWeek: number
+): Promise<Map<number, number>> {
+  const [latest] = await db
+    .select({ week: powerRankingSnapshots.week })
+    .from(powerRankingSnapshots)
+    .where(and(eq(powerRankingSnapshots.leagueId, leagueId), lt(powerRankingSnapshots.week, beforeWeek)))
+    .orderBy(desc(powerRankingSnapshots.week))
+    .limit(1);
+
+  if (!latest) return new Map();
+
+  const rows = await db
+    .select({ teamId: powerRankingSnapshots.teamId, rank: powerRankingSnapshots.rank })
+    .from(powerRankingSnapshots)
+    .where(and(eq(powerRankingSnapshots.leagueId, leagueId), eq(powerRankingSnapshots.week, latest.week)));
+
+  return new Map(rows.map((r) => [r.teamId, r.rank]));
+}
+
+export async function savePowerRankingSnapshot(leagueId: number, week: number, rankings: PowerRanking[]) {
+  for (const r of rankings) {
+    await db
+      .insert(powerRankingSnapshots)
+      .values({ leagueId, week, teamId: r.teamId, rank: r.rank })
+      .onConflictDoUpdate({
+        target: [powerRankingSnapshots.leagueId, powerRankingSnapshots.week, powerRankingSnapshots.teamId],
+        set: { rank: r.rank },
+      });
+  }
 }

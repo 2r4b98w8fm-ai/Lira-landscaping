@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { RosterTable } from "@/components/RosterTable";
+import { InjuryWatchPanel } from "@/components/InjuryWatchPanel";
 import type { RosterPlayer } from "@/types/domain";
 
 interface RosterResponse {
@@ -66,7 +67,10 @@ export default function DashboardPage() {
         </button>
       </div>
       {data.roster && data.roster.length > 0 ? (
-        <RosterTable roster={data.roster} />
+        <>
+          <InjuryWatchPanel roster={data.roster} />
+          <RosterTable roster={data.roster} />
+        </>
       ) : (
         <p className="text-slate-400">This roster came back empty — try refreshing.</p>
       )}

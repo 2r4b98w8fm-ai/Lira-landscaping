@@ -108,6 +108,35 @@ export const rosterSlots = pgTable(
 );
 
 /**
+ * The free-agent/waiver-wire pool for a league as of the last sync. Keyed
+ * by league (not team, since a player is a free agent relative to one
+ * league specifically) and refreshed wholesale on each waiver sync — a
+ * player who gets picked up simply stops appearing next sync rather than
+ * needing an explicit delete.
+ */
+export const freeAgents = pgTable(
+  "free_agents",
+  {
+    id: serial("id").primaryKey(),
+    leagueId: integer("league_id")
+      .notNull()
+      .references(() => leagues.id, { onDelete: "cascade" }),
+    espnPlayerId: integer("espn_player_id")
+      .notNull()
+      .references(() => players.espnPlayerId),
+    week: integer("week").notNull(),
+    opponent: text("opponent"),
+    weekProjection: real("week_projection"),
+    seasonPoints: real("season_points"),
+    restOfSeasonProjection: real("rest_of_season_projection"),
+    restOfSeasonSource: text("rest_of_season_source"),
+  },
+  (t) => ({
+    leaguePlayerIdx: uniqueIndex("free_agents_league_player_idx").on(t.leagueId, t.espnPlayerId),
+  })
+);
+
+/**
  * Real weekly stats pulled from nflverse (nflverse-data GitHub releases).
  * Used to compute defense-vs-position rankings from actual points allowed.
  */
@@ -226,6 +255,34 @@ export const positionVariance = pgTable(
   },
   (t) => ({
     seasonPositionIdx: uniqueIndex("position_variance_season_position_idx").on(t.season, t.position),
+  })
+);
+
+/**
+ * One row per team per week a power ranking was computed, purely so the
+ * next computation can show a trend arrow against the prior week's rank.
+ * Power rankings themselves are computed on demand from cached data (not
+ * pulled from ESPN), so this table is the only thing making trend
+ * comparison possible across requests.
+ */
+export const powerRankingSnapshots = pgTable(
+  "power_ranking_snapshots",
+  {
+    id: serial("id").primaryKey(),
+    leagueId: integer("league_id")
+      .notNull()
+      .references(() => leagues.id, { onDelete: "cascade" }),
+    week: integer("week").notNull(),
+    teamId: integer("team_id").notNull(),
+    rank: integer("rank").notNull(),
+    computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    leagueWeekTeamIdx: uniqueIndex("power_ranking_snapshots_league_week_team_idx").on(
+      t.leagueId,
+      t.week,
+      t.teamId
+    ),
   })
 );
 
