@@ -17,23 +17,25 @@ const links = [
 export function Nav() {
   const pathname = usePathname();
   return (
-    <header className="border-b border-white/10 bg-field-900/80 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/85 shadow-sm backdrop-blur-md">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
-          <span className="text-lg font-semibold tracking-tight">🏈 Gridiron Desk</span>
+          <span className="text-lg font-extrabold tracking-tight text-slate-900">
+            🏈 <span className="bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent">Gridiron Desk</span>
+          </span>
           <LeagueSwitcher />
         </div>
-        <nav className="flex gap-1 text-sm">
+        <nav className="flex flex-wrap gap-1 text-sm">
           {links.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-md px-3 py-1.5 transition-colors ${
+                className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
                   active
-                    ? "bg-emerald-600/90 text-white"
-                    : "text-slate-300 hover:bg-white/5 hover:text-white"
+                    ? "bg-brand-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 {link.label}

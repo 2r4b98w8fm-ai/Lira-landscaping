@@ -18,8 +18,8 @@ export function TradeValueRow({
 
   return (
     <div
-      className={`rounded-lg border p-3 ${
-        selected ? "border-emerald-500/70 bg-emerald-500/10" : "border-white/10 bg-field-900/60"
+      className={`rounded-xl border p-3 shadow-sm transition ${
+        selected ? "border-brand-400 bg-brand-50" : "border-slate-200 bg-white hover:shadow-card-hover"
       }`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -29,29 +29,29 @@ export function TradeValueRow({
               type="checkbox"
               checked={!!selected}
               onChange={onToggle}
-              className="rounded border-white/20 bg-field-800"
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500/30"
             />
           )}
-          <span className="font-medium">{value.player.name}</span>
-          <span className="text-xs text-slate-400">
+          <span className="font-semibold text-slate-900">{value.player.name}</span>
+          <span className="text-xs text-slate-500">
             {value.player.position} · {value.player.nflTeam}
           </span>
         </label>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-mono tabular-nums text-emerald-300">
+          <span className="text-sm font-mono font-semibold tabular-nums text-brand-700">
             {value.finalValue.toFixed(1)}
           </span>
           <button
             type="button"
             onClick={() => setExpanded((e) => !e)}
-            className="text-xs text-slate-500 hover:text-slate-300"
+            className="text-xs font-medium text-slate-400 hover:text-brand-600"
           >
             {expanded ? "hide math" : "show math"}
           </button>
         </div>
       </div>
       {expanded && (
-        <ul className="mt-2 space-y-0.5 border-t border-white/5 pt-2 text-xs text-slate-400">
+        <ul className="mt-2 space-y-0.5 border-t border-slate-100 pt-2 text-xs text-slate-500">
           {value.reasoning.map((line, i) => (
             <li key={i}>· {line}</li>
           ))}

@@ -39,7 +39,7 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return <p className="text-slate-400">Loading your roster…</p>;
+    return <p className="text-slate-500">Loading your roster…</p>;
   }
 
   if (!data?.connected) {
@@ -50,10 +50,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
         <div>
-          <h1 className="text-xl font-bold">{data.leagueName}</h1>
+          <h1 className="text-xl font-extrabold text-slate-900">{data.leagueName}</h1>
           <p className="text-xs text-slate-500">
             Last synced from ESPN:{" "}
             {data.lastSyncedAt ? new Date(data.lastSyncedAt).toLocaleString() : "never"}
@@ -62,7 +62,7 @@ export default function DashboardPage() {
         <button
           onClick={refresh}
           disabled={syncing}
-          className="rounded-md border border-white/10 bg-field-800 px-3 py-1.5 text-sm hover:bg-field-800/70 disabled:opacity-50"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
         >
           {syncing ? "Refreshing…" : "Refresh from ESPN"}
         </button>
@@ -73,7 +73,7 @@ export default function DashboardPage() {
           <RosterTable roster={data.roster} />
         </>
       ) : (
-        <p className="text-slate-400">This roster came back empty — try refreshing.</p>
+        <p className="text-slate-500">This roster came back empty — try refreshing.</p>
       )}
       <NotificationSettings />
     </div>

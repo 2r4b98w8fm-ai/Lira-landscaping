@@ -24,6 +24,15 @@ interface DiscoveredLeague {
   season: number;
 }
 
+const inputClass =
+  "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30";
+
+const cardButtonClass =
+  "block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-card transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card-hover disabled:opacity-50 disabled:hover:translate-y-0";
+
+const primaryButtonClass =
+  "w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 hover:shadow disabled:opacity-50 sm:w-auto";
+
 export function LeagueConnectForm() {
   const router = useRouter();
 
@@ -165,17 +174,20 @@ export function LeagueConnectForm() {
   }
 
   if (existingLeagues === null) {
-    return <p className="text-slate-400">Loading your account…</p>;
+    return <p className="text-slate-500">Loading your account…</p>;
   }
 
   if (pickingTeam && connected) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Which team is yours?</h2>
-        <p className="text-sm text-slate-400">Connected to “{connected.name}”. Pick your team to load your roster.</p>
+        <h2 className="text-xl font-bold text-slate-900">Which team is yours?</h2>
+        <p className="text-sm text-slate-500">
+          Connected to <span className="font-medium text-slate-700">“{connected.name}”</span>. Pick your team to
+          load your roster.
+        </p>
         {warnings.length > 0 && (
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
-            <p className="font-medium">Synced with a few hiccups (non-fatal):</p>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <p className="font-semibold">Synced with a few hiccups (non-fatal):</p>
             <ul className="mt-1 list-inside list-disc space-y-0.5">
               {warnings.map((w, i) => (
                 <li key={i}>{w}</li>
@@ -183,23 +195,18 @@ export function LeagueConnectForm() {
             </ul>
           </div>
         )}
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           {connected.teams.map((team) => (
-            <button
-              key={team.espnTeamId}
-              onClick={() => handlePickTeam(team.espnTeamId)}
-              disabled={loading}
-              className="rounded-lg border border-white/10 bg-field-800 px-4 py-3 text-left transition-colors hover:border-emerald-500/60 hover:bg-field-800/70 disabled:opacity-50"
-            >
-              <div className="font-medium">{team.name}</div>
-              <div className="text-xs text-slate-400">
+            <button key={team.espnTeamId} onClick={() => handlePickTeam(team.espnTeamId)} disabled={loading} className={cardButtonClass}>
+              <div className="font-semibold text-slate-900">{team.name}</div>
+              <div className="mt-0.5 text-xs text-slate-500">
                 {team.wins}-{team.losses}
                 {team.ties > 0 ? `-${team.ties}` : ""} · {team.pointsFor.toFixed(1)} PF
               </div>
             </button>
           ))}
         </div>
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
     );
   }
@@ -207,22 +214,20 @@ export function LeagueConnectForm() {
   return (
     <div className="space-y-6">
       {existingLeagues.length > 0 && (
-        <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-slate-300">Your leagues</h2>
-          {existingLeagues.map((l, i) => (
-            <button
-              key={`${l.espnLeagueId}-${l.season}`}
-              onClick={() => goToLeague(i)}
-              className="block w-full rounded-lg border border-white/10 bg-field-800 px-4 py-3 text-left hover:border-emerald-500/60 hover:bg-field-800/70"
-            >
-              <div className="font-medium">{l.name ?? `League ${l.espnLeagueId}`}</div>
-              <div className="text-xs text-slate-400">{l.season} season</div>
-            </button>
-          ))}
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Your leagues</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {existingLeagues.map((l, i) => (
+              <button key={`${l.espnLeagueId}-${l.season}`} onClick={() => goToLeague(i)} className={cardButtonClass}>
+                <div className="font-semibold text-slate-900">{l.name ?? `League ${l.espnLeagueId}`}</div>
+                <div className="mt-0.5 text-xs text-slate-500">{l.season} season</div>
+              </button>
+            ))}
+          </div>
           {!showAddForm && (
             <button
               onClick={() => setShowAddForm(true)}
-              className="text-sm text-emerald-400 hover:text-emerald-300"
+              className="text-sm font-medium text-brand-600 hover:text-brand-700"
             >
               + Add another league
             </button>
@@ -231,35 +236,39 @@ export function LeagueConnectForm() {
       )}
 
       {showAddForm && (
-        <div className="space-y-5">
+        <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
               {existingLeagues.length > 0 ? "Add another league" : "Connect your ESPN league"}
             </h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-slate-500">
               We pull your league, teams, and rosters straight from ESPN. No password ever leaves
               your browser — this uses the same session cookies (espn_s2/SWID) your browser already
               has after you log into fantasy.espn.com yourself.
             </p>
           </div>
 
-          <div className="flex gap-1 border-b border-white/10">
+          <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-sm">
             <button
               onClick={() => setConnectMode("account")}
-              className={`px-3 py-2 text-sm ${connectMode === "account" ? "border-b-2 border-emerald-500 text-white" : "text-slate-400"}`}
+              className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
+                connectMode === "account" ? "bg-white text-brand-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
             >
               Connect my ESPN account
             </button>
             <button
               onClick={() => setConnectMode("manual")}
-              className={`px-3 py-2 text-sm ${connectMode === "manual" ? "border-b-2 border-emerald-500 text-white" : "text-slate-400"}`}
+              className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
+                connectMode === "manual" ? "bg-white text-brand-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
             >
               I have a league ID
             </button>
           </div>
 
-          <details className="text-xs text-slate-400">
-            <summary className="cursor-pointer text-slate-300">How do I find espn_s2 and SWID?</summary>
+          <details className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+            <summary className="cursor-pointer font-medium text-slate-700">How do I find espn_s2 and SWID?</summary>
             <ol className="mt-2 list-inside list-decimal space-y-1">
               <li>Log into fantasy.espn.com in your browser and open your league.</li>
               <li>Open developer tools (F12 or Cmd+Opt+I) → Application (Chrome) or Storage (Firefox) tab.</li>
@@ -282,26 +291,23 @@ export function LeagueConnectForm() {
             values automatically.
           </p>
           <label className="block text-sm">
-            <span className="text-slate-300">espn_s2</span>
-            <input
-              value={espnS2}
-              onChange={(e) => setEspnS2(e.target.value)}
-              onPaste={handleCookiePaste}
-              className="mt-1 w-full rounded-md border border-white/10 bg-field-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-            />
+            <span className="font-medium text-slate-700">espn_s2</span>
+            <input value={espnS2} onChange={(e) => setEspnS2(e.target.value)} onPaste={handleCookiePaste} className={inputClass} />
           </label>
           <label className="block text-sm">
-            <span className="text-slate-300">SWID</span>
+            <span className="font-medium text-slate-700">SWID</span>
             <input
               value={swid}
               onChange={(e) => setSwid(e.target.value)}
               onPaste={handleCookiePaste}
               placeholder="{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
-              className="mt-1 w-full rounded-md border border-white/10 bg-field-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+              className={inputClass}
             />
           </label>
           {pasteDetected && (
-            <p className="text-xs text-emerald-400">✓ Detected both espn_s2 and SWID from that paste.</p>
+            <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
+              ✓ Detected both espn_s2 and SWID from that paste.
+            </p>
           )}
           <p className="text-xs text-slate-500">
             Public league and just want the quick path? Leave both blank and use the "I have a
@@ -310,32 +316,26 @@ export function LeagueConnectForm() {
 
           {connectMode === "account" && (
             <form onSubmit={handleDiscover} className="space-y-3">
-              <button
-                type="submit"
-                disabled={loading || !espnS2 || !swid}
-                className="w-full rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 sm:w-auto"
-              >
+              <button type="submit" disabled={loading || !espnS2 || !swid} className={primaryButtonClass}>
                 {loading ? "Looking…" : "Find my leagues"}
               </button>
 
               {discoveryNote && (
-                <p className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-200">
-                  {discoveryNote}
-                </p>
+                <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">{discoveryNote}</p>
               )}
 
               {discovered && discovered.length > 0 && (
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                   {discovered.map((d) => (
                     <button
                       key={`${d.espnLeagueId}-${d.season}`}
                       type="button"
                       onClick={() => connectLeague(d.espnLeagueId, d.season)}
                       disabled={loading}
-                      className="rounded-lg border border-white/10 bg-field-800 px-4 py-3 text-left hover:border-emerald-500/60 hover:bg-field-800/70 disabled:opacity-50"
+                      className={cardButtonClass}
                     >
-                      <div className="font-medium">League {d.espnLeagueId}</div>
-                      <div className="text-xs text-slate-400">{d.season} season — click to connect</div>
+                      <div className="font-semibold text-slate-900">League {d.espnLeagueId}</div>
+                      <div className="mt-0.5 text-xs text-slate-500">{d.season} season — click to connect</div>
                     </button>
                   ))}
                 </div>
@@ -347,43 +347,37 @@ export function LeagueConnectForm() {
             <form onSubmit={handleManualConnect} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm">
-                  <span className="text-slate-300">ESPN League ID</span>
+                  <span className="font-medium text-slate-700">ESPN League ID</span>
                   <input
                     required
                     value={leagueId}
                     onChange={(e) => setLeagueId(e.target.value)}
                     placeholder="e.g. 123456"
-                    className="mt-1 w-full rounded-md border border-white/10 bg-field-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+                    className={inputClass}
                   />
                   <span className="mt-1 block text-xs text-slate-500">
                     Found in your league&apos;s URL: fantasy.espn.com/football/team?leagueId=<b>123456</b>
                   </span>
                 </label>
                 <label className="block text-sm">
-                  <span className="text-slate-300">Season</span>
+                  <span className="font-medium text-slate-700">Season</span>
                   <input
                     required
                     type="number"
                     value={season}
                     onChange={(e) => setSeason(Number(e.target.value))}
-                    className="mt-1 w-full rounded-md border border-white/10 bg-field-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+                    className={inputClass}
                   />
                 </label>
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 sm:w-auto"
-              >
+              <button type="submit" disabled={loading} className={primaryButtonClass}>
                 {loading ? "Connecting…" : "Connect league"}
               </button>
             </form>
           )}
 
           {error && (
-            <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
-              {error}
-            </div>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
           )}
         </div>
       )}

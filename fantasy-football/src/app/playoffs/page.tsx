@@ -29,11 +29,11 @@ export default function PlayoffsPage() {
       });
   }, []);
 
-  if (!data) return <p className="text-slate-400">Running the simulation…</p>;
+  if (!data) return <p className="text-slate-500">Running the simulation…</p>;
   if (!data.connected) return <NotConnectedBanner reason="not_connected" />;
   if (!data.teamSelected) return <NotConnectedBanner reason="no_team_selected" />;
   if (!data.available) {
-    return <p className="text-slate-400">{data.reason}</p>;
+    return <p className="text-slate-500">{data.reason}</p>;
   }
 
   const sim = data.simulation!;
@@ -41,15 +41,15 @@ export default function PlayoffsPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold">Playoff Odds</h1>
-        <p className="mt-1 text-sm text-slate-400">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+        <h1 className="text-xl font-extrabold text-slate-900">Playoff Odds</h1>
+        <p className="mt-1 text-sm text-slate-500">
           {sim.numSimulations.toLocaleString()} simulated regular seasons, {sim.weeksRemaining} week
           {sim.weeksRemaining === 1 ? "" : "s"} remaining. Each team&apos;s weekly score is drawn from a
           distribution built from real rest-of-season projections and real historical per-position
           scoring variance.
         </p>
-        <p className="mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-200">
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
           This is a probabilistic model, not a guarantee — treat it as a range of plausible outcomes,
           not a prediction of what will happen.
         </p>

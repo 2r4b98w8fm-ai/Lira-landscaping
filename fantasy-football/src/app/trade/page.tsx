@@ -14,21 +14,21 @@ export default function TradePage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold">Trade</h1>
-        <p className="text-sm text-slate-400">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+        <h1 className="text-xl font-extrabold text-slate-900">Trade</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Value is rest-of-season points over a replacement-level player at the position, adjusted for
           injury and remaining schedule — the math is always shown, never a black-box number.
         </p>
       </div>
 
-      <div className="flex gap-1 border-b border-white/10">
+      <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-sm">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm ${
-              tab === t ? "border-b-2 border-emerald-500 text-white" : "text-slate-400 hover:text-slate-200"
+            className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
+              tab === t ? "bg-white text-brand-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
             }`}
           >
             {t}

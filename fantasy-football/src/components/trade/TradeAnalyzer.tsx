@@ -81,11 +81,11 @@ export function TradeAnalyzer() {
     }
   }
 
-  if (status === "loading") return <p className="text-slate-400">Loading rosters…</p>;
+  if (status === "loading") return <p className="text-slate-500">Loading rosters…</p>;
   if (status === "not_connected") return <NotConnectedBanner reason="not_connected" />;
   if (status === "no_team_selected") return <NotConnectedBanner reason="no_team_selected" />;
   if (!teams || teams.length < 2) {
-    return <p className="text-slate-400">Need at least two teams with synced rosters to analyze a trade.</p>;
+    return <p className="text-slate-500">Need at least two teams with synced rosters to analyze a trade.</p>;
   }
 
   const teamA = teams.find((t) => t.teamId === teamAId);
@@ -123,16 +123,16 @@ export function TradeAnalyzer() {
       <button
         onClick={runAnalysis}
         disabled={loading}
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+        className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 hover:shadow disabled:opacity-50"
       >
         {loading ? "Analyzing…" : "Analyze trade"}
       </button>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {analysis && (
-        <div className="space-y-3 rounded-lg border border-white/10 bg-field-900/40 p-4">
-          <p className="font-medium">{analysis.verdict}</p>
-          <ul className="space-y-0.5 text-sm text-slate-400">
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <p className="font-semibold text-slate-900">{analysis.verdict}</p>
+          <ul className="space-y-0.5 text-sm text-slate-500">
             {analysis.reasoning.map((line, i) => (
               <li key={i}>· {line}</li>
             ))}
@@ -167,11 +167,11 @@ function TeamColumn({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-300">{label}</h3>
+        <h3 className="text-sm font-semibold text-slate-700">{label}</h3>
         <select
           value={selectedTeamId ?? ""}
           onChange={(e) => onTeamChange(Number(e.target.value))}
-          className="rounded-md border border-white/10 bg-field-800 px-2 py-1 text-xs"
+          className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
         >
           {teams.map((t) => (
             <option key={t.teamId} value={t.teamId}>
@@ -202,7 +202,7 @@ function TeamColumn({
 function SideSummary({ side }: { side: TradeAnalysis["sideA"] }) {
   return (
     <div>
-      <h4 className="text-sm font-semibold">
+      <h4 className="text-sm font-semibold text-slate-900">
         {side.teamName} — {side.totalValue.toFixed(1)} total value
       </h4>
       <div className="mt-1 space-y-1.5">

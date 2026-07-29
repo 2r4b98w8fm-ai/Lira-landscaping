@@ -22,10 +22,10 @@ export default function WaiversPage() {
       .then(setData);
   }, []);
 
-  if (!data) return <p className="text-slate-400">Scanning the waiver wire…</p>;
+  if (!data) return <p className="text-slate-500">Scanning the waiver wire…</p>;
   if (!data.connected) return <NotConnectedBanner reason="not_connected" />;
   if (!data.teamSelected) return <NotConnectedBanner reason="no_team_selected" />;
-  if (!data.available) return <p className="text-slate-400">{data.reason}</p>;
+  if (!data.available) return <p className="text-slate-500">{data.reason}</p>;
 
   const byPosition = new Map<string, WaiverRecommendation[]>();
   for (const rec of data.recommendations ?? []) {
@@ -36,15 +36,15 @@ export default function WaiversPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold">Waiver Wire</h1>
-        <p className="text-sm text-slate-400">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+        <h1 className="text-xl font-extrabold text-slate-900">Waiver Wire</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Ranked by rest-of-season projected value added over your current worst starter at each
           position — not just "who&apos;s available," but who&apos;s actually an upgrade.
         </p>
       </div>
       {byPosition.size === 0 ? (
-        <p className="text-slate-400">No free agents with usable data right now.</p>
+        <p className="text-slate-500">No free agents with usable data right now.</p>
       ) : (
         Array.from(byPosition.entries()).map(([position, recs]) => (
           <WaiverBoard key={position} position={position} recs={recs.slice(0, 10)} />

@@ -44,7 +44,7 @@ export function LeagueSwitcher() {
     <select
       value={activeIndex}
       onChange={(e) => handleChange(Number(e.target.value))}
-      className="rounded-md border border-white/10 bg-field-800 px-2 py-1 text-xs text-slate-300"
+      className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
     >
       {leagues.map((l, i) => (
         <option key={`${l.espnLeagueId}-${l.season}`} value={i}>

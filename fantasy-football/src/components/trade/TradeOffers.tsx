@@ -56,16 +56,16 @@ export function TradeOffers({
       .finally(() => setLoading(false));
   }, [targetTeamId]);
 
-  if (!teams) return <p className="text-slate-400">Loading teams…</p>;
+  if (!teams) return <p className="text-slate-500">Loading teams…</p>;
 
   return (
     <div className="space-y-4">
       <label className="flex items-center gap-2 text-sm">
-        <span className="text-slate-300">Target team</span>
+        <span className="font-medium text-slate-700">Target team</span>
         <select
           value={targetTeamId ?? ""}
           onChange={(e) => setTargetTeamId(Number(e.target.value))}
-          className="rounded-md border border-white/10 bg-field-800 px-2 py-1 text-sm"
+          className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 shadow-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
         >
           {teams
             .filter((t) => !t.isMyTeam)
@@ -77,25 +77,25 @@ export function TradeOffers({
         </select>
       </label>
 
-      {loading && <p className="text-slate-400">Building a package…</p>}
+      {loading && <p className="text-slate-500">Building a package…</p>}
 
       {!loading && checked && !offer && (
-        <p className="text-slate-400">
+        <p className="text-slate-500">
           No sensible offer found — either you don&apos;t have tradeable surplus at a position they
           need, or they don&apos;t have surplus at a position you need.
         </p>
       )}
 
       {offer && (
-        <div className="space-y-3 rounded-lg border border-white/10 bg-field-900/40 p-4">
-          <ul className="space-y-0.5 text-sm text-slate-400">
+        <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <ul className="space-y-0.5 text-sm text-slate-500">
             {offer.rationale.map((line, i) => (
               <li key={i}>· {line}</li>
             ))}
           </ul>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <h4 className="text-sm font-semibold">You give ({offer.giveValue.toFixed(1)})</h4>
+              <h4 className="text-sm font-semibold text-slate-900">You give ({offer.giveValue.toFixed(1)})</h4>
               <div className="mt-1 space-y-1.5">
                 {offer.give.map((p) => (
                   <TradeValueRow key={p.player.espnPlayerId} value={p} />
@@ -103,7 +103,7 @@ export function TradeOffers({
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-semibold">You receive ({offer.receiveValue.toFixed(1)})</h4>
+              <h4 className="text-sm font-semibold text-slate-900">You receive ({offer.receiveValue.toFixed(1)})</h4>
               <div className="mt-1 space-y-1.5">
                 {offer.receive.map((p) => (
                   <TradeValueRow key={p.player.espnPlayerId} value={p} />

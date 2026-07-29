@@ -50,7 +50,7 @@ export function NotificationSettings() {
 
   if (!configured) {
     return (
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-400">
         Email notifications aren&apos;t configured on this deployment (needs a{" "}
         <code>RESEND_API_KEY</code>).
       </p>
@@ -58,33 +58,43 @@ export function NotificationSettings() {
   }
 
   return (
-    <form onSubmit={save} className="space-y-2 rounded-lg border border-white/10 bg-field-900/60 p-4">
-      <h2 className="text-sm font-semibold text-slate-300">Email notifications</h2>
+    <form onSubmit={save} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Email notifications</h2>
       <input
         type="email"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
-        className="w-full rounded-md border border-white/10 bg-field-800 px-3 py-2 text-sm outline-none focus:border-emerald-500"
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30"
       />
-      <label className="flex items-center gap-2 text-sm text-slate-300">
-        <input type="checkbox" checked={injuryAlerts} onChange={(e) => setInjuryAlerts(e.target.checked)} />
+      <label className="flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={injuryAlerts}
+          onChange={(e) => setInjuryAlerts(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500/30"
+        />
         Email me when a rostered player's injury status changes (checked on each refresh)
       </label>
-      <label className="flex items-center gap-2 text-sm text-slate-300">
-        <input type="checkbox" checked={waiverAlerts} onChange={(e) => setWaiverAlerts(e.target.checked)} />
+      <label className="flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={waiverAlerts}
+          onChange={(e) => setWaiverAlerts(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500/30"
+        />
         Email me a periodic digest of real waiver-wire upgrades
       </label>
       <button
         type="submit"
         disabled={saving}
-        className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+        className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 hover:shadow disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save"}
       </button>
-      {saved && <p className="text-xs text-emerald-400">Saved.</p>}
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {saved && <p className="text-xs font-medium text-brand-600">Saved.</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </form>
   );
 }

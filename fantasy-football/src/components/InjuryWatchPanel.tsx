@@ -9,11 +9,11 @@ const SEVERITY_ORDER: Record<string, number> = {
 };
 
 const SEVERITY_COLOR: Record<string, string> = {
-  OUT: "border-red-500/40 bg-red-500/10 text-red-300",
-  IR: "border-red-500/40 bg-red-500/10 text-red-300",
-  DOUBTFUL: "border-orange-500/40 bg-orange-500/10 text-orange-300",
-  SUSPENSION: "border-orange-500/40 bg-orange-500/10 text-orange-300",
-  QUESTIONABLE: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  OUT: "border-red-200 bg-red-50 text-red-700",
+  IR: "border-red-200 bg-red-50 text-red-700",
+  DOUBTFUL: "border-orange-200 bg-orange-50 text-orange-700",
+  SUSPENSION: "border-orange-200 bg-orange-50 text-orange-700",
+  QUESTIONABLE: "border-amber-200 bg-amber-50 text-amber-700",
 };
 
 /** Every rostered player ESPN doesn't list as fully active, worst-first. Real data already fetched with the roster — no separate alert/notification service involved. */
@@ -26,15 +26,15 @@ export function InjuryWatchPanel({ roster }: { roster: RosterPlayer[] }) {
 
   return (
     <section className="space-y-2">
-      <h2 className="text-sm font-semibold text-slate-300">Injury Watch</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Injury Watch</h2>
       <div className="grid gap-2 sm:grid-cols-2">
         {flagged.map((p) => (
           <div
             key={p.espnPlayerId}
-            className={`rounded-lg border px-3 py-2 text-sm ${SEVERITY_COLOR[p.injuryStatus] ?? "border-white/10 bg-field-900/60 text-slate-300"}`}
+            className={`rounded-xl border px-3 py-2 text-sm shadow-sm ${SEVERITY_COLOR[p.injuryStatus] ?? "border-slate-200 bg-white text-slate-700"}`}
           >
-            <span className="font-medium">{p.name}</span>{" "}
-            <span className="text-xs">
+            <span className="font-semibold">{p.name}</span>{" "}
+            <span className="text-xs opacity-90">
               ({p.position} · {p.nflTeam}) — {p.injuryStatus}
             </span>
           </div>
