@@ -12,6 +12,8 @@ export interface ResolvedTeam {
   season: number;
   currentWeek: number;
   rosterSlotCounts: Record<string, number>;
+  regularSeasonWeeks: number;
+  playoffTeamCount: number;
 }
 
 export type ResolveResult =
@@ -48,6 +50,8 @@ export async function resolveMyTeam(): Promise<ResolveResult> {
       season: league.season,
       currentWeek: league.currentWeek,
       rosterSlotCounts: league.rosterSlotCounts ?? {},
+      regularSeasonWeeks: league.regularSeasonWeeks,
+      playoffTeamCount: league.playoffTeamCount,
     },
   };
 }

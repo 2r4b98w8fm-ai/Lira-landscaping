@@ -62,6 +62,23 @@ export interface EspnLeagueSettings {
   rosterSettings?: {
     lineupSlotCounts?: Record<string, number>;
   };
+  /** Regular-season length and playoff bracket size, for the season simulator. */
+  scheduleSettings?: {
+    matchupPeriodCount?: number;
+    playoffTeamCount?: number;
+  };
+}
+
+export interface EspnMatchupSide {
+  teamId?: number;
+  totalPoints?: number;
+}
+
+export interface EspnMatchup {
+  matchupPeriodId?: number;
+  home?: EspnMatchupSide;
+  away?: EspnMatchupSide;
+  winner?: string; // "HOME" | "AWAY" | "UNDECIDED" | "TIE"
 }
 
 export interface EspnLeagueResponse {
@@ -69,6 +86,8 @@ export interface EspnLeagueResponse {
   seasonId?: number;
   settings?: EspnLeagueSettings;
   teams?: EspnTeam[];
+  /** Every matchup for the season, past and future — from view=mMatchup. */
+  schedule?: EspnMatchup[];
   status?: {
     currentMatchupPeriod?: number;
   };

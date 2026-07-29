@@ -3,13 +3,17 @@ import { db } from "./client";
 import {
   defenseVsPosition,
   leagues,
+  matchups,
   players,
+  positionVariance,
   proTeamSchedule,
   rosterSlots,
   syncLog,
   teams,
 } from "./schema";
 import type { DefenseRankRow } from "@/lib/nflverse/ingest";
+import type { PositionVarianceRow } from "@/lib/nflverse/variance";
+import type { MappedMatchup } from "@/lib/espn/mappers";
 import type { LeagueSummary, RosterPlayer } from "@/types/domain";
 
 export async function logSync(
@@ -72,11 +76,21 @@ export async function upsertLeague(summary: LeagueSummary): Promise<number> {
 export async function updateLeagueMeta(
   leagueRowId: number,
   currentWeek: number,
-  rosterSlotCounts: Record<string, number>
+  rosterSlotCounts: Record<string, number>,
+  scheduleSettings?: { regularSeasonWeeks: number; playoffTeamCount: number }
 ) {
   await db
     .update(leagues)
-    .set({ currentWeek, rosterSlotCounts })
+    .set({
+      currentWeek,
+      rosterSlotCounts,
+      ...(scheduleSettings
+        ? {
+            regularSeasonWeeks: scheduleSettings.regularSeasonWeeks,
+            playoffTeamCount: scheduleSettings.playoffTeamCount,
+          }
+        : {}),
+    })
     .where(eq(leagues.id, leagueRowId));
 }
 
@@ -309,4 +323,56 @@ export async function getRestOfSeasonOpponents(
       )
     );
   return rows.map((r) => r.opponent).filter((o): o is string => o !== null);
+}
+
+export async function upsertMatchups(leagueId: number, rows: MappedMatchup[]) {
+  for (const row of rows) {
+    await db
+      .insert(matchups)
+      .values({
+        leagueId,
+        week: row.week,
+        homeTeamId: row.homeTeamId,
+        awayTeamId: row.awayTeamId,
+        homeScore: row.homeScore,
+        awayScore: row.awayScore,
+      })
+      .onConflictDoUpdate({
+        target: [matchups.leagueId, matchups.week, matchups.homeTeamId, matchups.awayTeamId],
+        set: { homeScore: row.homeScore, awayScore: row.awayScore },
+      });
+  }
+}
+
+export async function getMatchupsForLeague(leagueId: number): Promise<MappedMatchup[]> {
+  const rows = await db.select().from(matchups).where(eq(matchups.leagueId, leagueId));
+  return rows.map((r) => ({
+    week: r.week,
+    homeTeamId: r.homeTeamId,
+    awayTeamId: r.awayTeamId,
+    homeScore: r.homeScore,
+    awayScore: r.awayScore,
+  }));
+}
+
+export async function savePositionVariance(season: number, rows: PositionVarianceRow[]) {
+  for (const row of rows) {
+    await db
+      .insert(positionVariance)
+      .values({
+        season,
+        position: row.position,
+        meanPpr: row.meanPpr,
+        stdevPpr: row.stdevPpr,
+        sampleSize: row.sampleSize,
+      })
+      .onConflictDoUpdate({
+        target: [positionVariance.season, positionVariance.position],
+        set: { meanPpr: row.meanPpr, stdevPpr: row.stdevPpr, sampleSize: row.sampleSize },
+      });
+  }
+}
+
+export async function getPositionVariance(season: number) {
+  return db.select().from(positionVariance).where(eq(positionVariance.season, season));
 }

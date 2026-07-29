@@ -91,7 +91,7 @@ export async function fetchLeagueRaw(
   creds: EspnCredentials
 ): Promise<EspnLeagueResponse> {
   const params = new URLSearchParams({ scoringPeriodId: String(scoringPeriodId) });
-  for (const view of ["mTeam", "mRoster", "mSettings", "mStandings"]) {
+  for (const view of ["mTeam", "mRoster", "mSettings", "mStandings", "mMatchup"]) {
     params.append("view", view);
   }
   const url = `${BASE}/${season}/segments/0/leagues/${leagueId}?${params.toString()}`;

@@ -2,7 +2,8 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 config();
 import { computeDefenseVsPosition, fetchWeeklyStatsForSeason } from "../src/lib/nflverse/ingest";
-import { saveDefenseVsPosition, logSync } from "../src/lib/db/queries";
+import { computePositionVariance } from "../src/lib/nflverse/variance";
+import { saveDefenseVsPosition, savePositionVariance, logSync } from "../src/lib/db/queries";
 
 const season = Number(process.argv[2] ?? new Date().getFullYear());
 
@@ -18,8 +19,17 @@ async function main() {
     const ranked = computeDefenseVsPosition(rows);
     const throughWeek = Math.max(...rows.map((r) => r.week));
     await saveDefenseVsPosition(season, throughWeek, ranked);
-    await logSync("nflverse", "ok", `Synced ${ranked.length} defense-vs-position rows through week ${throughWeek}`);
     console.log(`Saved ${ranked.length} defense-vs-position rows (through week ${throughWeek}).`);
+
+    const variance = computePositionVariance(rows);
+    await savePositionVariance(season, variance);
+    console.log(`Saved weekly scoring variance for ${variance.length} position(s).`);
+
+    await logSync(
+      "nflverse",
+      "ok",
+      `Synced ${ranked.length} defense-vs-position rows and ${variance.length} position-variance rows through week ${throughWeek}`
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Sync failed:", message);

@@ -123,6 +123,34 @@ export interface TradeTargetSuggestion {
   rationale: string[];
 }
 
+export interface TeamScoreDistribution {
+  teamId: number;
+  teamName: string;
+  /** Expected weekly starting-lineup score. */
+  mean: number;
+  /** Standard deviation of that weekly score, from real historical per-position variance. */
+  stdev: number;
+}
+
+export interface SimulationTeamResult {
+  teamId: number;
+  teamName: string;
+  playoffPct: number;
+  /** seed -> % of simulations landing on that seed, for seeds that made the playoffs. */
+  seedDistribution: Record<number, number>;
+  mostLikelySeed: number | null;
+  /** 10th/50th/90th percentile of final regular-season win total across all simulations. */
+  projectedWinsRange: { p10: number; p50: number; p90: number };
+  /** Average projected weekly score of remaining opponents — higher = tougher rest-of-season schedule. Null if no games remain. */
+  remainingSOS: number | null;
+}
+
+export interface SimulationResult {
+  numSimulations: number;
+  weeksRemaining: number;
+  teams: SimulationTeamResult[];
+}
+
 export interface SuggestedOffer {
   targetTeamId: number;
   targetTeamName: string;

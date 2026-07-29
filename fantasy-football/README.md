@@ -5,9 +5,9 @@ visible reasoning, backed by real ESPN roster/projection data and real historica
 (no fabricated numbers).
 
 **Phase 1:** connect an ESPN league, browse your roster, get a start/sit board per position.
-**Phase 2 (this build):** trade value calculator, "who should I target," and "what should I
-offer" — all with the math shown, not a black-box score. Phases 3–4 (playoff simulator,
-waiver/power-rankings layer) are not built yet.
+**Phase 2:** trade value calculator, "who should I target," and "what should I offer" — all with
+the math shown, not a black-box score. **Phase 3 (this build):** Monte Carlo playoff probability
+simulator. Phase 4 (waiver wire, power rankings, weekly recap dashboard) is not built yet.
 
 ## Tech stack
 
@@ -30,6 +30,9 @@ waiver/power-rankings layer) are not built yet.
 | Rest-of-season projection | ESPN's season-total projected stat, net of points already scored | **Real** when ESPN provides it; **estimated** from season-to-date scoring pace when it doesn't (always labeled which, in both the API response and the UI's "show math") |
 | Starting lineup requirements (for scarcity math) | ESPN league settings (`rosterSettings.lineupSlotCounts`) | **Real**, falls back to a standard assumption (with a logged warning) only if ESPN omits it |
 | Positional scarcity / replacement level | Computed from every rostered player's real rest-of-season projection in your league | **Real**, no external "average draft position" or similar service used |
+| Fantasy league schedule (who plays whom, every week) | ESPN's `mMatchup` view | **Real**; if ESPN doesn't return it, the playoff simulator says so instead of running on an assumed schedule |
+| Regular-season length / playoff bracket size | ESPN league settings (`scheduleSettings`) | **Real**, falls back to a standard assumption (with a logged warning) only if ESPN omits it |
+| Weekly scoring variance per position (for the playoff simulator) | Computed from every individual player-week in nflverse's real historical data | **Real** for QB/RB/WR/TE; K/DST use a documented fixed assumption (labeled as such) since nflverse's player-level file has no kicker/defense rows |
 
 Nothing here is mocked or hardcoded. Where ESPN doesn't return a value (a rookie the API hasn't
 projected yet, a bye week, etc.), the UI says so explicitly instead of showing a plausible-looking
@@ -64,6 +67,27 @@ vice versa), weighting a mutual fit above a one-sided favor.
 position, matched against their surplus at one of your weak positions, picking whichever
 combination lands closest to even value (returns nothing rather than inventing a trade when there
 isn't real surplus on both sides).
+
+## Playoff simulator methodology (Phase 3)
+
+The `/playoffs` page runs 5,000 Monte Carlo simulations of the rest of the regular season:
+
+1. **Each team's weekly score is a distribution, not a number.** Mean = sum of each likely starter's
+   weekly-average rest-of-season projection (best player at each position, including FLEX — the
+   simulator assumes a team starts its best roster every week, since it can't know future in-season
+   lineup decisions). Stdev = combined real historical week-to-week variance per position from
+   nflverse (K/DST use a documented fixed assumption, not measured data — see the table above).
+2. **Every remaining matchup** (from ESPN's actual schedule) samples both teams' scores from that
+   distribution, decides a winner, and updates simulated wins and points.
+3. **After all remaining weeks, teams are ranked** by wins, then points-for as the tiebreaker
+   (a reasonable default — ESPN's actual tiebreaker rules aren't exposed by the API), and the top
+   N make the playoffs (N = your league's real playoff bracket size).
+4. Repeat 5,000 times and tally: **playoff odds**, a **seed distribution**, a **10th–90th percentile
+   projected win-total range**, and **remaining strength of schedule** (average projected score of
+   a team's remaining opponents).
+
+The UI states plainly that this is a probabilistic model, not a guarantee. If ESPN's schedule data
+isn't available for a league, the page says so rather than simulating on a guessed schedule.
 
 ### A note on ESPN's API
 
@@ -121,28 +145,37 @@ Start/Sit pages.
   tested through all three Trade tabs, including a 0%-gap offer the algorithm found on its own.
   It still depends on the same ESPN roster sync as Phase 1, so it inherits that same "needs one
   live league to fully confirm" caveat.
+- Phase 3's simulator was verified end-to-end against a seeded 4-team league with a real schedule
+  and 5 remaining weeks: the strongest team locked a #1 seed, an evenly-matched pair split with
+  daylight between them, and the two weak teams were correctly all but eliminated — sensible
+  results, not just "it renders." The first version of my seed data had a bug (used ESPN team IDs
+  where internal database IDs were needed) that made every team's projected wins stay frozen at
+  their current record; catching that in the verification screenshot is what caught it, not a
+  flaw in the simulator itself — worth knowing since the same ID-mapping pattern appears in the
+  real sync code (`sync/league.ts`), just already handled correctly there.
 
-## What's next (Phase 3)
+## What's next (Phase 4)
 
-Monte Carlo playoff probability simulator — not started. Let me know when you want to move on and
-I'll pick up from there.
+Waiver wire recommendations, power rankings with trend arrows, and a weekly recap/analytics
+dashboard — not started. Let me know when you want to move on and I'll pick up from there.
 
 ## Project layout
 
 ```
 src/
-  app/                    pages (connect, dashboard, start-sit, trade) + API route handlers
+  app/                    pages (connect, dashboard, start-sit, trade, playoffs) + API routes
   components/             UI components (components/trade/ for the trade tabs)
   lib/
     espn/                 ESPN API client + defensive mappers
-    nflverse/              real weekly stats ingestion + defense-vs-position math
+    nflverse/              real weekly stats ingestion + defense-vs-position math + scoring variance
     startsit/              ranking engine with human-readable reasoning
     trade/                 value/scarcity/schedule/needs/targets/offers — all pure, tested functions
+    simulation/             team score distribution + Monte Carlo season simulator
     db/                    Drizzle schema, client, queries
     sync/                  orchestrates an ESPN pull -> DB cache write; resolves session -> cached team
     session.ts             encrypted session cookie (league/team selection + ESPN creds)
 scripts/
   migrate.ts               applies Drizzle migrations
-  sync-defense-rankings.ts  one-off/cron entry point for the nflverse ingest
-tests/                     fixture-based unit tests for mappers, ingest math, ranking/trade engines
+  sync-defense-rankings.ts  one-off/cron entry point for the nflverse ingest (defense rankings + variance)
+tests/                     fixture-based unit tests for mappers, ingest math, ranking/trade/sim engines
 ```

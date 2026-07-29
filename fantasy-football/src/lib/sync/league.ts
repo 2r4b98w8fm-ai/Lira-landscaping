@@ -5,13 +5,17 @@ import {
   buildOpponentMap,
   mapLeagueSummary,
   mapRosterPlayers,
+  mapSchedule,
+  mapScheduleSettings,
   mapStartingSlotCounts,
 } from "@/lib/espn/mappers";
 import {
+  getTeamsForLeague,
   logSync,
   recordLeagueSyncError,
   updateLeagueMeta,
   upsertLeague,
+  upsertMatchups,
   upsertProTeamSchedule,
   upsertRoster,
 } from "@/lib/db/queries";
@@ -55,11 +59,34 @@ export async function syncLeague(
     const leagueRowId = await upsertLeague(league);
 
     const rosterSlotCounts = mapStartingSlotCounts(raw, warnings);
-    await updateLeagueMeta(leagueRowId, week, rosterSlotCounts);
+    const scheduleSettings = mapScheduleSettings(raw, warnings);
+    await updateLeagueMeta(leagueRowId, week, rosterSlotCounts, scheduleSettings);
 
     const fullSchedule = buildFullSeasonSchedule(schedule, warnings);
     if (fullSchedule.length > 0) {
       await upsertProTeamSchedule(season, fullSchedule);
+    }
+
+    const leagueMatchups = mapSchedule(raw, warnings);
+    if (leagueMatchups.length > 0) {
+      const leagueTeams = await getTeamsForLeague(leagueRowId);
+      const espnToRowId = new Map(leagueTeams.map((t) => [t.espnTeamId, t.id]));
+      const resolvedMatchups = leagueMatchups
+        .map((m) => ({
+          ...m,
+          homeTeamId: espnToRowId.get(m.homeTeamId),
+          awayTeamId: espnToRowId.get(m.awayTeamId),
+        }))
+        .filter(
+          (m): m is typeof m & { homeTeamId: number; awayTeamId: number } =>
+            m.homeTeamId !== undefined && m.awayTeamId !== undefined
+        );
+      if (resolvedMatchups.length < leagueMatchups.length) {
+        warnings.add(
+          `${leagueMatchups.length - resolvedMatchups.length} matchup(s) referenced a team not in this sync's roster pull; skipped.`
+        );
+      }
+      await upsertMatchups(leagueRowId, resolvedMatchups);
     }
 
     for (const team of raw.teams ?? []) {

@@ -23,6 +23,9 @@ export const leagues = pgTable(
      * real positional scarcity/replacement level for trade value.
      */
     rosterSlotCounts: jsonb("roster_slot_counts").$type<Record<string, number>>(),
+    /** Regular-season length and playoff bracket size, from ESPN's scheduleSettings. Used by the playoff simulator. */
+    regularSeasonWeeks: integer("regular_season_weeks").notNull().default(14),
+    playoffTeamCount: integer("playoff_team_count").notNull().default(4),
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
     lastSyncError: text("last_sync_error"),
   },
@@ -172,6 +175,57 @@ export const proTeamSchedule = pgTable(
       t.nflTeam,
       t.week
     ),
+  })
+);
+
+/**
+ * Fantasy league matchup schedule (who plays whom, every week, past and
+ * future), from ESPN's mMatchup view. The playoff simulator uses this to
+ * know remaining opponents; already-played weeks (with scores) anchor the
+ * simulation's starting standings.
+ */
+export const matchups = pgTable(
+  "matchups",
+  {
+    id: serial("id").primaryKey(),
+    leagueId: integer("league_id")
+      .notNull()
+      .references(() => leagues.id, { onDelete: "cascade" }),
+    week: integer("week").notNull(),
+    homeTeamId: integer("home_team_id").notNull(),
+    awayTeamId: integer("away_team_id").notNull(),
+    /** Null until the matchup is actually played. */
+    homeScore: real("home_score"),
+    awayScore: real("away_score"),
+  },
+  (t) => ({
+    leagueWeekTeamsIdx: uniqueIndex("matchups_league_week_home_away_idx").on(
+      t.leagueId,
+      t.week,
+      t.homeTeamId,
+      t.awayTeamId
+    ),
+  })
+);
+
+/**
+ * Real week-to-week scoring variance per position, computed from nflverse's
+ * actual historical fantasy points (see nflverse/ingest.ts). Used to model
+ * each team's weekly score as a distribution (not a single number) in the
+ * playoff simulator, instead of assuming a made-up variance.
+ */
+export const positionVariance = pgTable(
+  "position_variance",
+  {
+    id: serial("id").primaryKey(),
+    season: integer("season").notNull(),
+    position: text("position").notNull(),
+    meanPpr: real("mean_ppr").notNull(),
+    stdevPpr: real("stdev_ppr").notNull(),
+    sampleSize: integer("sample_size").notNull(),
+  },
+  (t) => ({
+    seasonPositionIdx: uniqueIndex("position_variance_season_position_idx").on(t.season, t.position),
   })
 );
 

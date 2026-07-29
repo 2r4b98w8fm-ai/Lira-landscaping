@@ -163,6 +163,67 @@ export function mapStartingSlotCounts(
   return result;
 }
 
+/** Regular-season length and playoff bracket size, for the season simulator. Falls back (with a warning) to a standard 14-week/4-team assumption if ESPN omits scheduleSettings. */
+export function mapScheduleSettings(
+  raw: EspnLeagueResponse,
+  warnings: MappingWarnings
+): { regularSeasonWeeks: number; playoffTeamCount: number } {
+  const settings = raw.settings?.scheduleSettings;
+  if (!settings?.matchupPeriodCount || !settings?.playoffTeamCount) {
+    warnings.add(
+      "League settings didn't include scheduleSettings; falling back to a standard 14-week season / 4-team playoff assumption."
+    );
+    return { regularSeasonWeeks: 14, playoffTeamCount: 4 };
+  }
+  return {
+    regularSeasonWeeks: settings.matchupPeriodCount,
+    playoffTeamCount: settings.playoffTeamCount,
+  };
+}
+
+export interface MappedMatchup {
+  week: number;
+  homeTeamId: number;
+  awayTeamId: number;
+  /** Null until the matchup is actually played. */
+  homeScore: number | null;
+  awayScore: number | null;
+}
+
+/**
+ * Every matchup ESPN has scheduled for the season (past and future). Used
+ * by the playoff simulator to know which teams play each other in each
+ * remaining week — without it, the simulator can't model anything beyond
+ * "everyone plays everyone," so a missing/malformed schedule is treated as
+ * "no schedule data" upstream rather than guessed at.
+ */
+export function mapSchedule(raw: EspnLeagueResponse, warnings: MappingWarnings): MappedMatchup[] {
+  const matchups = raw.schedule;
+  if (!matchups) {
+    warnings.add("ESPN response had no `schedule` array; playoff simulation will be unavailable this sync.");
+    return [];
+  }
+
+  const mapped: MappedMatchup[] = [];
+  for (const m of matchups) {
+    if (
+      m.matchupPeriodId === undefined ||
+      m.home?.teamId === undefined ||
+      m.away?.teamId === undefined
+    ) {
+      continue; // e.g. a playoff-bye placeholder with no away team
+    }
+    mapped.push({
+      week: m.matchupPeriodId,
+      homeTeamId: m.home.teamId,
+      awayTeamId: m.away.teamId,
+      homeScore: typeof m.home.totalPoints === "number" && m.home.totalPoints > 0 ? m.home.totalPoints : null,
+      awayScore: typeof m.away.totalPoints === "number" && m.away.totalPoints > 0 ? m.away.totalPoints : null,
+    });
+  }
+  return mapped;
+}
+
 export function mapLeagueSummary(
   raw: EspnLeagueResponse,
   espnLeagueId: string,

@@ -8,6 +8,7 @@ const links = [
   { href: "/dashboard", label: "Roster" },
   { href: "/start-sit", label: "Start/Sit" },
   { href: "/trade", label: "Trade" },
+  { href: "/playoffs", label: "Playoffs" },
 ];
 
 export function Nav() {
