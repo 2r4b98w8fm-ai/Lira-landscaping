@@ -3,9 +3,11 @@ import { refreshProjectionData } from "@/lib/ingestion/refreshProjectionData";
 
 /**
  * Refreshes the nflverse (real per-player game log, defense-vs-position,
- * scoring variance) and Sleeper (ID crosswalk, trending adds/drops) data
- * our own model and consensus blending depend on. Same shared-secret
- * pattern as the waiver-digest cron — meant for Vercel Cron, not a browser.
+ * scoring variance), nflverse snap counts (player + team usage for the
+ * breakout engine), and Sleeper (ID crosswalk, trending adds/drops) data
+ * our own model, breakout engine, and consensus blending depend on. Same
+ * shared-secret pattern as the waiver-digest cron — meant for Vercel Cron,
+ * not a browser.
  */
 export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET;

@@ -11,8 +11,9 @@ async function main() {
 
   console.log(`nflverse: ${result.nflverse.ok ? "ok" : "FAILED"} — ${result.nflverse.message}`);
   console.log(`sleeper: ${result.sleeper.ok ? "ok" : "FAILED"} — ${result.sleeper.message}`);
+  console.log(`snap counts: ${result.snapCounts.ok ? "ok" : "FAILED"} — ${result.snapCounts.message}`);
 
-  if (!result.nflverse.ok && !result.sleeper.ok) process.exitCode = 1;
+  if (!result.nflverse.ok && !result.sleeper.ok && !result.snapCounts.ok) process.exitCode = 1;
 }
 
 main();

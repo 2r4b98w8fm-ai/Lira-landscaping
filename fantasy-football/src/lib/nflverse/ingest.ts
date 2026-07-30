@@ -35,6 +35,14 @@ export interface RawStatRow {
   /** nflverse's gsis_id for this player — the join key to Sleeper's crosswalk (see sleeper/ingest.ts) and our own projection model. */
   gsisId: string;
   playerName: string;
+  /** Real usage/opportunity for the breakout engine (src/lib/breakouts) — rushing attempts, targets, and receptions this game. */
+  carries: number;
+  targets: number;
+  receptions: number;
+  /** Share of the team's total targets this game (0-1). Null if nflverse didn't compute it (e.g. QBs, or a bye). */
+  targetShare: number | null;
+  /** "Weighted Opportunity Rating" (target_share*1.5 + air_yards_share*0.7) — nflverse's own composite opportunity metric for pass-catchers. Null when not applicable/computable. */
+  wopr: number | null;
 }
 
 export class NflverseIngestError extends Error {
@@ -104,6 +112,9 @@ export async function fetchWeeklyStatsForSeason(
 
     if (!r.player_id || !r.player_display_name) continue;
 
+    const targetShareRaw = Number(r.target_share);
+    const woprRaw = Number(r.wopr);
+
     rows.push({
       season: rowSeason,
       week: Number(r.week),
@@ -113,6 +124,11 @@ export async function fetchWeeklyStatsForSeason(
       fantasyPointsPpr,
       gsisId: r.player_id,
       playerName: r.player_display_name,
+      carries: Number(r.carries) || 0,
+      targets: Number(r.targets) || 0,
+      receptions: Number(r.receptions) || 0,
+      targetShare: Number.isFinite(targetShareRaw) ? targetShareRaw : null,
+      wopr: Number.isFinite(woprRaw) ? woprRaw : null,
     });
   }
 

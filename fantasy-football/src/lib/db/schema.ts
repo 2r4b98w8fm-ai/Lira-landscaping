@@ -155,12 +155,67 @@ export const playerWeekStats = pgTable(
     opponent: text("opponent").notNull(),
     position: text("position").notNull(),
     fantasyPointsPpr: real("fantasy_points_ppr").notNull(),
+    /** Real usage/opportunity for the breakout engine (src/lib/breakouts). */
+    carries: real("carries").notNull().default(0),
+    targets: real("targets").notNull().default(0),
+    receptions: real("receptions").notNull().default(0),
+    targetShare: real("target_share"),
+    wopr: real("wopr"),
   },
   (t) => ({
     gsisSeasonWeekIdx: uniqueIndex("player_week_stats_gsis_season_week_idx").on(
       t.gsisId,
       t.season,
       t.week
+    ),
+  })
+);
+
+/**
+ * Real weekly snap counts, resolved from nflverse's PFR-sourced
+ * snap_counts release to a gsis_id via name+team matching against
+ * player_stats (see nflverse/snapCounts.ts) — there's no shared ID
+ * between the two sources, so this table only ever holds rows we could
+ * confidently resolve.
+ */
+export const playerSnapCounts = pgTable(
+  "player_snap_counts",
+  {
+    id: serial("id").primaryKey(),
+    gsisId: text("gsis_id").notNull(),
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    offenseSnaps: integer("offense_snaps").notNull(),
+    offensePct: real("offense_pct").notNull(),
+  },
+  (t) => ({
+    gsisSeasonWeekIdx: uniqueIndex("player_snap_counts_gsis_season_week_idx").on(
+      t.gsisId,
+      t.season,
+      t.week
+    ),
+  })
+);
+
+/**
+ * Each NFL team's estimated total offensive snaps for the week — pace
+ * context (a team running more plays gives everyone on offense more
+ * opportunity), used as supplementary reasoning in the breakout engine.
+ */
+export const teamSnapCounts = pgTable(
+  "team_snap_counts",
+  {
+    id: serial("id").primaryKey(),
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    team: text("team").notNull(),
+    totalOffenseSnaps: integer("total_offense_snaps").notNull(),
+  },
+  (t) => ({
+    seasonWeekTeamIdx: uniqueIndex("team_snap_counts_season_week_team_idx").on(
+      t.season,
+      t.week,
+      t.team
     ),
   })
 );

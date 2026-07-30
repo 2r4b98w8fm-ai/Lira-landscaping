@@ -11,6 +11,11 @@ function row(partial: Partial<RawStatRow>): RawStatRow {
     fantasyPointsPpr: 10,
     gsisId: "00-0000001",
     playerName: "Test Player",
+    carries: 0,
+    targets: 0,
+    receptions: 0,
+    targetShare: null,
+    wopr: null,
     ...partial,
   };
 }

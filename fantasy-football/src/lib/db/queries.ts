@@ -8,6 +8,7 @@ import {
   notificationSubscriptions,
   playerCrosswalk,
   playerProjections,
+  playerSnapCounts,
   playerWeekStats,
   players,
   positionVariance,
@@ -17,6 +18,7 @@ import {
   sleeperTrending,
   syncLog,
   teams,
+  teamSnapCounts,
 } from "./schema";
 import type { DefenseRankRow, RawStatRow } from "@/lib/nflverse/ingest";
 import type { PositionVarianceRow } from "@/lib/nflverse/variance";
@@ -628,6 +630,11 @@ export async function savePlayerWeekStats(season: number, rows: RawStatRow[]) {
         opponent: r.opponentTeam,
         position: r.position,
         fantasyPointsPpr: r.fantasyPointsPpr,
+        carries: r.carries,
+        targets: r.targets,
+        receptions: r.receptions,
+        targetShare: r.targetShare,
+        wopr: r.wopr,
       }))
     );
   }
@@ -665,6 +672,143 @@ export async function getRecentGameLog(
     }
   }
 
+  for (const list of result.values()) list.sort((a, b) => a.week - b.week);
+  return result;
+}
+
+export interface OpportunityGameLogEntry {
+  week: number;
+  fantasyPointsPpr: number;
+  carries: number;
+  targets: number;
+  receptions: number;
+  targetShare: number | null;
+  wopr: number | null;
+}
+
+/** Same scope as getRecentGameLog, but with the usage/opportunity columns the breakout engine needs (touches, target share, WOPR) rather than just fantasy points. */
+export async function getOpportunityGameLog(
+  gsisIds: string[],
+  season: number,
+  throughWeek: number
+): Promise<Map<string, OpportunityGameLogEntry[]>> {
+  const result = new Map<string, OpportunityGameLogEntry[]>();
+  if (gsisIds.length === 0) return result;
+
+  for (const batch of chunk(gsisIds, 500)) {
+    const rows = await db
+      .select({
+        gsisId: playerWeekStats.gsisId,
+        week: playerWeekStats.week,
+        fantasyPointsPpr: playerWeekStats.fantasyPointsPpr,
+        carries: playerWeekStats.carries,
+        targets: playerWeekStats.targets,
+        receptions: playerWeekStats.receptions,
+        targetShare: playerWeekStats.targetShare,
+        wopr: playerWeekStats.wopr,
+      })
+      .from(playerWeekStats)
+      .where(
+        and(
+          inArray(playerWeekStats.gsisId, batch),
+          eq(playerWeekStats.season, season),
+          lte(playerWeekStats.week, throughWeek)
+        )
+      );
+    for (const row of rows) {
+      const list = result.get(row.gsisId) ?? [];
+      list.push({
+        week: row.week,
+        fantasyPointsPpr: row.fantasyPointsPpr,
+        carries: row.carries,
+        targets: row.targets,
+        receptions: row.receptions,
+        targetShare: row.targetShare,
+        wopr: row.wopr,
+      });
+      result.set(row.gsisId, list);
+    }
+  }
+
+  for (const list of result.values()) list.sort((a, b) => a.week - b.week);
+  return result;
+}
+
+/** Wholesale-replaces this season's snap counts with a freshly resolved set (see nflverse/snapCounts.ts for how PFR player names get resolved to a gsis_id). */
+export async function savePlayerSnapCounts(
+  season: number,
+  rows: Array<{ gsisId: string; week: number; offenseSnaps: number; offensePct: number }>
+) {
+  await db.delete(playerSnapCounts).where(eq(playerSnapCounts.season, season));
+  for (const batch of chunk(rows, 500)) {
+    await db.insert(playerSnapCounts).values(
+      batch.map((r) => ({ gsisId: r.gsisId, season, week: r.week, offenseSnaps: r.offenseSnaps, offensePct: r.offensePct }))
+    );
+  }
+}
+
+export interface SnapCountLogEntry {
+  week: number;
+  offenseSnaps: number;
+  offensePct: number;
+}
+
+export async function getSnapCountLog(
+  gsisIds: string[],
+  season: number,
+  throughWeek: number
+): Promise<Map<string, SnapCountLogEntry[]>> {
+  const result = new Map<string, SnapCountLogEntry[]>();
+  if (gsisIds.length === 0) return result;
+
+  for (const batch of chunk(gsisIds, 500)) {
+    const rows = await db
+      .select({
+        gsisId: playerSnapCounts.gsisId,
+        week: playerSnapCounts.week,
+        offenseSnaps: playerSnapCounts.offenseSnaps,
+        offensePct: playerSnapCounts.offensePct,
+      })
+      .from(playerSnapCounts)
+      .where(
+        and(
+          inArray(playerSnapCounts.gsisId, batch),
+          eq(playerSnapCounts.season, season),
+          lte(playerSnapCounts.week, throughWeek)
+        )
+      );
+    for (const row of rows) {
+      const list = result.get(row.gsisId) ?? [];
+      list.push({ week: row.week, offenseSnaps: row.offenseSnaps, offensePct: row.offensePct });
+      result.set(row.gsisId, list);
+    }
+  }
+
+  for (const list of result.values()) list.sort((a, b) => a.week - b.week);
+  return result;
+}
+
+/** Wholesale-replaces this season's team-level snap-count estimates. */
+export async function saveTeamSnapCounts(season: number, rows: Array<{ week: number; team: string; totalOffenseSnaps: number }>) {
+  await db.delete(teamSnapCounts).where(eq(teamSnapCounts.season, season));
+  for (const batch of chunk(rows, 500)) {
+    await db.insert(teamSnapCounts).values(batch.map((r) => ({ season, week: r.week, team: r.team, totalOffenseSnaps: r.totalOffenseSnaps })));
+  }
+}
+
+/** This season's team snap-count history through `throughWeek`, for every team — a small table, so loaded wholesale rather than per-team. */
+export async function getTeamSnapCounts(season: number, throughWeek: number): Promise<Map<string, Array<{ week: number; totalOffenseSnaps: number }>>> {
+  const rows = await db
+    .select({ team: teamSnapCounts.team, week: teamSnapCounts.week, totalOffenseSnaps: teamSnapCounts.totalOffenseSnaps })
+    .from(teamSnapCounts)
+    .where(and(eq(teamSnapCounts.season, season), lte(teamSnapCounts.week, throughWeek)));
+
+  const result = new Map<string, Array<{ week: number; totalOffenseSnaps: number }>>();
+  for (const row of rows) {
+    const list = result.get(row.team) ?? [];
+    list.push({ week: row.week, totalOffenseSnaps: row.totalOffenseSnaps });
+    result.set(row.team, list);
+  }
   for (const list of result.values()) list.sort((a, b) => a.week - b.week);
   return result;
 }
