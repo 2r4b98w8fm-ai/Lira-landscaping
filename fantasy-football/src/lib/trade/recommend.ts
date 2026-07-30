@@ -18,12 +18,30 @@ export interface CandidateTeam {
 }
 
 /**
+ * Shared ranking score for any built offer — bigger, more substantive
+ * trades score higher; a value gap beyond the fairness threshold and a
+ * trade that only looks good because I'm winning (favorsThem: false) both
+ * take a discount. Used both to rank across every team here and, in
+ * trade/chain.ts, to pick the best next hop in a multi-step plan.
+ */
+export function scoreOffer(offer: SuggestedOffer, fairnessThresholdPct = DEFAULT_FAIRNESS_THRESHOLD_PCT): number {
+  const substantive = (offer.giveValue + offer.receiveValue) / 2;
+  const fairnessPenalty = Math.max(0, offer.fairnessGapPct - fairnessThresholdPct);
+  const unrealisticPenalty = offer.favorsThem ? 0 : substantive * 0.15;
+  return substantive - fairnessPenalty * 2 - unrealisticPenalty;
+}
+
+/**
  * Builds the single best offer against every other team in the league
  * (reusing buildOffer's give/receive search) and ranks all of them
  * together into one prioritized "trades you should make" list. Bigger,
  * more substantive trades rank first; a lopsided ask that exceeds the
  * fairness threshold is penalized rather than excluded outright, since a
  * team might still take a slightly uneven deal if it fills a real need.
+ * Trades that only look good because I'm the one winning value
+ * (`favorsThem: false`) take an extra discount on top of that — buildOffer
+ * only produces those when no realistic (their-favor-or-fair) combination
+ * existed at all, so they're the least likely to actually get accepted.
  * Never fabricates a trade — a team with nothing complementary to offer
  * simply produces no candidate, same as buildOffer's own null case.
  */
@@ -50,11 +68,7 @@ export function recommendTrades(
     });
     if (!offer) continue;
 
-    const substantive = (offer.giveValue + offer.receiveValue) / 2;
-    const fairnessPenalty = Math.max(0, offer.fairnessGapPct - fairnessThresholdPct);
-    const score = substantive - fairnessPenalty * 2;
-
-    candidates.push({ ...offer, score });
+    candidates.push({ ...offer, score: scoreOffer(offer, fairnessThresholdPct) });
   }
 
   return candidates.sort((a, b) => b.score - a.score).slice(0, MAX_RECOMMENDATIONS);

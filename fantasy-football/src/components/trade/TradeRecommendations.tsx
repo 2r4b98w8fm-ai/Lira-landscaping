@@ -53,6 +53,9 @@ export function TradeRecommendations() {
               value moved: {((offer.giveValue + offer.receiveValue) / 2).toFixed(1)}
             </span>
           </div>
+          <span className={`inline-block text-xs font-medium ${offer.favorsThem ? "text-brand-600" : "text-amber-600"}`}>
+            {offer.favorsThem ? "Tilted their way — realistic to accept" : "Favors you — may need a sweetener"}
+          </span>
           <ul className="space-y-0.5 text-sm text-slate-500">
             {offer.rationale.map((line, j) => (
               <li key={j}>· {line}</li>
@@ -76,6 +79,13 @@ export function TradeRecommendations() {
               </div>
             </div>
           </div>
+          {offer.dropCandidate && (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              You&apos;d net {offer.receive.length} player(s) for {offer.give.length} — drop{" "}
+              <strong>{offer.dropCandidate.player.name}</strong> ({offer.dropCandidate.finalValue.toFixed(1)} val) to
+              make roster room.
+            </p>
+          )}
         </div>
       ))}
     </div>

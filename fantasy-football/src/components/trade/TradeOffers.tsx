@@ -88,6 +88,13 @@ export function TradeOffers({
 
       {offer && (
         <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="flex items-center justify-between">
+            <span
+              className={`text-xs font-medium ${offer.favorsThem ? "text-brand-600" : "text-amber-600"}`}
+            >
+              {offer.favorsThem ? "Tilted their way — realistic to accept" : "Favors you — may need a sweetener"}
+            </span>
+          </div>
           <ul className="space-y-0.5 text-sm text-slate-500">
             {offer.rationale.map((line, i) => (
               <li key={i}>· {line}</li>
@@ -111,6 +118,13 @@ export function TradeOffers({
               </div>
             </div>
           </div>
+          {offer.dropCandidate && (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              You&apos;d net {offer.receive.length} player(s) for {offer.give.length} — drop{" "}
+              <strong>{offer.dropCandidate.player.name}</strong> ({offer.dropCandidate.finalValue.toFixed(1)} val) to
+              make roster room.
+            </p>
+          )}
         </div>
       )}
     </div>

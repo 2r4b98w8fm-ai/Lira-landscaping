@@ -5,8 +5,9 @@ import { TradeAnalyzer } from "@/components/trade/TradeAnalyzer";
 import { TradeTargets } from "@/components/trade/TradeTargets";
 import { TradeOffers } from "@/components/trade/TradeOffers";
 import { TradeRecommendations } from "@/components/trade/TradeRecommendations";
+import { TradeChainPlan } from "@/components/trade/TradeChainPlan";
 
-const TABS = ["Trades you should make", "Analyze a trade", "Find targets", "What should I offer"] as const;
+const TABS = ["Trades you should make", "Multi-step plan", "Analyze a trade", "Find targets", "What should I offer"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function TradePage() {
@@ -38,6 +39,7 @@ export default function TradePage() {
       </div>
 
       {tab === "Trades you should make" && <TradeRecommendations />}
+      {tab === "Multi-step plan" && <TradeChainPlan />}
       {tab === "Analyze a trade" && <TradeAnalyzer />}
       {tab === "Find targets" && (
         <TradeTargets

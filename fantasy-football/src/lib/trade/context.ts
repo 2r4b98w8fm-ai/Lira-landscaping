@@ -15,6 +15,8 @@ export interface TradeContext {
   tradeValuesByTeam: Map<number, TradeValue[]>;
   needsByTeam: Map<number, TeamNeedsProfile>;
   replacementLevels: Record<Position, number>;
+  /** The baseline computeTeamNeeds is measured against — exposed so a hypothetical post-trade roster (see trade/chain.ts) can be re-evaluated against the same yardstick. */
+  avgValuePerStarter: Record<Position, number>;
 }
 
 /**
@@ -81,5 +83,6 @@ export async function buildTradeContext(
     tradeValuesByTeam,
     needsByTeam,
     replacementLevels,
+    avgValuePerStarter,
   };
 }

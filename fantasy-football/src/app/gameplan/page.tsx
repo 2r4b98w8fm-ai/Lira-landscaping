@@ -99,11 +99,19 @@ export default function GamePlanPage() {
         {topTrades.length === 0 && <p className="text-sm text-slate-500">No trade clears the fairness bar right now.</p>}
         {topTrades.map((offer) => (
           <div key={offer.targetTeamId} className="rounded-xl border border-slate-200 p-3 text-sm">
-            <p className="font-semibold text-slate-900">vs {offer.targetTeamName}</p>
+            <div className="flex items-center justify-between">
+              <p className="font-semibold text-slate-900">vs {offer.targetTeamName}</p>
+              <span className={`text-xs font-medium ${offer.favorsThem ? "text-brand-600" : "text-amber-600"}`}>
+                {offer.favorsThem ? "realistic to accept" : "favors you"}
+              </span>
+            </div>
             <p className="mt-1 text-slate-600">
               Give: {offer.give.map((p) => p.player.name).join(", ")} ({offer.giveValue.toFixed(1)}) · Receive:{" "}
               {offer.receive.map((p) => p.player.name).join(", ")} ({offer.receiveValue.toFixed(1)})
             </p>
+            {offer.dropCandidate && (
+              <p className="mt-1 text-xs text-amber-700">Drop {offer.dropCandidate.player.name} to make roster room.</p>
+            )}
           </div>
         ))}
         <Link href="/trade" className="inline-block text-xs font-medium text-brand-600 hover:text-brand-700">

@@ -209,5 +209,9 @@ export interface SuggestedOffer {
   giveValue: number;
   receiveValue: number;
   fairnessGapPct: number;
+  /** True when I give at least as much value as I receive — a real team has a rational reason to accept, not just me extracting value. */
+  favorsThem: boolean;
+  /** When this trade nets you more players than you gave up, the weakest piece on your resulting roster worth cutting to make room. Null when give/receive counts are equal or give > receive. */
+  dropCandidate: TradeValue | null;
   rationale: string[];
 }
