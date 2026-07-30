@@ -43,6 +43,13 @@
       "when": 1785361615780,
       "tag": "0005_deep_annihilus",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785371750527,
+      "tag": "0006_confused_expediter",
+      "breakpoints": true
     }
   ]
 }

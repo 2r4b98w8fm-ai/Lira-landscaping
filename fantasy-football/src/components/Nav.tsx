@@ -6,9 +6,11 @@ import { LeagueSwitcher } from "./LeagueSwitcher";
 
 const links = [
   { href: "/", label: "Connect" },
+  { href: "/gameplan", label: "Game Plan" },
   { href: "/dashboard", label: "Roster" },
   { href: "/start-sit", label: "Start/Sit" },
   { href: "/trade", label: "Trade" },
+  { href: "/rankings", label: "Rankings" },
   { href: "/playoffs", label: "Playoffs" },
   { href: "/waivers", label: "Waivers" },
   { href: "/power-rankings", label: "Power Rankings" },

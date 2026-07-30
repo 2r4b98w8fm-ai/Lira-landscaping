@@ -40,7 +40,7 @@ export async function resolveMyTeam(): Promise<ResolveResult> {
   const team = await getTeamByEspnTeamId(league.id, activeLeague.myTeamId);
   if (!team) return { status: "no_team_selected", leagueRowId: league.id };
 
-  const roster = await getRosterForTeam(team.id);
+  const roster = await getRosterForTeam(team.id, league.season, league.currentWeek);
 
   return {
     status: "ok",

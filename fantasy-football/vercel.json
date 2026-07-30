@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/waiver-digest",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/sync-projections-data",
+      "schedule": "0 11 * * *"
     }
   ]
 }

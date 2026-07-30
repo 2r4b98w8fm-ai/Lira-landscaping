@@ -1,3 +1,4 @@
+import { ProjectionSources } from "@/components/ProjectionSources";
 import type { StartSitBoard as StartSitBoardType } from "@/types/domain";
 
 export function StartSitBoard({ board }: { board: StartSitBoardType }) {
@@ -29,9 +30,15 @@ export function StartSitBoard({ board }: { board: StartSitBoardType }) {
                   : "no projection"}
               </span>
             </div>
+            <div className="mt-1.5">
+              <ProjectionSources breakdown={rec.player.projectionBreakdown} />
+            </div>
             <ul className="mt-2 space-y-0.5 text-xs text-slate-500">
               {rec.reasoning.map((line, j) => (
                 <li key={j}>· {line}</li>
+              ))}
+              {rec.player.projectionBreakdown?.ourModelReasoning.map((line, j) => (
+                <li key={`model-${j}`}>· {line}</li>
               ))}
             </ul>
           </li>

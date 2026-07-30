@@ -32,7 +32,7 @@ export async function buildAndRunSimulation(
   }
 
   const teamRows = await getTeamsForLeague(leagueRowId);
-  const teamRosters = await getAllTeamRosters(leagueRowId);
+  const teamRosters = await getAllTeamRosters(leagueRowId, season, currentWeek);
   const rosterByTeamId = new Map(teamRosters.map((t) => [t.teamId, t.roster]));
 
   const varianceRows = await getPositionVariance(season);

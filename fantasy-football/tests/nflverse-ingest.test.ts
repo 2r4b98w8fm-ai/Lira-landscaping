@@ -6,8 +6,11 @@ function row(partial: Partial<RawStatRow>): RawStatRow {
     season: 2026,
     week: 1,
     position: "WR",
+    nflTeam: "MIA",
     opponentTeam: "BUF",
     fantasyPointsPpr: 10,
+    gsisId: "00-0000001",
+    playerName: "Test Player",
     ...partial,
   };
 }

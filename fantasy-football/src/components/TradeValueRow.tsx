@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ProjectionSources } from "@/components/ProjectionSources";
 import type { TradeValue } from "@/types/domain";
 
 export function TradeValueRow({
@@ -50,10 +51,16 @@ export function TradeValueRow({
           </button>
         </div>
       </div>
+      <div className="mt-1.5">
+        <ProjectionSources breakdown={value.player.projectionBreakdown} />
+      </div>
       {expanded && (
         <ul className="mt-2 space-y-0.5 border-t border-slate-100 pt-2 text-xs text-slate-500">
           {value.reasoning.map((line, i) => (
             <li key={i}>· {line}</li>
+          ))}
+          {value.player.projectionBreakdown?.ourModelReasoning.map((line, i) => (
+            <li key={`model-${i}`}>· {line}</li>
           ))}
         </ul>
       )}

@@ -9,8 +9,8 @@ export async function GET() {
     return NextResponse.json({ connected: true, teamSelected: false });
   }
 
-  const { leagueRowId, teamRowId, rosterSlotCounts } = result.data;
-  const waivers = await buildWaiverRecommendations(leagueRowId, teamRowId, rosterSlotCounts);
+  const { leagueRowId, teamRowId, rosterSlotCounts, season, currentWeek } = result.data;
+  const waivers = await buildWaiverRecommendations(leagueRowId, teamRowId, rosterSlotCounts, season, currentWeek);
 
   if (!waivers.available) {
     return NextResponse.json({ connected: true, teamSelected: true, available: false, reason: waivers.reason });

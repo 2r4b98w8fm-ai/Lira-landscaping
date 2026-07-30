@@ -30,7 +30,7 @@ export async function buildTradeContext(
   currentWeek: number,
   rosterSlotCounts: Record<string, number>
 ): Promise<TradeContext> {
-  const teamRosters = await getAllTeamRosters(leagueRowId);
+  const teamRosters = await getAllTeamRosters(leagueRowId, season, currentWeek);
   const numTeams = teamRosters.length;
 
   const allPlayers = teamRosters.flatMap((t) => t.roster);

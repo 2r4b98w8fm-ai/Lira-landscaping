@@ -4,12 +4,13 @@ import { useState } from "react";
 import { TradeAnalyzer } from "@/components/trade/TradeAnalyzer";
 import { TradeTargets } from "@/components/trade/TradeTargets";
 import { TradeOffers } from "@/components/trade/TradeOffers";
+import { TradeRecommendations } from "@/components/trade/TradeRecommendations";
 
-const TABS = ["Analyze a trade", "Find targets", "What should I offer"] as const;
+const TABS = ["Trades you should make", "Analyze a trade", "Find targets", "What should I offer"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function TradePage() {
-  const [tab, setTab] = useState<Tab>("Analyze a trade");
+  const [tab, setTab] = useState<Tab>("Trades you should make");
   const [offerTarget, setOfferTarget] = useState<number | null>(null);
 
   return (
@@ -36,6 +37,7 @@ export default function TradePage() {
         ))}
       </div>
 
+      {tab === "Trades you should make" && <TradeRecommendations />}
       {tab === "Analyze a trade" && <TradeAnalyzer />}
       {tab === "Find targets" && (
         <TradeTargets

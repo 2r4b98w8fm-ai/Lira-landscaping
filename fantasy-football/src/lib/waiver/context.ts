@@ -10,9 +10,11 @@ export type WaiverAvailability =
 export async function buildWaiverRecommendations(
   leagueRowId: number,
   myTeamRowId: number,
-  rosterSlotCounts: Record<string, number>
+  rosterSlotCounts: Record<string, number>,
+  season: number,
+  currentWeek: number
 ): Promise<WaiverAvailability> {
-  const freeAgentPool = await getFreeAgentsForLeague(leagueRowId);
+  const freeAgentPool = await getFreeAgentsForLeague(leagueRowId, season, currentWeek);
   if (freeAgentPool.length === 0) {
     return {
       available: false,
@@ -21,6 +23,6 @@ export async function buildWaiverRecommendations(
     };
   }
 
-  const myRoster = await getRosterForTeam(myTeamRowId);
+  const myRoster = await getRosterForTeam(myTeamRowId, season, currentWeek);
   return { available: true, recommendations: rankWaiverWire(myRoster, freeAgentPool, rosterSlotCounts) };
 }

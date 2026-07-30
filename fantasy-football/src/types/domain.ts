@@ -27,12 +27,29 @@ export interface RosterPlayer {
   injuryStatus: InjuryStatus;
   opponent: string | null;
   seasonPoints: number | null;
-  /** Null when ESPN didn't return a projection for this player/week — never fabricated. */
+  /** Null when no source had a projection for this player/week — never fabricated. May itself be a consensus blend; see projectionBreakdown for the full per-source split. */
   weekProjection: number | null;
-  /** Rest-of-season projected points, used for trade value. Null if neither ESPN's own ROS projection nor a season-pace estimate could be computed (e.g. no games played yet). */
+  /** Rest-of-season projected points, used for trade value. Null if no source could produce one (e.g. no games played yet). */
   restOfSeasonProjection: number | null;
-  /** Where restOfSeasonProjection came from — surfaced in the UI so an estimate is never mistaken for ESPN's own number. */
-  restOfSeasonSource: "espn" | "pace_estimate" | null;
+  /** Where restOfSeasonProjection came from — surfaced in the UI so an estimate is never mistaken for a single authoritative number. */
+  restOfSeasonSource: RestOfSeasonSource;
+  /** Full multi-source breakdown behind restOfSeasonProjection/weekProjection, when available. Null if this player couldn't be matched across sources (crosswalk miss, no game log yet, etc.) — engines still work off the plain numbers above either way. */
+  projectionBreakdown: ProjectionBreakdown | null;
+}
+
+export type RestOfSeasonSource = "espn" | "pace_estimate" | "our_model" | "blended" | null;
+
+export interface ProjectionBreakdown {
+  /** ESPN's own rest-of-season projection, un-blended. Null if ESPN didn't supply one. */
+  espnRestOfSeason: number | null;
+  /** Our own model's rest-of-season projection, built from this player's real recent game log, remaining matchups, and injury status. Null if we have no game log to build it from (crosswalk miss, rookie, etc.). */
+  ourModelRestOfSeason: number | null;
+  ourModelWeek: number | null;
+  ourModelReasoning: string[];
+  /** Sleeper's overall search_rank across the whole NFL player pool — lower is better. Null if unranked/not found on Sleeper. */
+  sleeperSearchRank: number | null;
+  /** Sleeper community add/drop buzz in the last 24h, if this player is trending. */
+  sleeperTrend: { direction: "add" | "drop"; count: number } | null;
 }
 
 export type InjuryStatus =

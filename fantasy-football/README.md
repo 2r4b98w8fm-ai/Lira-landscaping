@@ -214,7 +214,8 @@ cp .env.example .env.local
 npm install
 npm run db:generate   # generate SQL migration from schema.ts (already checked in under drizzle/)
 npm run db:migrate    # apply it
-npm run db:sync-defense [season]   # pull real nflverse stats, compute defense-vs-position
+npm run db:sync-defense [season]   # pull real nflverse stats + Sleeper crosswalk/trending — powers
+                                    # defense-vs-position, scoring variance, and our own model
 
 npm run dev
 ```
@@ -293,13 +294,16 @@ src/
     simulation/             team score distribution + Monte Carlo season simulator
     waiver/                 free-agent value-added ranking engine
     analytics/              all-play records + power rankings + luck rating
+    projections/             our own model (real recent form + matchup + injury) + consensus blending
+    sleeper/                 Sleeper's public API client (ID crosswalk + trending adds/drops)
+    ingestion/               shared nflverse+Sleeper refresh, used by both the script and the cron route
     notifications/          email digests (injury changes, waiver upgrades) via Resend
     db/                    Drizzle schema, client, queries
     sync/                  orchestrates an ESPN pull -> DB cache write; resolves session -> cached team
     session.ts             encrypted, multi-league session cookie (leagues[], espn_s2/SWID)
 scripts/
   migrate.ts               applies Drizzle migrations
-  sync-defense-rankings.ts  one-off/cron entry point for the nflverse ingest (defense rankings + variance)
+  sync-defense-rankings.ts  one-off/cron entry point for the nflverse+Sleeper ingest (also runs daily via cron)
 tests/                     fixture-based unit tests for mappers, ingest math, and every engine
-vercel.json                daily cron config for the waiver-digest email job
+vercel.json                daily cron config for the waiver-digest email job and the projection-data refresh
 ```

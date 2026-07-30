@@ -347,6 +347,7 @@ function mapCorePlayerFields(
     weekProjection,
     restOfSeasonProjection,
     restOfSeasonSource,
+    projectionBreakdown: null,
   };
 }
 

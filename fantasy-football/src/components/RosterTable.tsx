@@ -1,3 +1,4 @@
+import { ProjectionSources } from "@/components/ProjectionSources";
 import type { RosterPlayer } from "@/types/domain";
 
 const injuryColor: Record<string, string> = {
@@ -36,6 +37,7 @@ export function RosterTable({ roster }: { roster: RosterPlayer[] }) {
                 {p.injuryStatus !== "ACTIVE" && p.injuryStatus !== "UNKNOWN" && (
                   <div className={`text-xs font-medium ${injuryColor[p.injuryStatus]}`}>{p.injuryStatus}</div>
                 )}
+                <ProjectionSources breakdown={p.projectionBreakdown} />
               </td>
               <td className="px-3 py-2.5 text-slate-600">{p.position}</td>
               <td className="px-3 py-2.5 text-slate-600">{p.nflTeam}</td>

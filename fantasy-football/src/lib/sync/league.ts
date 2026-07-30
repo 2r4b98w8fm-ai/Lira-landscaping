@@ -18,10 +18,12 @@ import {
   upsertFreeAgents,
   upsertLeague,
   upsertMatchups,
+  upsertPlayers,
   upsertProTeamSchedule,
   upsertRoster,
 } from "@/lib/db/queries";
-import type { LeagueSummary } from "@/types/domain";
+import { enrichRosterPlayers } from "@/lib/projections/enrich";
+import type { LeagueSummary, RosterPlayer } from "@/types/domain";
 
 export interface LeagueSyncResult {
   league: LeagueSummary;
@@ -91,18 +93,47 @@ export async function syncLeague(
       await upsertMatchups(leagueRowId, resolvedMatchups);
     }
 
+    const rosterByTeam: Array<{ espnTeamId: number; roster: RosterPlayer[] }> = [];
     for (const team of raw.teams ?? []) {
       if (team.id === undefined) continue;
-      const roster = mapRosterPlayers(team, week, opponentMap, warnings);
-      await upsertRoster(leagueRowId, team.id, week, roster);
+      rosterByTeam.push({ espnTeamId: team.id, roster: mapRosterPlayers(team, week, opponentMap, warnings) });
     }
 
+    let freeAgentPool: RosterPlayer[] = [];
+    let freeAgentFetchOk = false;
     try {
       const freeAgentsRaw = await fetchFreeAgentsRaw(espnLeagueId, season, week, creds);
-      const freeAgentPool = mapFreeAgents(freeAgentsRaw, week, opponentMap, warnings);
-      await upsertFreeAgents(leagueRowId, week, freeAgentPool);
+      freeAgentPool = mapFreeAgents(freeAgentsRaw, week, opponentMap, warnings);
+      freeAgentFetchOk = true;
     } catch (err) {
       warnings.add(`Could not load free agents (waiver wire will be unavailable this sync): ${(err as Error).message}`);
+    }
+
+    // Run every player synced this cycle through our own model + Sleeper
+    // blending in one batch (rather than per-team), so defense rankings and
+    // schedule lookups are only fetched once regardless of league size.
+    const allPlayers = [...rosterByTeam.flatMap((t) => t.roster), ...freeAgentPool];
+    let enrichedAll = allPlayers;
+    try {
+      // Player identities must exist before enrichment persists
+      // player_projections rows (it has a foreign key into players).
+      await upsertPlayers(allPlayers);
+      enrichedAll = await enrichRosterPlayers(allPlayers, season, week);
+    } catch (err) {
+      warnings.add(
+        `Could not enrich projections with our own model/Sleeper data this sync (using ESPN-only numbers): ${(err as Error).message}`
+      );
+    }
+
+    let cursor = 0;
+    for (const { espnTeamId, roster } of rosterByTeam) {
+      const enrichedRoster = enrichedAll.slice(cursor, cursor + roster.length);
+      cursor += roster.length;
+      await upsertRoster(leagueRowId, espnTeamId, week, enrichedRoster);
+    }
+    if (freeAgentFetchOk) {
+      const enrichedFreeAgents = enrichedAll.slice(cursor, cursor + freeAgentPool.length);
+      await upsertFreeAgents(leagueRowId, week, enrichedFreeAgents);
     }
 
     await logSync(

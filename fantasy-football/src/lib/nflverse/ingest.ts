@@ -29,8 +29,12 @@ export interface RawStatRow {
   season: number;
   week: number;
   position: Position;
+  nflTeam: string;
   opponentTeam: string;
   fantasyPointsPpr: number;
+  /** nflverse's gsis_id for this player — the join key to Sleeper's crosswalk (see sleeper/ingest.ts) and our own projection model. */
+  gsisId: string;
+  playerName: string;
 }
 
 export class NflverseIngestError extends Error {
@@ -89,18 +93,26 @@ export async function fetchWeeklyStatsForSeason(
     const position = POSITION_ALIAS[r.position];
     if (!position) continue;
 
+    const nflTeam = r.recent_team;
+    if (!nflTeam || !ALL_NFL_TEAMS.includes(nflTeam as (typeof ALL_NFL_TEAMS)[number])) continue;
+
     const opponentTeam = r.opponent_team;
     if (!opponentTeam || !ALL_NFL_TEAMS.includes(opponentTeam as (typeof ALL_NFL_TEAMS)[number])) continue;
 
     const fantasyPointsPpr = Number(r.fantasy_points_ppr);
     if (!Number.isFinite(fantasyPointsPpr)) continue;
 
+    if (!r.player_id || !r.player_display_name) continue;
+
     rows.push({
       season: rowSeason,
       week: Number(r.week),
       position,
+      nflTeam,
       opponentTeam,
       fantasyPointsPpr,
+      gsisId: r.player_id,
+      playerName: r.player_display_name,
     });
   }
 

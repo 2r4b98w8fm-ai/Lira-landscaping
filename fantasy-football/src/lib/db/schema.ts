@@ -138,13 +138,17 @@ export const freeAgents = pgTable(
 );
 
 /**
- * Real weekly stats pulled from nflverse (nflverse-data GitHub releases).
- * Used to compute defense-vs-position rankings from actual points allowed.
+ * Real weekly per-player stats pulled from nflverse (nflverse-data GitHub
+ * releases). Used both to compute defense-vs-position rankings (aggregated
+ * by team+position) and, per player (via gsisId), as the real game log our
+ * own projection model is built from — see projections/ourModel.ts.
  */
 export const playerWeekStats = pgTable(
   "player_week_stats",
   {
     id: serial("id").primaryKey(),
+    gsisId: text("gsis_id").notNull(),
+    playerName: text("player_name").notNull(),
     season: integer("season").notNull(),
     week: integer("week").notNull(),
     nflTeam: text("nfl_team").notNull(),
@@ -153,9 +157,84 @@ export const playerWeekStats = pgTable(
     fantasyPointsPpr: real("fantasy_points_ppr").notNull(),
   },
   (t) => ({
-    seasonWeekTeamIdx: uniqueIndex(
-      "player_week_stats_season_week_team_pos_idx"
-    ).on(t.season, t.week, t.nflTeam, t.position, t.opponent),
+    gsisSeasonWeekIdx: uniqueIndex("player_week_stats_gsis_season_week_idx").on(
+      t.gsisId,
+      t.season,
+      t.week
+    ),
+  })
+);
+
+/**
+ * Cross-platform player ID map: ESPN's player ID (our primary key
+ * everywhere else) to Sleeper's ID and nflverse's gsis ID, sourced from
+ * Sleeper's public player directory (the one place that publishes this
+ * crosswalk for free, without scraping). Lets us join an ESPN roster
+ * player to their real nflverse game log and Sleeper trending signal.
+ */
+export const playerCrosswalk = pgTable("player_crosswalk", {
+  espnPlayerId: integer("espn_player_id").primaryKey(),
+  sleeperId: text("sleeper_id"),
+  gsisId: text("gsis_id"),
+  /** Sleeper's overall "search_rank" — lower is better/more relevant. Null if Sleeper doesn't rank this player. */
+  sleeperSearchRank: integer("sleeper_search_rank"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Snapshot of Sleeper's "trending" adds/drops (waiver-wire buzz across
+ * Sleeper's whole user base) — a market-sentiment signal independent of
+ * ESPN's or our own projection math. Refreshed wholesale on each ingest.
+ */
+export const sleeperTrending = pgTable(
+  "sleeper_trending",
+  {
+    id: serial("id").primaryKey(),
+    sleeperId: text("sleeper_id").notNull(),
+    direction: text("direction").notNull(), // 'add' | 'drop'
+    count: integer("count").notNull(),
+    capturedAt: timestamp("captured_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    sleeperIdDirectionIdx: uniqueIndex("sleeper_trending_sleeper_id_direction_idx").on(
+      t.sleeperId,
+      t.direction
+    ),
+  })
+);
+
+/**
+ * Per-player, per-week projection breakdown, kept separately from
+ * roster_slots/free_agents (which only store the final blended number used
+ * for trade/waiver/start-sit math) so the UI can show exactly what each
+ * source said — never a single black-box number.
+ */
+export const playerProjections = pgTable(
+  "player_projections",
+  {
+    id: serial("id").primaryKey(),
+    espnPlayerId: integer("espn_player_id")
+      .notNull()
+      .references(() => players.espnPlayerId),
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    espnRestOfSeason: real("espn_rest_of_season"),
+    ourModelRestOfSeason: real("our_model_rest_of_season"),
+    ourModelWeek: real("our_model_week"),
+    ourModelReasoning: jsonb("our_model_reasoning").$type<string[]>(),
+    sleeperSearchRank: integer("sleeper_search_rank"),
+    sleeperTrendDirection: text("sleeper_trend_direction"), // 'add' | 'drop' | null
+    sleeperTrendCount: integer("sleeper_trend_count"),
+    consensusRestOfSeason: real("consensus_rest_of_season"),
+    consensusSource: text("consensus_source"),
+    consensusWeek: real("consensus_week"),
+  },
+  (t) => ({
+    playerSeasonWeekIdx: uniqueIndex("player_projections_player_season_week_idx").on(
+      t.espnPlayerId,
+      t.season,
+      t.week
+    ),
   })
 );
 

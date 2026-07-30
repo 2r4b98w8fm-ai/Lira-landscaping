@@ -16,6 +16,7 @@ function player(partial: Partial<RosterPlayer>): RosterPlayer {
     weekProjection: 10,
     restOfSeasonProjection: 100,
     restOfSeasonSource: "espn",
+    projectionBreakdown: null,
     ...partial,
   };
 }
