@@ -70,6 +70,7 @@ describe("buildWaiverDigestHtml", () => {
       myWorstStarterValue: 50,
       valueAdded: 20,
       reasoning: [],
+      faabBid: null,
       ...partial,
     };
   }

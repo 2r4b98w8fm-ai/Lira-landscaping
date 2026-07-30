@@ -27,6 +27,7 @@ function rec(partial: Partial<RosterPlayer>, score: number): StartSitRecommendat
     score,
     reasoning: [],
     matchup: { opponent: null, defenseRank: null, defenseRankLabel: null },
+    consistency: null,
   };
 }
 

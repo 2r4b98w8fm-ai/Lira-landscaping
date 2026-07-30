@@ -183,6 +183,13 @@ export function mapScheduleSettings(
   };
 }
 
+/** Real FAAB (free-agent budget) total for this league, from ESPN's own acquisitionSettings — null for a league that uses plain waiver priority instead (never guessed which kind a league is). */
+export function mapFaabBudget(raw: EspnLeagueResponse): number | null {
+  const settings = raw.settings?.acquisitionSettings;
+  if (!settings?.isUsingAcquisitionBudget || !settings.acquisitionBudget) return null;
+  return settings.acquisitionBudget;
+}
+
 export interface MappedMatchup {
   week: number;
   homeTeamId: number;
@@ -251,6 +258,7 @@ function mapTeamSummary(raw: EspnTeam, warnings: MappingWarnings): TeamSummary {
       ties: record?.ties ?? 0,
       pointsFor: record?.pointsFor ?? 0,
       pointsAgainst: record?.pointsAgainst ?? 0,
+      faabSpent: raw.transactionCounter?.acquisitionBudgetSpent ?? null,
     };
   } catch (err) {
     warnings.add(`Failed to map team ${raw.id ?? "?"}: ${(err as Error).message}`);
@@ -263,6 +271,7 @@ function mapTeamSummary(raw: EspnTeam, warnings: MappingWarnings): TeamSummary {
       ties: 0,
       pointsFor: 0,
       pointsAgainst: 0,
+      faabSpent: null,
     };
   }
 }

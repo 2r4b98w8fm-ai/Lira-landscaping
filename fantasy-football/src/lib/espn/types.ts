@@ -46,6 +46,11 @@ export interface EspnRecord {
   };
 }
 
+/** How much of a FAAB (free-agent acquisition budget) league's team has spent so far this season — real ESPN transaction accounting, not tracked by this app. */
+export interface EspnTransactionCounter {
+  acquisitionBudgetSpent?: number;
+}
+
 export interface EspnTeam {
   id?: number;
   name?: string;
@@ -54,6 +59,7 @@ export interface EspnTeam {
   nickname?: string;
   record?: EspnRecord;
   roster?: EspnRoster;
+  transactionCounter?: EspnTransactionCounter;
 }
 
 export interface EspnLeagueSettings {
@@ -66,6 +72,11 @@ export interface EspnLeagueSettings {
   scheduleSettings?: {
     matchupPeriodCount?: number;
     playoffTeamCount?: number;
+  };
+  /** FAAB (free-agent budget bidding) settings, when the league uses one instead of plain waiver priority. */
+  acquisitionSettings?: {
+    isUsingAcquisitionBudget?: boolean;
+    acquisitionBudget?: number;
   };
 }
 

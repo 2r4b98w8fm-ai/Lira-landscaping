@@ -1,5 +1,5 @@
-import { getFreeAgentsForLeague, getRosterForTeam } from "@/lib/db/queries";
-import { rankWaiverWire } from "./engine";
+import { getFreeAgentsForLeague, getLeagueById, getRosterForTeam, getTeamById } from "@/lib/db/queries";
+import { rankWaiverWire, type FaabState } from "./engine";
 import type { WaiverRecommendation } from "@/types/domain";
 
 export type WaiverAvailability =
@@ -24,5 +24,10 @@ export async function buildWaiverRecommendations(
   }
 
   const myRoster = await getRosterForTeam(myTeamRowId, season, currentWeek);
-  return { available: true, recommendations: rankWaiverWire(myRoster, freeAgentPool, rosterSlotCounts) };
+
+  const [league, myTeam] = await Promise.all([getLeagueById(leagueRowId), getTeamById(myTeamRowId)]);
+  const faab: FaabState | null =
+    league?.faabBudget != null ? { totalBudget: league.faabBudget, spent: myTeam?.faabSpent ?? null } : null;
+
+  return { available: true, recommendations: rankWaiverWire(myRoster, freeAgentPool, rosterSlotCounts, faab) };
 }

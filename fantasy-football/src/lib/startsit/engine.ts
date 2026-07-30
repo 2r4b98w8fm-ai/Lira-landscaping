@@ -1,5 +1,6 @@
 import type { Position } from "@/lib/constants";
 import type {
+  ConsistencyRating,
   DefenseRanking,
   RosterPlayer,
   StartSitBoard,
@@ -21,7 +22,8 @@ function defenseRankLabel(rank: number): string {
 export function rankPosition(
   position: Position,
   candidates: RosterPlayer[],
-  defenseRankings: DefenseRanking[]
+  defenseRankings: DefenseRanking[],
+  consistencyByPlayer: Map<number, ConsistencyRating> = new Map()
 ): StartSitBoard {
   const defenseByTeam = new Map(
     defenseRankings
@@ -69,6 +71,19 @@ export function rankPosition(
       }
     }
 
+    const consistency = consistencyByPlayer.get(player.espnPlayerId) ?? null;
+    if (consistency) {
+      if (consistency.label === "Boom/bust") {
+        reasoning.push(
+          `Boom/bust: real week-to-week scores have ranged widely (avg ${consistency.mean.toFixed(1)} ± ${consistency.stdev.toFixed(1)} over their last ${consistency.gamesPlayed} games) — a bigger swing than a safe-floor start, better as a gamble when you need upside than when you just need to protect a lead.`
+        );
+      } else if (consistency.label === "Consistent floor") {
+        reasoning.push(
+          `Consistent floor: real week-to-week scores have stayed tight (avg ${consistency.mean.toFixed(1)} ± ${consistency.stdev.toFixed(1)} over their last ${consistency.gamesPlayed} games) — a safer bet when you don't need a boom, just don't want a bust.`
+        );
+      }
+    }
+
     return {
       player,
       score,
@@ -78,6 +93,7 @@ export function rankPosition(
         defenseRank: defense?.rank ?? null,
         defenseRankLabel: defense ? defenseRankLabel(defense.rank) : null,
       },
+      consistency,
     };
   });
 
@@ -91,13 +107,14 @@ export function rankPosition(
 export function buildStartSitBoards(
   roster: RosterPlayer[],
   defenseRankings: DefenseRanking[],
-  positions: Position[] = ["QB", "RB", "WR", "TE", "K", "DST"]
+  positions: Position[] = ["QB", "RB", "WR", "TE", "K", "DST"],
+  consistencyByPlayer: Map<number, ConsistencyRating> = new Map()
 ): StartSitBoard[] {
   return positions
     .map((position) => {
       const candidates = roster.filter((p) => p.position === position);
       if (candidates.length === 0) return null;
-      return rankPosition(position, candidates, defenseRankings);
+      return rankPosition(position, candidates, defenseRankings, consistencyByPlayer);
     })
     .filter((b): b is StartSitBoard => b !== null);
 }

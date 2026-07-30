@@ -72,6 +72,7 @@ export async function upsertLeague(summary: LeagueSummary): Promise<number> {
         ties: team.ties,
         pointsFor: team.pointsFor,
         pointsAgainst: team.pointsAgainst,
+        faabSpent: team.faabSpent,
       })
       .onConflictDoUpdate({
         target: [teams.leagueId, teams.espnTeamId],
@@ -83,6 +84,7 @@ export async function upsertLeague(summary: LeagueSummary): Promise<number> {
           ties: team.ties,
           pointsFor: team.pointsFor,
           pointsAgainst: team.pointsAgainst,
+          faabSpent: team.faabSpent,
         },
       });
   }
@@ -94,7 +96,8 @@ export async function updateLeagueMeta(
   leagueRowId: number,
   currentWeek: number,
   rosterSlotCounts: Record<string, number>,
-  scheduleSettings?: { regularSeasonWeeks: number; playoffTeamCount: number }
+  scheduleSettings?: { regularSeasonWeeks: number; playoffTeamCount: number },
+  faabBudget?: number | null
 ) {
   await db
     .update(leagues)
@@ -107,6 +110,7 @@ export async function updateLeagueMeta(
             playoffTeamCount: scheduleSettings.playoffTeamCount,
           }
         : {}),
+      ...(faabBudget !== undefined ? { faabBudget } : {}),
     })
     .where(eq(leagues.id, leagueRowId));
 }
@@ -401,6 +405,11 @@ export async function getLeagueById(leagueId: number) {
 
 export async function getTeamsForLeague(leagueId: number) {
   return db.select().from(teams).where(eq(teams.leagueId, leagueId));
+}
+
+export async function getTeamById(teamId: number) {
+  const [team] = await db.select().from(teams).where(eq(teams.id, teamId));
+  return team ?? null;
 }
 
 export async function saveDefenseVsPosition(

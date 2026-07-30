@@ -16,6 +16,8 @@ export interface TeamSummary {
   ties: number;
   pointsFor: number;
   pointsAgainst: number;
+  /** How much of the league's FAAB budget this team has spent so far this season, from ESPN's real transaction accounting. Null if the league doesn't use FAAB or ESPN didn't report it. */
+  faabSpent: number | null;
 }
 
 export interface RosterPlayer {
@@ -70,6 +72,14 @@ export interface DefenseRanking {
   weeksSampled: number;
 }
 
+export interface ConsistencyRating {
+  gamesPlayed: number;
+  mean: number;
+  stdev: number;
+  coefficientOfVariation: number;
+  label: "Consistent floor" | "Boom/bust" | "Moderate";
+}
+
 export interface StartSitRecommendation {
   player: RosterPlayer;
   score: number;
@@ -79,6 +89,8 @@ export interface StartSitRecommendation {
     defenseRank: number | null;
     defenseRankLabel: string | null;
   };
+  /** Null without 3+ real games of history to measure a spread from. */
+  consistency: ConsistencyRating | null;
 }
 
 export interface StartSitBoard {
@@ -164,6 +176,14 @@ export interface PowerRanking {
   reasoning: string[];
 }
 
+export interface FaabBidSuggestion {
+  /** Suggested bid in whole dollars, capped at your real remaining budget. */
+  suggestedBid: number;
+  /** What fraction of your remaining budget that bid represents (0-1). */
+  percentOfRemaining: number;
+  reasoning: string;
+}
+
 export interface WaiverRecommendation {
   player: RosterPlayer;
   /** Rest-of-season projection of the worst starter you currently roster at this position. */
@@ -171,6 +191,8 @@ export interface WaiverRecommendation {
   /** Free agent's rest-of-season projection minus myWorstStarterValue. Null if the free agent has no usable projection. */
   valueAdded: number | null;
   reasoning: string[];
+  /** Null when the league doesn't use FAAB, your remaining budget is unknown, or this player isn't a real upgrade (valueAdded <= 0). */
+  faabBid: FaabBidSuggestion | null;
 }
 
 export interface TeamScoreDistribution {

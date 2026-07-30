@@ -3,6 +3,7 @@ import {
   MappingWarnings,
   buildFullSeasonSchedule,
   buildOpponentMap,
+  mapFaabBudget,
   mapFreeAgents,
   mapLeagueSummary,
   mapRosterPlayers,
@@ -64,7 +65,8 @@ export async function syncLeague(
 
     const rosterSlotCounts = mapStartingSlotCounts(raw, warnings);
     const scheduleSettings = mapScheduleSettings(raw, warnings);
-    await updateLeagueMeta(leagueRowId, week, rosterSlotCounts, scheduleSettings);
+    const faabBudget = mapFaabBudget(raw);
+    await updateLeagueMeta(leagueRowId, week, rosterSlotCounts, scheduleSettings, faabBudget);
 
     const fullSchedule = buildFullSeasonSchedule(schedule, warnings);
     if (fullSchedule.length > 0) {

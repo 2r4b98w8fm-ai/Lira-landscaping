@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rankWaiverWire } from "@/lib/waiver/engine";
+import { rankWaiverWire, suggestFaabBid } from "@/lib/waiver/engine";
 import type { RosterPlayer } from "@/types/domain";
 
 let nextId = 1;
@@ -70,5 +70,53 @@ describe("rankWaiverWire", () => {
     expect(ranked[1]?.player.name).toBe("Unknown");
     expect(ranked[1]?.valueAdded).toBeNull();
     expect(ranked[1]?.reasoning).toContain("No rest-of-season projection available for this player.");
+  });
+
+  it("attaches a real-budget FAAB bid suggestion when FAAB state is passed", () => {
+    const myRoster = [player({ position: "RB", restOfSeasonProjection: 100 }), player({ position: "RB", restOfSeasonProjection: 80 })];
+    const freeAgents = [player({ name: "Big Upgrade", position: "RB", restOfSeasonProjection: 110 })];
+
+    const [rec] = rankWaiverWire(myRoster, freeAgents, SLOTS, { totalBudget: 100, spent: 40 });
+    // valueAdded = 110 - 80 = 30; percent = clamp(30*0.02, 0.01, 0.4) = 0.4 (capped); remaining = 60; bid = round(60*0.4) = 24.
+    expect(rec?.faabBid?.suggestedBid).toBe(24);
+    expect(rec?.faabBid?.percentOfRemaining).toBeCloseTo(0.4, 5);
+  });
+
+  it("leaves faabBid null when the league doesn't use FAAB", () => {
+    const myRoster = [player({ position: "RB", restOfSeasonProjection: 80 })];
+    const freeAgents = [player({ name: "Add", position: "RB", restOfSeasonProjection: 110 })];
+
+    const [rec] = rankWaiverWire(myRoster, freeAgents, SLOTS);
+    expect(rec?.faabBid).toBeNull();
+  });
+});
+
+describe("suggestFaabBid", () => {
+  it("scales the bid with value added, capped at 40% of remaining budget", () => {
+    const bid = suggestFaabBid(30, { totalBudget: 100, spent: 40 });
+    expect(bid?.suggestedBid).toBe(24); // 60 remaining * 40% cap
+    expect(bid?.percentOfRemaining).toBeCloseTo(0.4, 5);
+    expect(bid?.reasoning).toContain("$60 remaining of a $100 budget");
+  });
+
+  it("scales down for a smaller value-add, floored at 1%", () => {
+    const bid = suggestFaabBid(0.1, { totalBudget: 100, spent: 40 });
+    // percent = clamp(0.1*0.02=0.002, 0.01, 0.4) = 0.01 floor; bid = max(1, round(60*0.01)) = 1
+    expect(bid?.suggestedBid).toBe(1);
+    expect(bid?.percentOfRemaining).toBeCloseTo(0.01, 5);
+  });
+
+  it("returns null for a player that isn't a real upgrade", () => {
+    expect(suggestFaabBid(0, { totalBudget: 100, spent: 0 })).toBeNull();
+    expect(suggestFaabBid(-5, { totalBudget: 100, spent: 0 })).toBeNull();
+  });
+
+  it("returns null once the budget is fully spent", () => {
+    expect(suggestFaabBid(50, { totalBudget: 100, spent: 100 })).toBeNull();
+  });
+
+  it("assumes the full budget remains and says so when ESPN didn't report spend", () => {
+    const bid = suggestFaabBid(30, { totalBudget: 100, spent: null });
+    expect(bid?.reasoning).toContain("assuming your full $100 budget remains");
   });
 });

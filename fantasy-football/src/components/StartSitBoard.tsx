@@ -23,6 +23,17 @@ export function StartSitBoard({ board }: { board: StartSitBoardType }) {
                 <span className="text-sm font-mono text-slate-400">#{i + 1}</span>
                 <span className="font-semibold text-slate-900">{rec.player.name}</span>
                 <span className="text-xs text-slate-500">{rec.player.nflTeam}</span>
+                {rec.consistency && rec.consistency.label !== "Moderate" && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      rec.consistency.label === "Boom/bust"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-sky-100 text-sky-700"
+                    }`}
+                  >
+                    {rec.consistency.label}
+                  </span>
+                )}
               </div>
               <span className="text-sm font-medium tabular-nums text-slate-700">
                 {rec.player.weekProjection !== null

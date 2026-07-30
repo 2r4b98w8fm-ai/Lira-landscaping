@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { getDefenseVsPosition } from "@/lib/db/queries";
+import { getCrosswalkForPlayers, getDefenseVsPosition, getRecentGameLog } from "@/lib/db/queries";
 import { resolveMyTeam } from "@/lib/sync/resolve";
 import { buildStartSitBoards } from "@/lib/startsit/engine";
 import { computeOptimalLineup } from "@/lib/startsit/optimalLineup";
+import { computeConsistency } from "@/lib/analytics/consistency";
 import type { Position } from "@/lib/constants";
-import type { DefenseRanking } from "@/types/domain";
+import type { ConsistencyRating, DefenseRanking } from "@/types/domain";
 
 export async function GET() {
   const result = await resolveMyTeam();
@@ -16,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ connected: true, teamSelected: false });
   }
 
-  const { season, roster, rosterSlotCounts } = result.data;
+  const { season, currentWeek, roster, rosterSlotCounts } = result.data;
   const defenseRows = await getDefenseVsPosition(season);
   const defenseRankings: DefenseRanking[] = defenseRows.map((r) => ({
     team: r.team,
@@ -26,7 +27,20 @@ export async function GET() {
     weeksSampled: r.weeksSampled,
   }));
 
-  const boards = buildStartSitBoards(roster, defenseRankings);
+  const crosswalk = await getCrosswalkForPlayers(roster.map((p) => p.espnPlayerId));
+  const gsisIds = Array.from(
+    new Set(Array.from(crosswalk.values()).map((c) => c.gsisId).filter((g): g is string => g !== null))
+  );
+  const gameLogs = await getRecentGameLog(gsisIds, season, currentWeek);
+  const consistencyByPlayer = new Map<number, ConsistencyRating>();
+  for (const player of roster) {
+    const gsisId = crosswalk.get(player.espnPlayerId)?.gsisId;
+    const log = gsisId ? gameLogs.get(gsisId) ?? [] : [];
+    const rating = computeConsistency(log.map((g) => g.fantasyPointsPpr));
+    if (rating) consistencyByPlayer.set(player.espnPlayerId, rating);
+  }
+
+  const boards = buildStartSitBoards(roster, defenseRankings, undefined, consistencyByPlayer);
   const optimalLineup = computeOptimalLineup(roster, rosterSlotCounts);
 
   return NextResponse.json({

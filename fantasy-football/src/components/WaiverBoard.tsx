@@ -19,13 +19,23 @@ export function WaiverBoard({ position, recs }: { position: string; recs: Waiver
                 <span className="font-semibold text-slate-900">{rec.player.name}</span>
                 <span className="text-xs text-slate-500">{rec.player.nflTeam}</span>
               </div>
-              <span
-                className={`text-sm font-semibold tabular-nums ${
-                  (rec.valueAdded ?? -1) > 0 ? "text-brand-700" : "text-slate-500"
-                }`}
-              >
-                {rec.valueAdded !== null ? `${rec.valueAdded > 0 ? "+" : ""}${rec.valueAdded.toFixed(1)} val` : "no projection"}
-              </span>
+              <div className="flex items-center gap-2">
+                {rec.faabBid && (
+                  <span
+                    title={rec.faabBid.reasoning}
+                    className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700"
+                  >
+                    Suggested bid: ${rec.faabBid.suggestedBid}
+                  </span>
+                )}
+                <span
+                  className={`text-sm font-semibold tabular-nums ${
+                    (rec.valueAdded ?? -1) > 0 ? "text-brand-700" : "text-slate-500"
+                  }`}
+                >
+                  {rec.valueAdded !== null ? `${rec.valueAdded > 0 ? "+" : ""}${rec.valueAdded.toFixed(1)} val` : "no projection"}
+                </span>
+              </div>
             </div>
             <div className="mt-1.5">
               <ProjectionSources breakdown={rec.player.projectionBreakdown} />
@@ -34,6 +44,7 @@ export function WaiverBoard({ position, recs }: { position: string; recs: Waiver
               {rec.reasoning.map((line, j) => (
                 <li key={j}>· {line}</li>
               ))}
+              {rec.faabBid && <li>· {rec.faabBid.reasoning}</li>}
               {rec.player.projectionBreakdown?.ourModelReasoning.map((line, j) => (
                 <li key={`model-${j}`}>· {line}</li>
               ))}

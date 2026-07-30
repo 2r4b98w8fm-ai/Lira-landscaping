@@ -27,6 +27,8 @@ export const leagues = pgTable(
     /** Regular-season length and playoff bracket size, from ESPN's scheduleSettings. Used by the playoff simulator. */
     regularSeasonWeeks: integer("regular_season_weeks").notNull().default(14),
     playoffTeamCount: integer("playoff_team_count").notNull().default(4),
+    /** Total FAAB (free-agent budget) for this league, from ESPN's acquisitionSettings. Null for a league using plain waiver priority instead. */
+    faabBudget: real("faab_budget"),
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
     lastSyncError: text("last_sync_error"),
   },
@@ -53,6 +55,8 @@ export const teams = pgTable(
     ties: integer("ties").notNull().default(0),
     pointsFor: real("points_for").notNull().default(0),
     pointsAgainst: real("points_against").notNull().default(0),
+    /** How much of the league's FAAB budget this team has spent, from ESPN's real transaction accounting. Null if the league doesn't use FAAB or ESPN didn't report it. */
+    faabSpent: real("faab_spent"),
   },
   (t) => ({
     leagueTeamIdx: uniqueIndex("teams_league_espn_team_idx").on(
