@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, lt, lte, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, lt, lte, notInArray, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
   defenseVsPosition,
@@ -471,6 +471,26 @@ export async function getRestOfSeasonOpponents(
       )
     );
   return rows.map((r) => r.opponent).filter((o): o is string => o !== null);
+}
+
+/** Schedule rows (week + opponent, including bye weeks as a null opponent) for one NFL team across a week range — unlike getRestOfSeasonOpponents, byes aren't filtered out, since finding them is the point. */
+export async function getScheduleForTeam(
+  season: number,
+  nflTeam: string,
+  fromWeek: number,
+  toWeek: number
+): Promise<Array<{ week: number; opponent: string | null }>> {
+  return db
+    .select({ week: proTeamSchedule.week, opponent: proTeamSchedule.opponent })
+    .from(proTeamSchedule)
+    .where(
+      and(
+        eq(proTeamSchedule.season, season),
+        eq(proTeamSchedule.nflTeam, nflTeam),
+        gte(proTeamSchedule.week, fromWeek),
+        lte(proTeamSchedule.week, toWeek)
+      )
+    );
 }
 
 export async function upsertMatchups(leagueId: number, rows: MappedMatchup[]) {

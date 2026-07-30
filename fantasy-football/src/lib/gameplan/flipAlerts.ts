@@ -25,9 +25,13 @@ export function findFlipAlerts(boards: StartSitBoard[], rosterSlotCounts: Record
     if (requirement <= 0) continue;
 
     const topN = board.recommendations.slice(0, requirement);
+    // Exclude a -Infinity score too — an OUT/IR player ranked last is
+    // "displaced" by definition, but that's not a flip worth flagging (it's
+    // already obvious, and -Infinity can't survive a JSON round-trip to the
+    // client anyway, since JSON has no representation for it).
     const displaced = board.recommendations
       .slice(requirement)
-      .find((r) => r.player.lineupSlot !== "BE" && r.player.lineupSlot !== "IR");
+      .find((r) => r.player.lineupSlot !== "BE" && r.player.lineupSlot !== "IR" && r.score !== -Infinity);
     if (!displaced) continue;
 
     for (const rec of topN) {

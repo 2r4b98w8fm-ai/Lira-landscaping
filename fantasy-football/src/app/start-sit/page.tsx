@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { StartSitBoard } from "@/components/StartSitBoard";
+import { OptimalLineupCard } from "@/components/OptimalLineupCard";
+import type { OptimalLineup } from "@/lib/startsit/optimalLineup";
 import type { StartSitBoard as StartSitBoardType } from "@/types/domain";
 
 interface StartSitResponse {
   connected: boolean;
   teamSelected?: boolean;
   boards?: StartSitBoardType[];
+  optimalLineup?: OptimalLineup;
   defenseDataAvailable?: boolean;
 }
 
@@ -42,6 +45,7 @@ export default function StartSitPage() {
           </p>
         )}
       </div>
+      {data.optimalLineup && <OptimalLineupCard lineup={data.optimalLineup} />}
       {data.boards && data.boards.length > 0 ? (
         data.boards.map((board) => <StartSitBoard key={board.position} board={board} />)
       ) : (

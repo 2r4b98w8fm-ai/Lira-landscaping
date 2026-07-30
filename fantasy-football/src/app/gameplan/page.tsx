@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import type { FlipAlert } from "@/lib/gameplan/flipAlerts";
+import type { InjuryReplacement } from "@/lib/gameplan/injuryReplacements";
+import type { ByeWeekEntry } from "@/lib/gameplan/byeWeeks";
+import type { MatchupPreview } from "@/lib/simulation/weekMatchup";
 import type { RosterPlayer, SimulationTeamResult, SuggestedOffer, WaiverRecommendation } from "@/types/domain";
 
 interface GamePlanResponse {
@@ -13,9 +16,12 @@ interface GamePlanResponse {
   currentWeek?: number;
   flipAlerts?: FlipAlert[];
   injuryAlerts?: RosterPlayer[];
+  injuryReplacements?: InjuryReplacement[];
+  byeWeeks?: ByeWeekEntry[];
   topTrades?: (SuggestedOffer & { score: number })[];
   topWaivers?: WaiverRecommendation[];
   myPlayoffOdds?: SimulationTeamResult | null;
+  weekMatchup?: (MatchupPreview & { opponentTeamName: string }) | null;
 }
 
 const INJURY_COLOR: Record<string, string> = {
@@ -51,9 +57,15 @@ export default function GamePlanPage() {
 
   const flipAlerts = data.flipAlerts ?? [];
   const injuryAlerts = data.injuryAlerts ?? [];
+  const injuryReplacements = data.injuryReplacements ?? [];
+  const byeWeeks = data.byeWeeks ?? [];
   const topTrades = data.topTrades ?? [];
   const topWaivers = data.topWaivers ?? [];
   const odds = data.myPlayoffOdds;
+  const matchup = data.weekMatchup;
+
+  const replacementFor = (espnPlayerId: number) =>
+    injuryReplacements.find((r) => r.injuredPlayer.espnPlayerId === espnPlayerId);
 
   return (
     <div className="space-y-4">
@@ -64,6 +76,38 @@ export default function GamePlanPage() {
           the best trade and waiver moves available, and where you stand for the playoffs.
         </p>
       </div>
+
+      <Section
+        title={matchup ? `This week: vs ${matchup.opponentTeamName}` : "This week's matchup"}
+        subtitle="Optimal-lineup projections for both teams, compared as real-valued distributions — not a coin flip."
+      >
+        {!matchup && (
+          <p className="text-sm text-slate-500">
+            No scheduled matchup found for this week — the league schedule may not be synced yet, or this
+            could be a playoff bye.
+          </p>
+        )}
+        {matchup && (
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3">
+            <div className="text-sm">
+              <p className="text-slate-900">
+                You project <span className="font-mono font-semibold">{matchup.myMean.toFixed(1)}</span> vs{" "}
+                <span className="font-mono font-semibold">{matchup.oppMean.toFixed(1)}</span>.
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Spread accounts for real per-position scoring variance on both sides.
+              </p>
+            </div>
+            <span
+              className={`font-mono text-2xl font-bold ${
+                matchup.winProbabilityPct >= 50 ? "text-brand-700" : "text-red-600"
+              }`}
+            >
+              {matchup.winProbabilityPct.toFixed(0)}%
+            </span>
+          </div>
+        )}
+      </Section>
 
       <Section
         title="Lineup flips"
@@ -83,14 +127,38 @@ export default function GamePlanPage() {
         </Link>
       </Section>
 
-      <Section title="Injury watch" subtitle="Everyone on your roster who isn't fully active right now.">
+      <Section title="Injury watch" subtitle="Everyone on your roster who isn't fully active right now, with the best replacement if you need one.">
         {injuryAlerts.length === 0 && <p className="text-sm text-slate-500">Nobody on your roster is banged up right now.</p>}
-        {injuryAlerts.map((p) => (
-          <div
-            key={p.espnPlayerId}
-            className={`rounded-xl border px-3 py-2 text-sm ${INJURY_COLOR[p.injuryStatus] ?? "border-slate-200 bg-slate-50 text-slate-700"}`}
-          >
-            <span className="font-semibold">{p.name}</span> ({p.position} · {p.nflTeam}) — {p.injuryStatus}
+        {injuryAlerts.map((p) => {
+          const replacement = replacementFor(p.espnPlayerId);
+          return (
+            <div
+              key={p.espnPlayerId}
+              className={`rounded-xl border px-3 py-2 text-sm ${INJURY_COLOR[p.injuryStatus] ?? "border-slate-200 bg-slate-50 text-slate-700"}`}
+            >
+              <span className="font-semibold">{p.name}</span> ({p.position} · {p.nflTeam}) — {p.injuryStatus}
+              {replacement?.replacement && (
+                <p className="mt-0.5 text-xs">
+                  Best replacement: <strong>{replacement.replacement.name}</strong> (
+                  {replacement.replacementSource === "bench" ? "your bench" : "waivers"})
+                </p>
+              )}
+              {replacement && !replacement.replacement && (
+                <p className="mt-0.5 text-xs">No real replacement available on your bench or waivers right now.</p>
+              )}
+            </div>
+          );
+        })}
+      </Section>
+
+      <Section title="Upcoming byes" subtitle="Roster players on a bye in the next few weeks — plan waiver moves ahead of time.">
+        {byeWeeks.length === 0 && <p className="text-sm text-slate-500">No byes coming up for your roster in the next few weeks.</p>}
+        {byeWeeks.map((entry) => (
+          <div key={entry.week} className="rounded-xl border border-slate-200 p-3 text-sm">
+            <p className="font-semibold text-slate-900">Week {entry.week}</p>
+            <p className="mt-0.5 text-slate-600">
+              {entry.players.map((p) => `${p.name} (${p.position} · ${p.nflTeam})`).join(", ")}
+            </p>
           </div>
         ))}
       </Section>

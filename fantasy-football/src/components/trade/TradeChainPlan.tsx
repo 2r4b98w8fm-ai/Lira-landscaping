@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TradeValueRow } from "@/components/TradeValueRow";
+import { CopyTradeButton } from "@/components/trade/CopyTradeButton";
 import type { SuggestedOffer } from "@/types/domain";
 
 interface TradeChainResponse {
@@ -50,11 +51,14 @@ export function TradeChainPlan() {
                 <span className="mr-2 rounded-full bg-brand-600 px-2 py-0.5 text-xs font-bold text-white">Step {i + 1}</span>
                 vs {offer.targetTeamName}
               </h3>
-              <span
-                className={`text-xs font-medium ${offer.favorsThem ? "text-brand-600" : "text-amber-600"}`}
-              >
-                {offer.favorsThem ? "tilted their way — realistic" : "favors you — may need a sweetener"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-xs font-medium ${offer.favorsThem ? "text-brand-600" : "text-amber-600"}`}
+                >
+                  {offer.favorsThem ? "tilted their way — realistic" : "favors you — may need a sweetener"}
+                </span>
+                <CopyTradeButton offer={offer} />
+              </div>
             </div>
             <ul className="space-y-0.5 text-sm text-slate-500">
               {offer.rationale.map((line, j) => (

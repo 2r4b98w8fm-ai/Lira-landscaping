@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TradeValueRow } from "@/components/TradeValueRow";
+import { CopyTradeButton } from "@/components/trade/CopyTradeButton";
 import type { SuggestedOffer } from "@/types/domain";
 
 interface RecommendedTrade extends SuggestedOffer {
@@ -53,9 +54,12 @@ export function TradeRecommendations() {
               value moved: {((offer.giveValue + offer.receiveValue) / 2).toFixed(1)}
             </span>
           </div>
-          <span className={`inline-block text-xs font-medium ${offer.favorsThem ? "text-brand-600" : "text-amber-600"}`}>
-            {offer.favorsThem ? "Tilted their way — realistic to accept" : "Favors you — may need a sweetener"}
-          </span>
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-medium ${offer.favorsThem ? "text-brand-600" : "text-amber-600"}`}>
+              {offer.favorsThem ? "Tilted their way — realistic to accept" : "Favors you — may need a sweetener"}
+            </span>
+            <CopyTradeButton offer={offer} />
+          </div>
           <ul className="space-y-0.5 text-sm text-slate-500">
             {offer.rationale.map((line, j) => (
               <li key={j}>· {line}</li>

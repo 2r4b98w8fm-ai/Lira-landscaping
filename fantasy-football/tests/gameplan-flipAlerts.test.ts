@@ -83,4 +83,23 @@ describe("findFlipAlerts", () => {
     ];
     expect(findFlipAlerts(boards, SLOTS)).toEqual([]);
   });
+
+  it("never selects an OUT/IR starter (-Infinity score) as the displaced player", () => {
+    // A currently-started OUT player sorts to the bottom and would
+    // otherwise be the only "starter" candidate below the cutoff — but
+    // -Infinity can't survive a JSON round-trip to the client (it
+    // serializes to null), so it must never end up in an alert at all.
+    const boards = [
+      board("RB", [
+        rec({ name: "Bench Guy", lineupSlot: "BE" }, 25),
+        rec({ name: "Healthy Starter", lineupSlot: "RB" }, 20),
+        rec({ name: "OUT Starter", lineupSlot: "RB", injuryStatus: "OUT" }, -Infinity),
+      ]),
+    ];
+    // With only 1 real healthy starter for 2 required slots, there's no
+    // legitimate "displaced starter" for a bench player to flip past — the
+    // only starter beyond the cutoff is the OUT player, which must be
+    // excluded rather than surfaced with a non-serializable score.
+    expect(findFlipAlerts(boards, SLOTS)).toEqual([]);
+  });
 });
