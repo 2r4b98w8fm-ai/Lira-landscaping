@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { StartSitBoard } from "@/components/StartSitBoard";
 import { OptimalLineupCard } from "@/components/OptimalLineupCard";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 import type { OptimalLineup } from "@/lib/startsit/optimalLineup";
 import type { StartSitBoard as StartSitBoardType } from "@/types/domain";
 
@@ -19,12 +20,12 @@ export default function StartSitPage() {
   const [data, setData] = useState<StartSitResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/league/start-sit")
+  useAutoRefresh(() => {
+    return fetch("/api/league/start-sit")
       .then((res) => res.json())
       .then((d) => setData(d))
       .finally(() => setLoading(false));
-  }, []);
+  }, DATA_POLL_INTERVAL_MS);
 
   if (loading) return <p className="text-slate-500">Crunching matchups…</p>;
   if (!data?.connected) return <NotConnectedBanner reason="not_connected" />;

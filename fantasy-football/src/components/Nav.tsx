@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LeagueSwitcher } from "./LeagueSwitcher";
+import { LiveSyncBadge } from "./LiveSyncBadge";
 
 const links = [
   { href: "/", label: "Connect" },
@@ -27,6 +28,7 @@ export function Nav() {
             🏈 <span className="bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent">Gridiron Desk</span>
           </span>
           <LeagueSwitcher />
+          <LiveSyncBadge />
         </div>
         <nav className="flex flex-wrap gap-1 text-sm">
           {links.map((link) => {

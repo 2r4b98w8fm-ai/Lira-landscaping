@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 import type { FlipAlert } from "@/lib/gameplan/flipAlerts";
 import type { InjuryReplacement } from "@/lib/gameplan/injuryReplacements";
 import type { ByeWeekEntry } from "@/lib/gameplan/byeWeeks";
@@ -45,11 +46,11 @@ function Section({ title, subtitle, children }: { title: string; subtitle: strin
 export default function GamePlanPage() {
   const [data, setData] = useState<GamePlanResponse | null>(null);
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     fetch("/api/league/gameplan")
       .then((res) => res.json())
       .then(setData);
-  }, []);
+  }, DATA_POLL_INTERVAL_MS);
 
   if (!data) return <p className="text-slate-500">Building your game plan…</p>;
   if (!data.connected) return <NotConnectedBanner reason="not_connected" />;

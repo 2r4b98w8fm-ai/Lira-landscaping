@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { PowerRankingRow } from "@/components/PowerRankingRow";
 import type { PowerRanking } from "@/types/domain";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 
 interface PowerRankingsResponse {
   connected: boolean;
@@ -15,11 +16,11 @@ interface PowerRankingsResponse {
 export default function PowerRankingsPage() {
   const [data, setData] = useState<PowerRankingsResponse | null>(null);
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     fetch("/api/league/power-rankings")
       .then((res) => res.json())
       .then(setData);
-  }, []);
+  }, DATA_POLL_INTERVAL_MS);
 
   if (!data) return <p className="text-slate-500">Crunching the standings…</p>;
   if (!data.connected) return <NotConnectedBanner reason="not_connected" />;

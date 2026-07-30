@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { RankingRow } from "@/components/RankingRow";
 import { POSITIONS, type Position } from "@/lib/constants";
 import type { RankedPlayer } from "@/lib/rankings/build";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 
 interface RankingsResponse {
   connected: boolean;
@@ -20,11 +21,11 @@ export default function RankingsPage() {
   const [data, setData] = useState<RankingsResponse | null>(null);
   const [filter, setFilter] = useState<Filter>("ALL");
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     fetch("/api/league/rankings")
       .then((res) => res.json())
       .then(setData);
-  }, []);
+  }, DATA_POLL_INTERVAL_MS);
 
   const filtered = useMemo(() => {
     const rankings = data?.rankings ?? [];

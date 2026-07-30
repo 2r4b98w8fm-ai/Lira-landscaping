@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/sync-projections-data",
-      "schedule": "0 11 * * *"
+      "schedule": "0 */4 * * *"
     }
   ]
 }

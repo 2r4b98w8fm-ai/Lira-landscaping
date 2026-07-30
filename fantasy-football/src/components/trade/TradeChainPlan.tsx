@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { TradeValueRow } from "@/components/TradeValueRow";
 import { CopyTradeButton } from "@/components/trade/CopyTradeButton";
 import type { SuggestedOffer } from "@/types/domain";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 
 interface TradeChainResponse {
   connected: boolean;
@@ -14,11 +15,11 @@ interface TradeChainResponse {
 export function TradeChainPlan() {
   const [data, setData] = useState<TradeChainResponse | null>(null);
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     fetch("/api/league/trade/chain")
       .then((res) => res.json())
       .then(setData);
-  }, []);
+  }, DATA_POLL_INTERVAL_MS);
 
   if (!data) return <p className="text-slate-500">Planning a sequence of moves…</p>;
   if (!data.connected || !data.teamSelected) {

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { RosterTable } from "@/components/RosterTable";
 import { InjuryWatchPanel } from "@/components/InjuryWatchPanel";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import type { RosterPlayer } from "@/types/domain";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 
 interface RosterResponse {
   connected: boolean;
@@ -21,15 +22,15 @@ export default function DashboardPage() {
   const [syncing, setSyncing] = useState(false);
 
   async function load() {
-    setLoading(true);
     const res = await fetch("/api/league/roster");
     setData(await res.json());
     setLoading(false);
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  // The nav's LiveSyncBadge already syncs ESPN in the background every
+  // minute; this just re-reads our own DB every 45s so this page reflects
+  // that (or a newer manual sync below) without a manual reload.
+  useAutoRefresh(load, DATA_POLL_INTERVAL_MS);
 
   async function refresh() {
     setSyncing(true);
@@ -56,7 +57,8 @@ export default function DashboardPage() {
           <h1 className="text-xl font-extrabold text-slate-900">{data.leagueName}</h1>
           <p className="text-xs text-slate-500">
             Last synced from ESPN:{" "}
-            {data.lastSyncedAt ? new Date(data.lastSyncedAt).toLocaleString() : "never"}
+            {data.lastSyncedAt ? new Date(data.lastSyncedAt).toLocaleString() : "never"} · auto-syncing every
+            minute while this tab is open
           </p>
         </div>
         <button
@@ -64,7 +66,7 @@ export default function DashboardPage() {
           disabled={syncing}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
         >
-          {syncing ? "Refreshing…" : "Refresh from ESPN"}
+          {syncing ? "Syncing…" : "Sync now"}
         </button>
       </div>
       {data.roster && data.roster.length > 0 ? (

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { TradeValueRow } from "@/components/TradeValueRow";
 import { CopyTradeButton } from "@/components/trade/CopyTradeButton";
 import type { SuggestedOffer } from "@/types/domain";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 
 interface RecommendedTrade extends SuggestedOffer {
   score: number;
@@ -14,7 +15,7 @@ export function TradeRecommendations() {
   const [connected, setConnected] = useState(true);
   const [teamSelected, setTeamSelected] = useState(true);
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     fetch("/api/league/trade/recommendations")
       .then((res) => res.json())
       .then((data) => {
@@ -22,7 +23,7 @@ export function TradeRecommendations() {
         setTeamSelected(data.teamSelected ?? false);
         setRecommendations(data.recommendations ?? []);
       });
-  }, []);
+  }, DATA_POLL_INTERVAL_MS);
 
   if (!connected || !teamSelected) {
     return <p className="text-slate-500">Connect a league and pick your team first.</p>;

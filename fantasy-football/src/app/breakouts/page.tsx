@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { BreakoutRow } from "@/components/BreakoutRow";
 import { FLEX_ELIGIBLE, type Position } from "@/lib/constants";
 import type { BreakoutEntry, TeamSnapSummary } from "@/lib/breakouts/context";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 
 interface BreakoutsResponse {
   connected: boolean;
@@ -22,11 +23,11 @@ export default function BreakoutsPage() {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [showTeamSnaps, setShowTeamSnaps] = useState(false);
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     fetch("/api/league/breakouts")
       .then((res) => res.json())
       .then(setData);
-  }, []);
+  }, DATA_POLL_INTERVAL_MS);
 
   const filtered = useMemo(() => {
     const entries = data?.entries ?? [];

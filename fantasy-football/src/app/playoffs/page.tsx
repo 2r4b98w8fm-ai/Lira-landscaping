@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { PlayoffOddsRow } from "@/components/PlayoffOddsRow";
 import type { SimulationResult } from "@/types/domain";
+import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 
 interface SimulateResponse {
   connected: boolean;
@@ -17,7 +18,7 @@ export default function PlayoffsPage() {
   const [data, setData] = useState<SimulateResponse | null>(null);
   const [myTeamId, setMyTeamId] = useState<number | null>(null);
 
-  useEffect(() => {
+  useAutoRefresh(() => {
     fetch("/api/league/simulate")
       .then((res) => res.json())
       .then(setData);
@@ -27,7 +28,7 @@ export default function PlayoffsPage() {
         const mine = d.teams?.find((t: { isMyTeam: boolean; teamId: number }) => t.isMyTeam);
         if (mine) setMyTeamId(mine.teamId);
       });
-  }, []);
+  }, DATA_POLL_INTERVAL_MS);
 
   if (!data) return <p className="text-slate-500">Running the simulation…</p>;
   if (!data.connected) return <NotConnectedBanner reason="not_connected" />;
