@@ -162,6 +162,48 @@ decide that tradeoff is worth it for real-time-without-a-visit injury alerts.
 is covered by unit tests up to the point of calling Resend's SDK (digest content, the "nothing to
 report" skip logic, the "not configured" guard) but an actual delivered email is unverified.
 
+## Keeping the background data refresh actually frequent on free plans
+
+Every page in the app polls its own data every 45s and the nav auto-syncs your ESPN league every
+60s straight from your browser session — that part is free and unconditional, no infra needed (see
+`src/lib/hooks/useAutoRefresh.ts` and `src/components/LiveSyncBadge.tsx`). But the nflverse/Sleeper/
+snap-count stats behind Rankings, Breakouts, etc. only get as fresh as whatever last hit
+`/api/cron/sync-projections-data`, and **Vercel's Hobby plan caps its own `vercel.json` cron
+schedule to once a day** — a paid Pro plan is the only way to make Vercel itself fire it more
+often.
+
+Rather than pay for that, this repo stacks two free services instead of one:
+
+1. **Vercel's own cron** (`vercel.json`) still fires once a day — free on Hobby, kept as a
+   guaranteed-to-work fallback.
+2. **A GitHub Actions scheduled workflow** (`.github/workflows/sync-projections-cron.yml`) hits the
+   same endpoint every 2 hours in between. This repo is public, so Actions minutes are unlimited —
+   nothing to pay or upgrade. The workflow is a plain `curl` with a bearer token; the app has no
+   idea which of the two triggered it.
+
+To turn the GitHub Actions half on, add two repository secrets under **Settings → Secrets and
+variables → Actions**:
+
+- `CRON_SECRET` — the exact same value you set as the `CRON_SECRET` env var on your Vercel
+  deployment.
+- `APP_URL` — your deployment's base URL, e.g. `https://your-app.vercel.app` (no trailing slash
+  needed either way).
+
+You can trigger it once manually (Actions tab → "Sync projections data (intraday)" → "Run
+workflow") to confirm both secrets are wired up correctly before waiting for the schedule.
+
+**Caveat:** GitHub disables a scheduled workflow automatically after 60 days with no commits to the
+repository — a dormant fork's cron will quietly stop firing (Vercel's daily cron keeps running
+regardless, so the app never goes fully stale, just back to once-a-day). Any push resets that
+clock, so this is only a concern for a repo nobody touches for two months straight.
+
+**If you'd rather not touch GitHub Actions at all:** a third-party free cron service like
+[cron-job.org](https://cron-job.org) does the same job with no code — create a job that GETs
+`https://your-app.vercel.app/api/cron/sync-projections-data` with header
+`Authorization: Bearer <your CRON_SECRET>` on whatever schedule you want (their free tier allows
+down to once a minute). Either approach — or both at once — is fine; the route doesn't care who
+calls it, only that the bearer token matches.
+
 ### A note on ESPN's API
 
 It's undocumented and has changed shape before (team ID renumbering, field renames). The client

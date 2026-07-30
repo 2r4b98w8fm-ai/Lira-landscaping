@@ -1,0 +1,29 @@
+name: Sync projections data (intraday)
+
+# Vercel's Hobby plan caps its own vercel.json cron at once a day, so this
+# workflow is the second half of a two-free-services stack: Vercel still
+# runs the daily fallback, and this repo (public, so GitHub Actions minutes
+# are unrestricted) hits the same endpoint every 2 hours in between. Both
+# call the exact same bearer-token-protected route — nothing app-side knows
+# or cares which trigger fired it.
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger sync-projections-data
+        run: |
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::Set the APP_URL and CRON_SECRET repository secrets first (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          curl -sS -f -X GET \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL%/}/api/cron/sync-projections-data"
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
