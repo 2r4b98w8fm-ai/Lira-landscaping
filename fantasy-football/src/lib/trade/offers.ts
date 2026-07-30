@@ -4,10 +4,15 @@ import { surplusPlayersAtPosition } from "./needs";
 
 const SIGNIFICANCE_THRESHOLD = 5;
 const DEFAULT_FAIRNESS_THRESHOLD_PCT = 15;
-const MAX_GIVE_CANDIDATES = 4;
-const MAX_RECEIVE_CANDIDATES = 3;
-const MAX_GIVE_COMBO_SIZE = 2;
-const MAX_RECEIVE_COMBO_SIZE = 2;
+/**
+ * How many of each side's tradeable-depth players get considered at all —
+ * not a cap on package size (a package can use every one of them if that's
+ * what's beneficial), just a bound on how deep into someone's bench this
+ * looks before giving up. Kept small enough that trying every subset of
+ * each side (2^n) stays instant even multiplied together.
+ */
+const MAX_GIVE_CANDIDATES = 5;
+const MAX_RECEIVE_CANDIDATES = 5;
 
 function needsMap(profile: TeamNeedsProfile): Map<Position, number> {
   return new Map(profile.needs.map((n) => [n.position, n.surplus]));
@@ -52,17 +57,19 @@ function pickReceivePosition(mine: Map<Position, number>, theirs: Map<Position, 
   return best && best.surplus > SIGNIFICANCE_THRESHOLD ? best.position : null;
 }
 
-function combinations<T>(items: T[], maxSize: number): T[][] {
+/** Every non-empty subset of `items` (1 player up to all of them) — a package trades "as many as is beneficial," not a fixed 1- or 2-player shape. Fine to enumerate by bitmask since `items` is already capped small by MAX_*_CANDIDATES. */
+function combinations<T>(items: T[]): T[][] {
   const results: T[][] = [];
-  for (const item of items) results.push([item]);
-  if (maxSize >= 2) {
-    for (let i = 0; i < items.length; i++) {
-      for (let j = i + 1; j < items.length; j++) {
-        const a = items[i];
-        const b = items[j];
-        if (a !== undefined && b !== undefined) results.push([a, b]);
+  const n = items.length;
+  for (let mask = 1; mask < 1 << n; mask++) {
+    const combo: T[] = [];
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) {
+        const item = items[i];
+        if (item !== undefined) combo.push(item);
       }
     }
+    results.push(combo);
   }
   return results;
 }
@@ -77,14 +84,13 @@ interface Candidate {
   overpay: number;
 }
 
-/** The weakest player left on my roster after giving up `given` — never one of the players just received, since recommending you drop what you just got would be nonsensical. Only meaningful when a trade nets you more players than you gave. */
-function pickDropCandidate(myRoster: TradeValue[], given: TradeValue[]): TradeValue | null {
+/** The `count` weakest players left on my roster after giving up `given` — never one of the players just received, since recommending you drop what you just got would be nonsensical. `count` is however many net players the trade adds (receive.length - give.length), so the roster comes back into balance. */
+function pickDropCandidates(myRoster: TradeValue[], given: TradeValue[], count: number): TradeValue[] {
   const givenIds = new Set(given.map((tv) => tv.player.espnPlayerId));
-  const remaining = myRoster.filter((tv) => !givenIds.has(tv.player.espnPlayerId));
-  return remaining.reduce<TradeValue | null>(
-    (worst, tv) => (!worst || tv.finalValue < worst.finalValue ? tv : worst),
-    null
-  );
+  return myRoster
+    .filter((tv) => !givenIds.has(tv.player.espnPlayerId))
+    .sort((a, b) => a.finalValue - b.finalValue)
+    .slice(0, count);
 }
 
 export interface BuildOfferParams {
@@ -103,19 +109,19 @@ export interface BuildOfferParams {
  * Builds a plausible trade package from my roster's surplus toward a
  * target's biggest hole at a complementary position, matched against a
  * receive package from their surplus at one of my weak spots. Searches
- * both 1- and 2-player combinations on *each* side (so a 1-for-2 or 2-for-1
- * shape is on the table, not just 1-for-1 and 2-for-1), and among all of
- * them prefers one where I give up at least as much value as I receive
- * (`favorsThem`) — a real team has no rational reason to accept a trade
- * that's bad for them, so a lopsided offer tilted their way is what
- * actually gets accepted, even though it costs more than a "fair" trade
- * would. Only falls back to the closest available value gap (possibly
- * favoring me) when no such combination exists, and says so plainly. When
- * the chosen shape nets more players than it gives up, also names the
- * weakest remaining roster spot worth dropping to make room. Returns null
- * when there's no real surplus to offer or nothing sensible to ask for —
- * it never invents a trade out of players that aren't actually tradeable
- * depth.
+ * every subset of each side's tradeable depth (1 player up to all of it —
+ * as many as is actually beneficial, not a fixed 1- or 2-player shape),
+ * and among all of them prefers one where I give up at least as much
+ * value as I receive (`favorsThem`) — a real team has no rational reason
+ * to accept a trade that's bad for them, so a lopsided offer tilted their
+ * way is what actually gets accepted, even though it costs more than a
+ * "fair" trade would. Only falls back to the closest available value gap
+ * (possibly favoring me) when no such combination exists, and says so
+ * plainly. When the chosen shape nets more players than it gives up, also
+ * names however many of the weakest remaining roster spots are needed to
+ * bring the roster back into balance. Returns null when there's no real
+ * surplus to offer or nothing sensible to ask for — it never invents a
+ * trade out of players that aren't actually tradeable depth.
  */
 export function buildOffer(params: BuildOfferParams): SuggestedOffer | null {
   const {
@@ -150,8 +156,8 @@ export function buildOffer(params: BuildOfferParams): SuggestedOffer | null {
 
   if (giveCandidates.length === 0 || receiveCandidates.length === 0) return null;
 
-  const giveCombos = combinations(giveCandidates, MAX_GIVE_COMBO_SIZE);
-  const receiveCombos = combinations(receiveCandidates, MAX_RECEIVE_COMBO_SIZE);
+  const giveCombos = combinations(giveCandidates);
+  const receiveCombos = combinations(receiveCandidates);
 
   let bestRealistic: Candidate | null = null;
   let bestFallback: Candidate | null = null;
@@ -179,7 +185,8 @@ export function buildOffer(params: BuildOfferParams): SuggestedOffer | null {
   const favorsThem = chosen === bestRealistic;
   const { give: bestGive, receive: bestReceive, giveValue, receiveValue, gap: bestGap } = chosen;
 
-  const dropCandidate = bestReceive.length > bestGive.length ? pickDropCandidate(myRoster, bestGive) : null;
+  const dropCount = bestReceive.length - bestGive.length;
+  const dropCandidates = dropCount > 0 ? pickDropCandidates(myRoster, bestGive, dropCount) : [];
 
   const rationale = [
     `You offer from your ${givePosition} surplus (${giveCandidates.length} tradeable player(s) beyond your own starting need), targeting ${targetTeamName}'s biggest hole at that position.`,
@@ -191,9 +198,9 @@ export function buildOffer(params: BuildOfferParams): SuggestedOffer | null {
         ? `Value gap ${bestGap.toFixed(1)}% favors you but is within the ${fairnessThresholdPct}% fairness threshold.`
         : `Value gap ${bestGap.toFixed(1)}% favors you and exceeds the ${fairnessThresholdPct}% fairness threshold — ${targetTeamName} likely won't accept this without more from your side.`,
   ];
-  if (dropCandidate) {
+  if (dropCandidates.length > 0) {
     rationale.push(
-      `This nets you ${bestReceive.length} player(s) for ${bestGive.length} — consider dropping ${dropCandidate.player.name} (${dropCandidate.finalValue.toFixed(1)} val), your weakest remaining bench piece, to make roster room.`
+      `This nets you ${bestReceive.length} player(s) for ${bestGive.length} — consider dropping ${dropCandidates.map((tv) => `${tv.player.name} (${tv.finalValue.toFixed(1)} val)`).join(", ")}, your weakest remaining bench piece(s), to make roster room.`
     );
   }
 
@@ -206,7 +213,7 @@ export function buildOffer(params: BuildOfferParams): SuggestedOffer | null {
     receiveValue,
     fairnessGapPct: bestGap,
     favorsThem,
-    dropCandidate,
+    dropCandidates,
     rationale,
   };
 }

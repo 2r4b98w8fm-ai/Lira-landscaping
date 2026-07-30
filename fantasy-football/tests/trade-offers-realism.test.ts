@@ -169,7 +169,58 @@ describe("buildOffer targets the other team's worst weakness", () => {
 
     expect(offer?.give).toHaveLength(1);
     expect(offer?.receive).toHaveLength(2);
-    expect(offer?.dropCandidate?.player.name).toBe("MyBenchWR");
+    expect(offer?.dropCandidates).toHaveLength(1);
+    expect(offer?.dropCandidates[0]?.player.name).toBe("MyBenchWR");
+  });
+
+  it("combines as many players as is beneficial, not just 1 or 2, when that's the only way to reach a realistic value", () => {
+    // None of my 3 depth RBs individually (or any pair of them) is worth
+    // as much as their single depth WR (100) — only combining all three
+    // (40+35+30=105) clears it, so a package capped at 2-per-side could
+    // never find a realistic trade here at all.
+    const myRoster: TradeValue[] = [
+      tv({ name: "MyRB1", position: "RB", restOfSeasonProjection: 300 }),
+      tv({ name: "MyRB2", position: "RB", restOfSeasonProjection: 290 }),
+      tv({ name: "MyRB3", position: "RB", restOfSeasonProjection: 90 }), // vorp 40
+      tv({ name: "MyRB4", position: "RB", restOfSeasonProjection: 85 }), // vorp 35
+      tv({ name: "MyRB5", position: "RB", restOfSeasonProjection: 80 }), // vorp 30
+    ];
+    const targetRoster: TradeValue[] = [
+      tv({ name: "TheirWR1", position: "WR", restOfSeasonProjection: 300 }),
+      tv({ name: "TheirWR2", position: "WR", restOfSeasonProjection: 290 }),
+      tv({ name: "TheirWR3", position: "WR", restOfSeasonProjection: 150 }), // vorp 100, their only tradeable depth
+    ];
+    const myNeeds: TeamNeedsProfile = {
+      teamId: 1,
+      teamName: "Me",
+      needs: [
+        { position: "RB", surplus: 200, startingRequirement: 2, rosteredCount: 5 },
+        { position: "WR", surplus: -80, startingRequirement: 2, rosteredCount: 0 },
+      ],
+    };
+    const targetNeeds: TeamNeedsProfile = {
+      teamId: 2,
+      teamName: "Them",
+      needs: [
+        { position: "RB", surplus: -80, startingRequirement: 2, rosteredCount: 0 },
+        { position: "WR", surplus: 60, startingRequirement: 2, rosteredCount: 3 },
+      ],
+    };
+
+    const offer = buildOffer({
+      myRoster,
+      myNeeds,
+      myStartingSlotCounts: STARTING_SLOTS,
+      targetTeamId: 2,
+      targetTeamName: "Them",
+      targetRoster,
+      targetNeeds,
+      targetStartingSlotCounts: STARTING_SLOTS,
+    });
+
+    expect(offer?.give).toHaveLength(3);
+    expect(offer?.give.map((tv) => tv.player.name).sort()).toEqual(["MyRB3", "MyRB4", "MyRB5"]);
+    expect(offer?.favorsThem).toBe(true);
   });
 
   it("returns null with no drop candidate when there's no real surplus to trade", () => {

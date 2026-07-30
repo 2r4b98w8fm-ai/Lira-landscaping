@@ -109,8 +109,10 @@ export default function GamePlanPage() {
               Give: {offer.give.map((p) => p.player.name).join(", ")} ({offer.giveValue.toFixed(1)}) · Receive:{" "}
               {offer.receive.map((p) => p.player.name).join(", ")} ({offer.receiveValue.toFixed(1)})
             </p>
-            {offer.dropCandidate && (
-              <p className="mt-1 text-xs text-amber-700">Drop {offer.dropCandidate.player.name} to make roster room.</p>
+            {offer.dropCandidates.length > 0 && (
+              <p className="mt-1 text-xs text-amber-700">
+                Drop {offer.dropCandidates.map((tv) => tv.player.name).join(", ")} to make roster room.
+              </p>
             )}
           </div>
         ))}

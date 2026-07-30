@@ -79,11 +79,13 @@ export function TradeChainPlan() {
                 </div>
               </div>
             </div>
-            {offer.dropCandidate && (
+            {offer.dropCandidates.length > 0 && (
               <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                 You&apos;d net {offer.receive.length} player(s) for {offer.give.length} after this step — drop{" "}
-                <strong>{offer.dropCandidate.player.name}</strong> ({offer.dropCandidate.finalValue.toFixed(1)} val) to
-                make roster room.
+                <strong>
+                  {offer.dropCandidates.map((tv) => `${tv.player.name} (${tv.finalValue.toFixed(1)} val)`).join(", ")}
+                </strong>{" "}
+                to make roster room.
               </p>
             )}
           </div>
