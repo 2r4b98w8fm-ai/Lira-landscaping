@@ -139,31 +139,44 @@ can connect multiple leagues (a switcher appears in the nav once you have 2+) an
 from the Connect page. If ESPN's discovery endpoint doesn't return anything usable, the manual
 "enter your league ID" path is still right there — auto-discovery is never the only way in.
 
-## Notifications (email digests)
+## Notifications (email + browser push)
 
-Two kinds, both opt-in from a panel on the Roster page, and both **inert until you set
-`RESEND_API_KEY`** in your deployment (the panel says so plainly, and the subscribe endpoint
-refuses to save with a clear error if it isn't set — no silent no-op):
+The same two real events — injury-status changes and waiver-wire upgrades — can reach you two
+ways, both opt-in from panels on the Roster page, and both **inert until configured** (each panel
+says so plainly, and the subscribe endpoints refuse to save with a clear error rather than
+silently no-op-ing):
 
-- **Injury alerts**: every time you (a real, session-having user) hit "Refresh from ESPN," the app
-  compares the new injury statuses against the last ones it emailed about and sends a digest if
-  anything changed. This deliberately does **not** run from an unattended cron job — see below.
-- **Waiver digest**: a periodic email of real upgrades on your waiver wire (same value-added-over-
-  worst-starter math as the Waivers page), meant to run from a scheduled job (`vercel.json` wires
-  up a daily cron hitting `/api/cron/waiver-digest`, protected by a `CRON_SECRET` you set — Vercel
-  automatically sends it as a bearer token to your own cron routes when that env var is present).
+- **Injury alerts**: every time you (a real, session-having user) hit "Sync now," the app compares
+  the new injury statuses against the last ones it notified about and sends a digest if anything
+  changed. This deliberately does **not** run from an unattended cron job — see below.
+- **Waiver digest**: a periodic notification of real upgrades on your waiver wire (same value-
+  added-over-worst-starter math as the Waivers page), meant to run from a scheduled job
+  (`vercel.json` wires up a daily cron hitting `/api/cron/waiver-digest`, protected by a
+  `CRON_SECRET` you set — Vercel automatically sends it as a bearer token to your own cron routes
+  when that env var is present).
 
-**Why the injury digest isn't also on the cron job:** sending it would require re-authenticating to
-ESPN outside of a real user's session, which means storing your `espn_s2`/`SWID` in the database
-rather than only in an encrypted cookie. A leaked database row would then hand over live ESPN
-session access, not just app data — a meaningfully worse blast radius than anything else this app
-stores. So the cron path only ever reads what a real sync already cached in Postgres; it never
-calls ESPN itself. That's a deliberate scope limit, not an oversight — revisit it only if you
-decide that tradeoff is worth it for real-time-without-a-visit injury alerts.
+**Email** needs `RESEND_API_KEY` (get one at resend.com; `RESEND_FROM_EMAIL` must be a domain
+verified in your Resend account) and has its own per-content checkboxes (injury alerts, waiver
+digest, independently). **Not yet exercised against a real Resend account** — sending is covered
+by unit tests up to the point of calling Resend's SDK, but an actual delivered email is unverified.
 
-**Not yet exercised against a real Resend account** — I have no API key to test with, so sending
-is covered by unit tests up to the point of calling Resend's SDK (digest content, the "nothing to
-report" skip logic, the "not configured" guard) but an actual delivered email is unverified.
+**Browser push** needs a real VAPID key pair — generate one with `npx web-push generate-vapid-keys`
+and set `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT`. Unlike email, push has no separate
+content toggle yet: enabling it on a device opts that device into both injury alerts and the
+waiver digest, since the permission prompt itself is already the opt-in gesture. A tiny service
+worker (`public/sw.js`) just shows the notification and routes a tap back into the app — no
+offline caching, this app never wants to show you stale data. Subscriptions are pruned
+automatically when a push comes back 404/410 (the browser or OS unsubscribed on its own, e.g. an
+uninstall), so the table doesn't accumulate dead rows from browsers that vanished outside the app.
+
+**Why the injury digest isn't also on the cron job (either channel):** sending it would require
+re-authenticating to ESPN outside of a real user's session, which means storing your
+`espn_s2`/`SWID` in the database rather than only in an encrypted cookie. A leaked database row
+would then hand over live ESPN session access, not just app data — a meaningfully worse blast
+radius than anything else this app stores. So the cron path only ever reads what a real sync
+already cached in Postgres; it never calls ESPN itself. That's a deliberate scope limit, not an
+oversight — revisit it only if you decide that tradeoff is worth it for real-time-without-a-visit
+injury alerts.
 
 ## Keeping the background data refresh actually frequent on free plans
 

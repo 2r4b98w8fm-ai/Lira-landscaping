@@ -14,6 +14,7 @@ import {
   positionVariance,
   powerRankingSnapshots,
   proTeamSchedule,
+  pushSubscriptions,
   rosterSlots,
   sleeperTrending,
   syncLog,
@@ -618,6 +619,41 @@ export async function updateInjurySnapshot(teamId: number, snapshot: Record<stri
     .update(notificationSubscriptions)
     .set({ lastInjurySnapshot: snapshot, lastDigestSentAt: new Date() })
     .where(eq(notificationSubscriptions.teamId, teamId));
+}
+
+/** Upserts by endpoint (the same browser re-subscribing, e.g. after switching leagues, just moves to the new team) rather than accumulating duplicate rows. */
+export async function savePushSubscription(teamId: number, endpoint: string, p256dh: string, auth: string) {
+  await db
+    .insert(pushSubscriptions)
+    .values({ teamId, endpoint, p256dh, auth })
+    .onConflictDoUpdate({
+      target: pushSubscriptions.endpoint,
+      set: { teamId, p256dh, auth },
+    });
+}
+
+export async function deletePushSubscription(endpoint: string) {
+  await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+}
+
+export async function getPushSubscriptionsForTeam(teamId: number) {
+  return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.teamId, teamId));
+}
+
+export async function getAllPushSubscriptions() {
+  return db
+    .select({
+      id: pushSubscriptions.id,
+      teamId: pushSubscriptions.teamId,
+      endpoint: pushSubscriptions.endpoint,
+      p256dh: pushSubscriptions.p256dh,
+      auth: pushSubscriptions.auth,
+      leagueId: teams.leagueId,
+      leagueName: leagues.name,
+    })
+    .from(pushSubscriptions)
+    .innerJoin(teams, eq(teams.id, pushSubscriptions.teamId))
+    .innerJoin(leagues, eq(leagues.id, teams.leagueId));
 }
 
 /**

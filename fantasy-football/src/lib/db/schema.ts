@@ -452,6 +452,31 @@ export const notificationSubscriptions = pgTable(
   })
 );
 
+/**
+ * Web Push (browser notification) subscriptions — one row per browser/
+ * device a user enabled push on, since (unlike email) the same team can
+ * have several. Holds only what the Push API itself needs (endpoint +
+ * encryption keys); no ESPN credentials, same "never store what a cron
+ * job would need to re-authenticate to ESPN" boundary as email. Sends
+ * mirror the same real-sync/cron triggers email digests already use.
+ */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    teamId: integer("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    endpointIdx: uniqueIndex("push_subscriptions_endpoint_idx").on(t.endpoint),
+  })
+);
+
 export const syncLog = pgTable("sync_log", {
   id: serial("id").primaryKey(),
   source: text("source").notNull(),

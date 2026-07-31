@@ -24,18 +24,20 @@ export default function TradePage() {
         </p>
       </div>
 
-      <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-sm">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 rounded-md px-3 py-1.5 font-medium transition ${
-              tab === t ? "bg-white text-brand-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="flex w-max min-w-full gap-1 rounded-lg bg-slate-100 p-1 text-sm sm:w-full">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-medium transition sm:flex-1 ${
+                tab === t ? "bg-white text-brand-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === "Trades you should make" && <TradeRecommendations />}

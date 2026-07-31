@@ -5,6 +5,7 @@ import { NotConnectedBanner } from "@/components/NotConnectedBanner";
 import { RosterTable } from "@/components/RosterTable";
 import { InjuryWatchPanel } from "@/components/InjuryWatchPanel";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import { PushNotificationSettings } from "@/components/PushNotificationSettings";
 import type { RosterPlayer } from "@/types/domain";
 import { DATA_POLL_INTERVAL_MS, useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 
@@ -78,6 +79,7 @@ export default function DashboardPage() {
         <p className="text-slate-500">This roster came back empty — try refreshing.</p>
       )}
       <NotificationSettings />
+      <PushNotificationSettings />
     </div>
   );
 }

@@ -54,3 +54,11 @@ export function buildInjuryDigestHtml(leagueName: string, changes: InjuryChange[
     </div>
   `.trim();
 }
+
+/** Same content as buildInjuryDigestHtml, condensed to one line for a push notification's body. Null when there's nothing to report. */
+export function buildInjuryPushBody(changes: InjuryChange[]): string | null {
+  if (changes.length === 0) return null;
+  const shown = changes.slice(0, 3).map((c) => `${c.name}: ${c.oldStatus} → ${c.newStatus}`);
+  const extra = changes.length > 3 ? ` +${changes.length - 3} more` : "";
+  return shown.join("; ") + extra;
+}

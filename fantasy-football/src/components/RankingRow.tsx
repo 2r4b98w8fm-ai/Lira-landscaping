@@ -14,8 +14,8 @@ export function RankingRow({ ranking, isMyTeam }: { ranking: RankedPlayer; isMyT
         isMyTeam ? "border-brand-400 bg-brand-50" : "border-slate-200 bg-white hover:shadow-card-hover"
       }`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-1 items-center gap-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
           <span className="w-8 font-mono text-slate-400">#{ranking.overallRank}</span>
           <span className="font-semibold text-slate-900">{player.name}</span>
           <span className="text-xs text-slate-500">

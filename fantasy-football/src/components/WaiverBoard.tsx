@@ -13,8 +13,8 @@ export function WaiverBoard({ position, recs }: { position: string; recs: Waiver
               (rec.valueAdded ?? -1) > 0 ? "border-brand-300 bg-brand-50/60" : "border-slate-200 bg-white"
             }`}
           >
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-baseline gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="text-sm font-mono text-slate-400">#{i + 1}</span>
                 <span className="font-semibold text-slate-900">{rec.player.name}</span>
                 <span className="text-xs text-slate-500">{rec.player.nflTeam}</span>

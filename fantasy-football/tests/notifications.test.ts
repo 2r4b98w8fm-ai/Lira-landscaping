@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildInjuryDigestHtml, diffInjuryStatuses, snapshotInjuryStatuses } from "@/lib/notifications/injuryDigest";
-import { buildWaiverDigestHtml } from "@/lib/notifications/waiverDigest";
+import { buildInjuryDigestHtml, buildInjuryPushBody, diffInjuryStatuses, snapshotInjuryStatuses } from "@/lib/notifications/injuryDigest";
+import { buildWaiverDigestHtml, buildWaiverPushBody } from "@/lib/notifications/waiverDigest";
 import type { RosterPlayer, WaiverRecommendation } from "@/types/domain";
 
 let nextId = 1;
@@ -18,6 +18,17 @@ function player(partial: Partial<RosterPlayer>): RosterPlayer {
     restOfSeasonProjection: 100,
     restOfSeasonSource: "espn",
     projectionBreakdown: null,
+    ...partial,
+  };
+}
+
+function waiverRec(partial: Partial<WaiverRecommendation>): WaiverRecommendation {
+  return {
+    player: player({}),
+    myWorstStarterValue: 50,
+    valueAdded: 20,
+    reasoning: [],
+    faabBid: null,
     ...partial,
   };
 }
@@ -63,29 +74,68 @@ describe("buildInjuryDigestHtml", () => {
   });
 });
 
-describe("buildWaiverDigestHtml", () => {
-  function rec(partial: Partial<WaiverRecommendation>): WaiverRecommendation {
-    return {
-      player: player({}),
-      myWorstStarterValue: 50,
-      valueAdded: 20,
-      reasoning: [],
-      faabBid: null,
-      ...partial,
-    };
-  }
+describe("buildInjuryPushBody", () => {
+  it("returns null when there's nothing to report", () => {
+    expect(buildInjuryPushBody([])).toBeNull();
+  });
 
+  it("condenses changes to one line", () => {
+    const body = buildInjuryPushBody([
+      { espnPlayerId: 1, name: "Star RB", position: "RB", oldStatus: "ACTIVE", newStatus: "OUT" },
+    ]);
+    expect(body).toBe("Star RB: ACTIVE → OUT");
+  });
+
+  it("caps at 3 shown and notes how many more", () => {
+    const changes = [1, 2, 3, 4, 5].map((n) => ({
+      espnPlayerId: n,
+      name: `Player ${n}`,
+      position: "RB",
+      oldStatus: "ACTIVE",
+      newStatus: "OUT",
+    }));
+    const body = buildInjuryPushBody(changes);
+    expect(body).toContain("Player 1");
+    expect(body).toContain("Player 3");
+    expect(body).not.toContain("Player 4");
+    expect(body).toContain("+2 more");
+  });
+});
+
+describe("buildWaiverDigestHtml", () => {
   it("returns null when nothing clears the value-added bar", () => {
-    const html = buildWaiverDigestHtml("My League", [rec({ valueAdded: 2 }), rec({ valueAdded: null })]);
+    const html = buildWaiverDigestHtml("My League", [waiverRec({ valueAdded: 2 }), waiverRec({ valueAdded: null })]);
     expect(html).toBeNull();
   });
 
   it("includes real upgrades above the bar, sorted best first", () => {
-    const big = rec({ valueAdded: 40, player: player({ name: "Big Add" }) });
-    const small = rec({ valueAdded: 10, player: player({ name: "Small Add" }) });
+    const big = waiverRec({ valueAdded: 40, player: player({ name: "Big Add" }) });
+    const small = waiverRec({ valueAdded: 10, player: player({ name: "Small Add" }) });
     const html = buildWaiverDigestHtml("My League", [small, big]);
     expect(html).toContain("Big Add");
     expect(html).toContain("Small Add");
     expect(html!.indexOf("Big Add")).toBeLessThan(html!.indexOf("Small Add"));
+  });
+});
+
+describe("buildWaiverPushBody", () => {
+  it("returns null when nothing clears the bar", () => {
+    expect(buildWaiverPushBody([waiverRec({ valueAdded: 2 })])).toBeNull();
+  });
+
+  it("condenses the best upgrades to one line, sorted best first", () => {
+    const big = waiverRec({ valueAdded: 40, player: player({ name: "Big Add" }) });
+    const small = waiverRec({ valueAdded: 10, player: player({ name: "Small Add" }) });
+    const body = buildWaiverPushBody([small, big]);
+    expect(body).toBe("Big Add (+40.0), Small Add (+10.0)");
+  });
+
+  it("caps at 3 shown and notes how many more", () => {
+    const recs = [10, 20, 30, 40, 50].map((v) => waiverRec({ valueAdded: v, player: player({ name: `P${v}` }) }));
+    const body = buildWaiverPushBody(recs);
+    expect(body).toContain("P50");
+    expect(body).toContain("P30");
+    expect(body).not.toContain("P20");
+    expect(body).toContain("+2 more");
   });
 });
